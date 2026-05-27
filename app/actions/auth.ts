@@ -12,6 +12,19 @@ function getStringValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
+function getLoginErrorMessage(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    error.code === "email_not_confirmed"
+  ) {
+    return "E-poštni naslov še ni potrjen. Preveri email in klikni potrditveno povezavo.";
+  }
+
+  return "Prijava ni uspela. Preveri e-pošto in geslo.";
+}
+
 export async function loginAction(
   _prevState: ActionState,
   formData: FormData,
@@ -33,7 +46,7 @@ export async function loginAction(
 
     if (error) {
       return {
-        error: "Prijava ni uspela. Preveri e-pošto in geslo.",
+        error: getLoginErrorMessage(error),
       };
     }
   } catch (error) {

@@ -22,13 +22,13 @@ export function AppShell({
       <div className="min-w-0 px-4 pb-10 pt-4 lg:px-6 lg:pb-12 lg:pt-6">
         <div className="mb-5 flex items-center justify-between lg:hidden">
           <AppSidebar email={email} demoMode={demoMode} mobile />
-          <div className="rounded-full border border-white/70 bg-white/75 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+          <div className="rounded-full border border-primary/10 bg-white/90 px-4 py-2 text-sm text-muted-foreground shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
             {demoMode ? "Demo pogled" : email ?? "Poziralnik"}
           </div>
         </div>
 
         {demoMode ? (
-          <div className="surface-glass mb-6 rounded-[1.75rem] border border-white/60 px-5 py-4 text-sm text-foreground">
+          <div className="surface-glass mb-6 rounded-[1.75rem] border border-primary/10 px-5 py-4 text-sm text-foreground">
             Supabase ni konfiguriran, zato aplikacija prikazuje prazna stanja brez shranjevanja podatkov.
           </div>
         ) : null}

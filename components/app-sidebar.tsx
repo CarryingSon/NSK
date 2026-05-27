@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
@@ -29,19 +30,30 @@ function SidebarBody({
   const pathname = usePathname();
 
   return (
-    <div className="surface-sidebar flex h-full flex-col rounded-[2rem] border border-white/60 px-5 py-6">
-      <div className="mb-8 px-2">
-        <div className="inline-flex rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Interni sistem
+    <div className="surface-sidebar flex h-full flex-col rounded-[2rem] border border-white/10 px-5 py-6 text-sidebar-foreground">
+      <div className="mb-8 px-1">
+        <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/72">
+          NSK klub
         </div>
-        <h2 className="mt-4 font-heading text-4xl font-semibold text-foreground">
-          {appName}
-        </h2>
-        <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-          Članstvo, prijave, dogodki in osnovna administracija na enem mestu.
-        </p>
+        <div className="mt-5 rounded-[1.75rem] border border-white/10 bg-white px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+          <Image
+            src="/nsk-logo.svg"
+            alt="NSK Klub"
+            width={352}
+            height={66}
+            className="h-9 w-auto"
+          />
+          <div className="mt-4 h-px bg-gradient-to-r from-[#f36717] via-[#f7c3a2] to-transparent" />
+          <h2 className="mt-4 font-heading text-3xl font-semibold text-[#182168]">
+            {appName}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Interni portal za članstvo, prijave, dogodke in osnovno klubsko
+            administracijo.
+          </p>
+        </div>
         {demoMode ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-primary/40 bg-primary/10 px-4 py-3 text-sm text-foreground">
+          <div className="mt-4 rounded-2xl border border-dashed border-white/20 bg-white/10 px-4 py-3 text-sm text-white/82">
             Demo prikaz brez povezane Supabase instance.
           </div>
         ) : null}
@@ -58,8 +70,9 @@ function SidebarBody({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-white/75 hover:text-foreground",
-                isActive && "bg-white/90 text-foreground shadow-sm ring-1 ring-primary/20",
+                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-white/72 transition hover:bg-white/10 hover:text-white",
+                isActive &&
+                  "bg-white text-[#182168] shadow-[0_16px_30px_rgba(15,23,42,0.18)] ring-1 ring-white/30",
               )}
             >
               <item.icon className="size-4" />
@@ -69,16 +82,16 @@ function SidebarBody({
         })}
       </nav>
 
-      <div className="mt-6 rounded-[1.75rem] border border-white/70 bg-white/75 p-4 shadow-sm">
+      <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-white/10 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.15)]">
         <div className="flex items-center gap-3">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground">
             {getInitials(email ?? appName)}
           </div>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-foreground">
+            <p className="truncate font-semibold text-white">
               {demoMode ? "Demo način" : "Prijavljen uporabnik"}
             </p>
-            <p className="truncate text-sm text-muted-foreground">
+            <p className="truncate text-sm text-white/72">
               {email ?? "Brez aktivne prijave"}
             </p>
           </div>
@@ -90,7 +103,7 @@ function SidebarBody({
           type="submit"
           variant="outline"
           pendingLabel="Odjavljam ..."
-          className="h-12 w-full justify-center rounded-2xl border-white/70 bg-white/80 text-foreground shadow-sm"
+          className="h-12 w-full justify-center rounded-2xl border-white/10 bg-white/10 text-white shadow-[0_10px_24px_rgba(15,23,42,0.15)] hover:bg-white/14"
         >
           <logoutItem.icon className="size-4" />
           {logoutItem.label}
@@ -117,7 +130,7 @@ export function AppSidebar({
             <Button
               variant="outline"
               size="icon-lg"
-              className="rounded-2xl border-white/70 bg-white/80"
+              className="rounded-2xl border-white/10 bg-[#182168] text-white shadow-[0_12px_28px_rgba(24,33,104,0.28)] hover:bg-[#222b86]"
             />
           }
         >

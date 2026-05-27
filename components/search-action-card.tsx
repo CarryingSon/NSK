@@ -17,7 +17,7 @@ export function SearchActionCard({
   return (
     <Card className="surface-glass rounded-[2rem] border border-white/60 py-0">
       <CardHeader className="px-6 pt-6">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 text-primary-foreground">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/12 text-primary">
           <Icon className="size-7" />
         </div>
         <CardTitle className="mt-4 font-heading text-2xl font-semibold text-foreground">

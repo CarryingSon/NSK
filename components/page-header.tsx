@@ -11,7 +11,8 @@ export function PageHeader({
 }) {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-      <div className="space-y-2">
+      <div className="space-y-3">
+        <div className="brand-chip">NSK klub interni portal</div>
         <h1 className="font-heading text-4xl font-semibold tracking-tight text-foreground">
           {title}
         </h1>

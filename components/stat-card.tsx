@@ -25,7 +25,7 @@ export function StatCard({
               {value}
             </p>
           </div>
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/20 text-primary-foreground">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/12 text-primary">
             <Icon className="size-5" />
           </div>
         </div>

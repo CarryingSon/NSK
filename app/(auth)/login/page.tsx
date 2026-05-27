@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 
 import { LoginForm } from "@/components/forms/login-form";
@@ -15,25 +16,30 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const configured = isSupabaseConfigured();
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-20">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-16">
       <div className="surface-glass grid w-full max-w-5xl overflow-hidden rounded-[2.5rem] border border-white/60 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="relative hidden bg-[radial-gradient(circle_at_top_left,rgba(255,213,30,0.28),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(220,211,255,0.36),transparent_32%)] px-10 py-12 lg:flex lg:flex-col lg:justify-between">
+        <section className="relative hidden bg-[radial-gradient(circle_at_top_left,rgba(243,103,23,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(46,49,146,0.18),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.78))] px-10 py-12 lg:flex lg:flex-col lg:justify-between">
           <div>
-            <div className="inline-flex rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Interni klubski sistem
-            </div>
+            <div className="brand-chip">Interni klubski sistem</div>
+            <Image
+              src="/nsk-logo.svg"
+              alt="NSK Klub"
+              width={352}
+              height={66}
+              className="mt-8 h-11 w-auto"
+            />
             <h1 className="mt-6 max-w-md font-heading text-5xl font-semibold leading-tight text-foreground">
-              Poziralnik za hitrejše delo z članstvom in dogodki
+              Poziralnik za interno vodenje članstva in dogodkov
             </h1>
             <p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">
-              Zasebna administracijska aplikacija za člansko ekipo, prijave, kupončke,
-              evidenco tiska in obveščanje.
+              Usklajen administratorski portal za člansko ekipo NSK kluba, prijave,
+              obveščanje, kupončke in evidenco operativnega dela.
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-white/70 bg-white/75 p-6 shadow-sm">
+          <div className="rounded-[2rem] border border-primary/10 bg-white/92 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
             <div className="flex items-center gap-4">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/20 text-primary-foreground">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/12 text-primary">
                 <ShieldCheck className="size-7" />
               </div>
               <div>
@@ -48,11 +54,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </section>
 
-        <section className="bg-white/70 px-6 py-10 sm:px-10 sm:py-12">
+        <section className="bg-white/82 px-6 py-10 sm:px-10 sm:py-12">
           <div className="mx-auto max-w-md">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
-              <ShieldCheck className="size-7" />
+            <div className="flex size-16 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,#f36717_0%,#d95d13_100%)] shadow-[0_18px_34px_rgba(243,103,23,0.24)]">
+              <ShieldCheck className="size-7 text-white" />
             </div>
+            <Image
+              src="/nsk-logo.svg"
+              alt="NSK Klub"
+              width={352}
+              height={66}
+              className="mt-6 h-10 w-auto"
+            />
             <p className="mt-6 text-sm font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               {appName}
             </p>

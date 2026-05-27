@@ -33,7 +33,7 @@ export default async function DashboardPage({
     <div className="space-y-8">
       <PageHeader
         title="Nadzorna plošča"
-        description="Dobrodošli v sistemu Poziralnik"
+        description="Dobrodošli v interni sistem Poziralnik za operativno delo ekipe NSK kluba."
       />
 
       <section className="grid gap-6 xl:grid-cols-3">

@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
+import { JetBrains_Mono, Manrope } from "next/font/google";
 
 import "./globals.css";
 
 const manrope = Manrope({
   variable: "--font-manrope",
-  subsets: ["latin"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
   subsets: ["latin"],
 });
 
@@ -31,7 +26,7 @@ export default function RootLayout({
   return (
     <html
       lang="sl"
-      className={`${manrope.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable}`}
+      className={`${manrope.variable} ${jetBrainsMono.variable}`}
     >
       <body>{children}</body>
     </html>

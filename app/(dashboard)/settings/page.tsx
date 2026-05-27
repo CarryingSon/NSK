@@ -32,7 +32,7 @@ export default function SettingsPage() {
             key={item.title}
             className="surface-glass rounded-[2rem] border border-white/60 p-6"
           >
-            <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/20 text-primary-foreground">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/12 text-primary">
               <item.icon className="size-5" />
             </div>
             <h2 className="mt-5 font-heading text-2xl font-semibold text-foreground">

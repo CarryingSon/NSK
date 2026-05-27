@@ -35,7 +35,7 @@ export function EventCalendar({
       <div className="flex flex-col gap-4 border-b border-white/60 pb-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/20 text-primary-foreground">
+            <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
               <CalendarDays className="size-5" />
             </div>
             <h2 className="font-heading text-3xl font-semibold text-foreground">
