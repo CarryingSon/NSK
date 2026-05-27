@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Poziralnik
 
-## Getting Started
+Poziralnik je interna administracijska spletna aplikacija za študentski klub. Namenjena je vodenju članov, prijav, dogodkov, kupončkov, evidence tiska in osnovne administracije v enem zasebnem dashboard okolju.
 
-First, run the development server:
+## Tehnologije
+
+- Next.js 16
+- TypeScript
+- Tailwind CSS 4
+- Supabase Auth + Database
+- shadcn/ui komponente
+- Lucide React ikone
+- Pripravljeno za deploy na Vercel
+
+## Lokalni zagon
+
+1. Namesti odvisnosti:
+
+```bash
+npm install
+```
+
+2. Ustvari lokalno `.env.local` datoteko iz primerka:
+
+```bash
+cp .env.example .env.local
+```
+
+3. V `.env.local` nastavi:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+4. Zaženi razvojni strežnik:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Odpri `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Nastavitev Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Ustvari nov Supabase projekt.
+2. V Supabase Dashboard odpri SQL Editor.
+3. Zaženi vsebino datoteke [supabase/schema.sql](/Users/jurekrizman/Documents/NŠK%20-%20po/supabase/schema.sql).
+4. V `Authentication > Users` ustvari prvega uporabnika z e-pošto in geslom.
+5. V `Project Settings > API` kopiraj `Project URL` in `anon public` ključ v `.env.local`.
 
-## Learn More
+Če Supabase ni konfiguriran, aplikacija še vedno prikaže UI in prazna stanja, vendar prijava in shranjevanje podatkov ne bosta delovala.
 
-To learn more about Next.js, take a look at the following resources:
+## SQL schema
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Datoteka [supabase/schema.sql](/Users/jurekrizman/Documents/NŠK%20-%20po/supabase/schema.sql) vsebuje:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- tabele `members`, `events`, `event_registrations`, `coupons`, `print_records`
+- `updated_at` trigger za `members` in `events`
+- osnovne indekse
+- omogočen RLS na vseh glavnih tabelah
+- politike za prijavljene (`authenticated`) uporabnike
 
-## Deploy on Vercel
+## Deploy na Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Potisni repozitorij na GitHub.
+2. Ustvari nov Vercel projekt in poveži GitHub repo.
+3. Dodaj naslednji environment variable:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```env
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
+
+4. Deployaj projekt.
+
+Po deployu se prijava in zaščita routov izvajata prek Supabase Auth cookie session mehanizma.
+
+## Projektna struktura
+
+```text
+app/
+components/
+lib/
+types/
+supabase/
+supabase/schema.sql
+.env.example
+README.md
+```
+
+## Pomembne opombe
+
+- Aplikacija uporablja App Router in server/client komponente po Next.js standardih.
+- CRUD operacije za člane, dogodke in prijave potekajo prek Supabase server clienta.
+- Middleware zaščiti zasebne poti, ko je Supabase pravilno konfiguriran.
+- RLS politike so namenoma osnovne in dovoljujejo dostop vsem prijavljenim uporabnikom; po potrebi jih lahko kasneje zaostriš po vlogah.
