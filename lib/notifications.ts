@@ -29,7 +29,7 @@ export async function getAudienceMembers(
 ) {
   let query = supabase
     .from("members")
-    .select("first_name, last_name, email, membership_status, membership_paid")
+    .select("first_name, last_name, email, membership_status")
     .not("email", "is", null)
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
@@ -44,10 +44,6 @@ export async function getAudienceMembers(
 
   if (audience === "pending") {
     query = query.eq("membership_status", "pending");
-  }
-
-  if (audience === "unpaid") {
-    query = query.eq("membership_paid", false);
   }
 
   const { data, error } = await query;
@@ -88,10 +84,9 @@ export async function getNotificationAudienceCounts(supabase: AppSupabaseClient)
     "all",
     "inactive",
     "pending",
-    "unpaid",
   ];
 
-  const [all, active, inactive, pending, unpaid] = await Promise.all([
+  const [all, active, inactive, pending] = await Promise.all([
     supabase
       .from("members")
       .select("*", { count: "exact", head: true })
@@ -111,11 +106,6 @@ export async function getNotificationAudienceCounts(supabase: AppSupabaseClient)
       .select("*", { count: "exact", head: true })
       .eq("membership_status", "pending")
       .not("email", "is", null),
-    supabase
-      .from("members")
-      .select("*", { count: "exact", head: true })
-      .eq("membership_paid", false)
-      .not("email", "is", null),
   ]);
 
   const countsMap: Record<NotificationAudience, number> = {
@@ -123,7 +113,6 @@ export async function getNotificationAudienceCounts(supabase: AppSupabaseClient)
     active: active.count ?? 0,
     inactive: inactive.count ?? 0,
     pending: pending.count ?? 0,
-    unpaid: unpaid.count ?? 0,
   };
 
   return audienceOrder.map((value) => ({

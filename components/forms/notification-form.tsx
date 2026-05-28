@@ -31,7 +31,7 @@ export function NotificationForm({
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {audiences.map((audience) => (
           <div
             key={audience.value}

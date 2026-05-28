@@ -16,12 +16,6 @@ const optionalInteger = z.preprocess((value) => {
   return Number.isNaN(numberValue) ? value : numberValue;
 }, z.number().int().nullable());
 
-const optionalNumber = z.preprocess((value) => {
-  if (value === "" || value === null || value === undefined) return null;
-  const numberValue = Number(value);
-  return Number.isNaN(numberValue) ? value : numberValue;
-}, z.number().nonnegative().nullable());
-
 const optionalDate = z
   .string()
   .trim()
@@ -72,8 +66,6 @@ export const memberSchema = z.object({
     "pending",
   ] as [MembershipStatus, MembershipStatus, MembershipStatus]),
   membership_year: optionalInteger,
-  membership_paid: z.boolean().default(false),
-  membership_fee: optionalNumber,
   joined_at: optionalDate,
   notes: optionalString,
 });
@@ -129,9 +121,7 @@ export const notificationSchema = z.object({
     "active",
     "inactive",
     "pending",
-    "unpaid",
   ] as [
-    NotificationAudience,
     NotificationAudience,
     NotificationAudience,
     NotificationAudience,

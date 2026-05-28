@@ -156,7 +156,6 @@ export const notificationAudienceOptions: StatusOption<NotificationAudience>[] =
   { value: "all", label: "Vsi člani z e-pošto" },
   { value: "inactive", label: "Neaktivni člani" },
   { value: "pending", label: "Člani v postopku" },
-  { value: "unpaid", label: "Neplačana članarina" },
 ];
 
 export const notificationAudienceLabels: Record<NotificationAudience, string> = {
@@ -164,7 +163,6 @@ export const notificationAudienceLabels: Record<NotificationAudience, string> = 
   active: "Aktivni člani",
   inactive: "Neaktivni člani",
   pending: "Člani v postopku",
-  unpaid: "Neplačana članarina",
 };
 
 export const weekdays = ["Pon", "Tor", "Sre", "Čet", "Pet", "Sob", "Ned"];

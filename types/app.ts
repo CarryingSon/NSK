@@ -62,7 +62,7 @@ export interface MemberFilters {
   status?: MembershipStatus | "all";
 }
 
-export type NotificationAudience = "all" | "active" | "inactive" | "pending" | "unpaid";
+export type NotificationAudience = "all" | "active" | "inactive" | "pending";
 
 export interface NotificationAudienceCount {
   value: NotificationAudience;

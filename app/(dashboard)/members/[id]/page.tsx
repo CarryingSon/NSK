@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/table";
 import { getMemberById, getMemberRegistrationHistory } from "@/lib/data";
 import {
-  formatCurrency,
   formatDate,
   formatDateTime,
   getMemberFullName,
@@ -83,9 +82,6 @@ export default async function MemberDetailPage({
         <div className="surface-glass rounded-[2rem] border border-white/60 p-6">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={member.membership_status} />
-            <span className="rounded-full bg-white/75 px-3 py-1 text-sm text-muted-foreground">
-              Članarina {member.membership_paid ? "plačana" : "ni plačana"}
-            </span>
           </div>
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -114,12 +110,6 @@ export default async function MemberDetailPage({
                   <dt className="text-muted-foreground">Fakulteta / zavod</dt>
                   <dd className="font-medium text-foreground">
                     {member.faculty || "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Znesek članarine</dt>
-                  <dd className="font-medium text-foreground">
-                    {formatCurrency(member.membership_fee)}
                   </dd>
                 </div>
               </dl>

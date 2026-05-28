@@ -40,8 +40,6 @@ export async function saveMemberAction(
     faculty: getStringValue(formData, "faculty"),
     membership_status: getStringValue(formData, "membership_status"),
     membership_year: getStringValue(formData, "membership_year"),
-    membership_paid: formData.get("membership_paid") === "on",
-    membership_fee: getStringValue(formData, "membership_fee"),
     joined_at: getStringValue(formData, "joined_at"),
     notes: getStringValue(formData, "notes"),
   });
