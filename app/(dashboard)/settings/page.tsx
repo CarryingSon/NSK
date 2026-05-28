@@ -1,8 +1,11 @@
-import { Cog, ShieldCheck, Workflow } from "lucide-react";
+import { Cog, Mail, ShieldCheck, Workflow } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
+import { isEmailConfigured } from "@/lib/supabase/env";
 
 export default function SettingsPage() {
+  const emailConfigured = isEmailConfigured();
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -10,7 +13,7 @@ export default function SettingsPage() {
         description="Osnovna konfiguracija aplikacije in operativni opomniki za ekipo."
       />
 
-      <section className="grid gap-6 lg:grid-cols-3">
+      <section className="grid gap-6 lg:grid-cols-4">
         {[
           {
             icon: Cog,
@@ -21,6 +24,13 @@ export default function SettingsPage() {
             icon: ShieldCheck,
             title: "Dostopi",
             text: "Supabase Auth skrbi za prijavo, RLS pa za osnovno zaščito podatkov za prijavljene uporabnike.",
+          },
+          {
+            icon: Mail,
+            title: "Email povezava",
+            text: emailConfigured
+              ? "SMTP povezava je zaznana in pripravljena za pošiljanje obvestil članom."
+              : "Nastavi SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in SMTP_FROM v `.env.local`, da omogočiš pošiljanje obvestil.",
           },
           {
             icon: Workflow,

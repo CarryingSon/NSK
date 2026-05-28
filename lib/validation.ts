@@ -1,10 +1,7 @@
 import { z } from "zod";
 
-import type {
-  EventStatus,
-  MembershipStatus,
-  RegistrationStatus,
-} from "@/types/database";
+import type { EventStatus, MembershipStatus, RegistrationStatus } from "@/types/database";
+import type { NotificationAudience } from "@/types/app";
 
 const optionalString = z
   .string()
@@ -68,6 +65,7 @@ export const memberSchema = z.object({
   address: optionalString,
   postal_code: optionalString,
   city: optionalString,
+  faculty: z.string().trim().min(1, "Izberi fakulteto ali visokošolski zavod."),
   membership_status: z.enum([
     "active",
     "inactive",
@@ -123,4 +121,22 @@ export const printRecordSchema = z.object({
   title: z.string().trim().min(2, "Vnesi naziv tiskovine."),
   quantity: positiveInteger,
   notes: optionalString,
+});
+
+export const notificationSchema = z.object({
+  audience: z.enum([
+    "all",
+    "active",
+    "inactive",
+    "pending",
+    "unpaid",
+  ] as [
+    NotificationAudience,
+    NotificationAudience,
+    NotificationAudience,
+    NotificationAudience,
+    NotificationAudience,
+  ]),
+  subject: z.string().trim().min(3, "Zadeva mora imeti vsaj 3 znake."),
+  body: z.string().trim().min(10, "Sporočilo mora imeti vsaj 10 znakov."),
 });

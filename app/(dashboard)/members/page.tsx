@@ -57,7 +57,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
             <Input
               name="query"
               defaultValue={query}
-              placeholder="Išči po imenu, priimku, emailu ali telefonu"
+              placeholder="Išči po imenu, priimku, fakulteti, emailu ali telefonu"
               className="h-12 rounded-2xl bg-white/80 pl-11 pr-4 shadow-sm"
             />
           </div>
@@ -93,6 +93,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
             <TableHeader>
               <TableRow className="border-white/60">
                 <TableHead className="px-6 py-4">Član</TableHead>
+                <TableHead className="px-6 py-4">Fakulteta</TableHead>
                 <TableHead className="px-6 py-4">Kontakt</TableHead>
                 <TableHead className="px-6 py-4">Status</TableHead>
                 <TableHead className="px-6 py-4">Članstvo</TableHead>
@@ -111,6 +112,9 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                         {member.city || "Brez mesta"}
                       </p>
                     </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-sm text-muted-foreground">
+                    {member.faculty || "Ni podatka"}
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <div>
@@ -154,6 +158,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                       <DeleteMemberButton
                         id={member.id}
                         fullName={getMemberFullName(member)}
+                        returnTo="/members"
                       />
                     </div>
                   </TableCell>

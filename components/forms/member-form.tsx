@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { membershipStatusOptions } from "@/lib/constants";
+import {
+  facultyOptionGroups,
+  facultyOptions,
+  membershipStatusOptions,
+} from "@/lib/constants";
 import { toDateInputValue } from "@/lib/format";
 import type { ActionState, Member } from "@/types/app";
 
@@ -16,6 +20,15 @@ const initialState: ActionState = {};
 
 export function MemberForm({ member }: { member?: Member | null }) {
   const [state, formAction] = useActionState(saveMemberAction, initialState);
+  const currentFaculty = member?.faculty ?? "";
+  const hasCustomFaculty =
+    currentFaculty.length > 0 &&
+    !facultyOptions.some((option) => option.value === currentFaculty);
+  const defaultMembershipYear =
+    member?.membership_year ?? new Date().getFullYear();
+  const defaultJoinedAt =
+    toDateInputValue(member?.joined_at) ||
+    new Date().toISOString().slice(0, 10);
 
   return (
     <form action={formAction} className="space-y-8">
@@ -77,7 +90,7 @@ export function MemberForm({ member }: { member?: Member | null }) {
             id="joined_at"
             name="joined_at"
             type="date"
-            defaultValue={toDateInputValue(member?.joined_at)}
+            defaultValue={defaultJoinedAt}
             className="h-11 rounded-2xl bg-white/75 px-4"
           />
         </div>
@@ -108,6 +121,32 @@ export function MemberForm({ member }: { member?: Member | null }) {
             className="h-11 rounded-2xl bg-white/75 px-4"
           />
         </div>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="faculty">Fakulteta / visokošolski zavod</Label>
+          <NativeSelect
+            id="faculty"
+            name="faculty"
+            defaultValue={currentFaculty}
+            required
+          >
+            <option value="">Izberi fakulteto ali zavod</option>
+            {hasCustomFaculty ? (
+              <option value={currentFaculty}>{currentFaculty}</option>
+            ) : null}
+            {facultyOptionGroups.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map((facultyOption) => (
+                  <option key={facultyOption.value} value={facultyOption.value}>
+                    {facultyOption.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </NativeSelect>
+          <p className="text-sm text-muted-foreground">
+            Seznam temelji na aktualnem skupnem razpisu za vpis v visoko šolstvo.
+          </p>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="membership_status">Status članstva</Label>
           <NativeSelect
@@ -128,7 +167,7 @@ export function MemberForm({ member }: { member?: Member | null }) {
             id="membership_year"
             name="membership_year"
             type="number"
-            defaultValue={member?.membership_year ?? ""}
+            defaultValue={defaultMembershipYear}
             placeholder="2026"
             className="h-11 rounded-2xl bg-white/75 px-4"
           />

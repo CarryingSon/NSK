@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 
+import { DeleteMemberButton } from "@/components/members/delete-member-button";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -66,6 +67,14 @@ export default async function MemberDetailPage({
             >
               Uredi
             </Link>
+            <DeleteMemberButton
+              id={member.id}
+              fullName={getMemberFullName(member)}
+              returnTo="/members"
+              variant="destructive"
+              size="lg"
+              className="h-12 rounded-2xl px-6"
+            />
           </div>
         }
       />
@@ -99,6 +108,12 @@ export default async function MemberDetailPage({
                   <dt className="text-muted-foreground">Leto članstva</dt>
                   <dd className="font-medium text-foreground">
                     {member.membership_year || "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Fakulteta / zavod</dt>
+                  <dd className="font-medium text-foreground">
+                    {member.faculty || "—"}
                   </dd>
                 </div>
                 <div>

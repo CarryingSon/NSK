@@ -1,6 +1,7 @@
 import type {
   Database,
   EventStatus,
+  EmailLogStatus,
   MembershipStatus,
   RegistrationStatus,
 } from "@/types/database";
@@ -11,6 +12,7 @@ export type Registration =
   Database["public"]["Tables"]["event_registrations"]["Row"];
 export type Coupon = Database["public"]["Tables"]["coupons"]["Row"];
 export type PrintRecord = Database["public"]["Tables"]["print_records"]["Row"];
+export type EmailLog = Database["public"]["Tables"]["email_logs"]["Row"];
 
 export interface ActionState {
   error?: string;
@@ -58,4 +60,37 @@ export interface StatusOption<TValue extends string> {
 export interface MemberFilters {
   query?: string;
   status?: MembershipStatus | "all";
+}
+
+export type NotificationAudience = "all" | "active" | "inactive" | "pending" | "unpaid";
+
+export interface NotificationAudienceCount {
+  value: NotificationAudience;
+  label: string;
+  count: number;
+}
+
+export interface EmailCampaign {
+  subject: string;
+  body: string | null;
+  sentAt: string;
+  totalSent: number;
+  successCount: number;
+  failedCount: number;
+  metadata: string | null;
+  failedRecipients: Array<{
+    email: string;
+    error: string | null;
+  }>;
+}
+
+export interface EmailLogMetadata {
+  audience: NotificationAudience;
+  createdByEmail?: string | null;
+  sentByName?: string | null;
+}
+
+export interface EmailDeliveryResult {
+  status: EmailLogStatus;
+  errorMessage?: string | null;
 }

@@ -17,6 +17,7 @@ export type RegistrationStatus =
   | "confirmed"
   | "cancelled"
   | "attended";
+export type EmailLogStatus = "sent" | "failed";
 
 export interface Database {
   public: {
@@ -32,6 +33,7 @@ export interface Database {
           address: string | null;
           postal_code: string | null;
           city: string | null;
+          faculty: string | null;
           membership_status: MembershipStatus;
           membership_year: number | null;
           membership_paid: boolean;
@@ -51,6 +53,7 @@ export interface Database {
           address?: string | null;
           postal_code?: string | null;
           city?: string | null;
+          faculty?: string | null;
           membership_status?: MembershipStatus;
           membership_year?: number | null;
           membership_paid?: boolean;
@@ -155,6 +158,30 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["print_records"]["Insert"]>;
+        Relationships: [];
+      };
+      email_logs: {
+        Row: {
+          id: string;
+          to_email: string;
+          subject: string;
+          body: string | null;
+          status: EmailLogStatus;
+          error_message: string | null;
+          metadata: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          to_email: string;
+          subject: string;
+          body?: string | null;
+          status?: EmailLogStatus;
+          error_message?: string | null;
+          metadata?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["email_logs"]["Insert"]>;
         Relationships: [];
       };
     };

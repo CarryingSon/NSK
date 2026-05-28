@@ -18,6 +18,11 @@ function getOptionalId(formData: FormData, key: string) {
   return value.length > 0 ? value : undefined;
 }
 
+function getReturnPath(formData: FormData) {
+  const value = getStringValue(formData, "return_to").trim();
+  return value.startsWith("/") ? value : "/members";
+}
+
 export async function saveMemberAction(
   _prevState: ActionState,
   formData: FormData,
@@ -32,6 +37,7 @@ export async function saveMemberAction(
     address: getStringValue(formData, "address"),
     postal_code: getStringValue(formData, "postal_code"),
     city: getStringValue(formData, "city"),
+    faculty: getStringValue(formData, "faculty"),
     membership_status: getStringValue(formData, "membership_status"),
     membership_year: getStringValue(formData, "membership_year"),
     membership_paid: formData.get("membership_paid") === "on",
@@ -46,8 +52,9 @@ export async function saveMemberAction(
     };
   }
 
+  const { id, ...memberValues } = parsed.data;
   const payload = {
-    ...parsed.data,
+    ...memberValues,
     updated_at: new Date().toISOString(),
   };
 
@@ -55,19 +62,19 @@ export async function saveMemberAction(
     await requireUser();
     const supabase = await createSupabaseServerClient();
 
-    if (parsed.data.id) {
+    if (id) {
       const { error } = await supabase
         .from("members")
         .update(payload)
-        .eq("id", parsed.data.id);
+        .eq("id", id);
 
       if (error) {
         throw error;
       }
 
-      revalidatePath(`/members/${parsed.data.id}`);
+      revalidatePath(`/members/${id}`);
       revalidatePath("/members");
-      redirect(`/members/${parsed.data.id}`);
+      redirect(`/members/${id}`);
     }
 
     const { data, error } = await supabase
@@ -93,9 +100,10 @@ export async function saveMemberAction(
 
 export async function deleteMemberAction(formData: FormData) {
   const id = getOptionalId(formData, "id");
+  const returnPath = getReturnPath(formData);
 
   if (!id) {
-    return;
+    redirect(returnPath);
   }
 
   try {
@@ -107,4 +115,6 @@ export async function deleteMemberAction(formData: FormData) {
   }
 
   revalidatePath("/members");
+  revalidatePath(`/members/${id}`);
+  redirect(returnPath);
 }

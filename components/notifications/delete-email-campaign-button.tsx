@@ -1,9 +1,8 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import type { ComponentProps } from "react";
 
-import { deleteMemberAction } from "@/app/actions/members";
+import { deleteEmailCampaignAction } from "@/app/actions/notifications";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,46 +16,36 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-export function DeleteMemberButton({
-  id,
-  fullName,
-  returnTo = "/members",
-  variant = "ghost",
-  size = "sm",
-  className,
+export function DeleteEmailCampaignButton({
+  subject,
+  sentAt,
+  totalSent,
 }: {
-  id: string;
-  fullName: string;
-  returnTo?: string;
-  variant?: ComponentProps<typeof Button>["variant"];
-  size?: ComponentProps<typeof Button>["size"];
-  className?: string;
+  subject: string;
+  sentAt: string;
+  totalSent: number;
 }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger
-        render={
-          <Button
-            variant={variant}
-            size={size}
-            className={className ?? (variant === "ghost" ? "text-rose-600" : undefined)}
-          />
-        }
+        render={<Button variant="ghost" size="icon-sm" className="text-rose-600" />}
       >
-        Izbriši
+        <Trash2 className="size-4" />
+        <span className="sr-only">Izbriši kampanjo</span>
       </AlertDialogTrigger>
       <AlertDialogContent className="rounded-[1.75rem] border border-white/60 bg-white/95 p-0">
         <AlertDialogHeader className="px-6 pt-6">
-          <AlertDialogTitle>Izbrišem člana?</AlertDialogTitle>
+          <AlertDialogTitle>Izbrišem zgodovino obvestila?</AlertDialogTitle>
           <AlertDialogDescription>
-            S tem boš trajno odstranil zapis za člana <strong>{fullName}</strong>.
+            Za obvestilo <strong>{subject}</strong> bo izbrisanih <strong>{totalSent}</strong>{" "}
+            zapisov pošiljanja. Ta korak je nepovraten.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel className="rounded-2xl">Prekliči</AlertDialogCancel>
-          <form action={deleteMemberAction}>
-            <input type="hidden" name="id" value={id} />
-            <input type="hidden" name="return_to" value={returnTo} />
+          <form action={deleteEmailCampaignAction}>
+            <input type="hidden" name="subject" value={subject} />
+            <input type="hidden" name="sent_at" value={sentAt} />
             <AlertDialogAction
               type="submit"
               variant="destructive"

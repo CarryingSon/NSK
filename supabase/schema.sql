@@ -20,6 +20,7 @@ create table if not exists public.members (
   address text,
   postal_code text,
   city text,
+  faculty text,
   membership_status text not null default 'active',
   membership_year integer,
   membership_paid boolean not null default false,
@@ -29,6 +30,9 @@ create table if not exists public.members (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.members
+add column if not exists faculty text;
 
 create table if not exists public.events (
   id uuid primary key default gen_random_uuid(),
@@ -74,6 +78,17 @@ create table if not exists public.print_records (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.email_logs (
+  id uuid primary key default gen_random_uuid(),
+  to_email text not null,
+  subject text not null,
+  body text,
+  status text not null default 'sent',
+  error_message text,
+  metadata text,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists members_status_idx on public.members (membership_status);
 create index if not exists members_email_idx on public.members (email);
 create index if not exists members_joined_at_idx on public.members (joined_at);
@@ -83,6 +98,8 @@ create index if not exists event_registrations_member_idx on public.event_regist
 create index if not exists event_registrations_event_idx on public.event_registrations (event_id);
 create index if not exists coupons_active_idx on public.coupons (active);
 create index if not exists print_records_member_idx on public.print_records (member_id);
+create index if not exists email_logs_created_at_idx on public.email_logs (created_at desc);
+create index if not exists email_logs_subject_idx on public.email_logs (subject);
 
 drop trigger if exists set_members_updated_at on public.members;
 create trigger set_members_updated_at
@@ -101,6 +118,7 @@ alter table public.events enable row level security;
 alter table public.event_registrations enable row level security;
 alter table public.coupons enable row level security;
 alter table public.print_records enable row level security;
+alter table public.email_logs enable row level security;
 
 drop policy if exists "Authenticated users can manage members" on public.members;
 create policy "Authenticated users can manage members"
@@ -137,6 +155,14 @@ with check (true);
 drop policy if exists "Authenticated users can manage print records" on public.print_records;
 create policy "Authenticated users can manage print records"
 on public.print_records
+for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated users can manage email logs" on public.email_logs;
+create policy "Authenticated users can manage email logs"
+on public.email_logs
 for all
 to authenticated
 using (true)

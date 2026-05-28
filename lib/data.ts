@@ -7,16 +7,24 @@ import {
 } from "date-fns";
 
 import { parseMonthParam } from "@/lib/format";
+import { notificationAudienceOptions } from "@/lib/constants";
+import {
+  getNotificationAudienceCounts,
+  groupEmailLogsIntoCampaigns,
+} from "@/lib/notifications";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 import type {
   CalendarEvent,
   Coupon,
   DashboardStats,
+  EmailCampaign,
   Event,
   Member,
   MemberFilters,
   MemberRegistrationHistoryItem,
+  NotificationAudienceCount,
   PrintRecordWithMember,
   RegistrationWithRelations,
 } from "@/types/app";
@@ -137,6 +145,7 @@ export async function getMembers(filters: MemberFilters = {}) {
         [
           `first_name.ilike.%${term}%`,
           `last_name.ilike.%${term}%`,
+          `faculty.ilike.%${term}%`,
           `email.ilike.%${term}%`,
           `phone.ilike.%${term}%`,
         ].join(","),
@@ -381,4 +390,49 @@ export async function getPrintRecords() {
     created_at: item.created_at,
     member: item.members,
   })) as PrintRecordWithMember[];
+}
+
+export async function getNotificationAudiences() {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return notificationAudienceOptions.map((option) => ({
+      value: option.value,
+      label: option.label,
+      count: 0,
+    })) as NotificationAudienceCount[];
+  }
+
+  try {
+    return await getNotificationAudienceCounts(supabase);
+  } catch (error) {
+    console.error("Napaka pri nalaganju skupin za obveščanje", error);
+    return notificationAudienceOptions.map((option) => ({
+      value: option.value,
+      label: option.label,
+      count: 0,
+    })) as NotificationAudienceCount[];
+  }
+}
+
+export async function getEmailCampaigns() {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return [] as EmailCampaign[];
+  }
+
+  const { data, error } = await supabase
+    .from("email_logs")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Napaka pri nalaganju email zgodovine", error);
+    return [] as EmailCampaign[];
+  }
+
+  return groupEmailLogsIntoCampaigns(
+    (data ?? []) as Database["public"]["Tables"]["email_logs"]["Row"][],
+  );
 }
