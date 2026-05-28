@@ -57,10 +57,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && isPublicPath) {
-    const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = "/dashboard";
-    dashboardUrl.searchParams.delete("redirectedFrom");
-    return NextResponse.redirect(dashboardUrl);
+    const membersUrl = request.nextUrl.clone();
+    membersUrl.pathname = "/members";
+    membersUrl.searchParams.delete("redirectedFrom");
+    return NextResponse.redirect(membersUrl);
   }
 
   return response;

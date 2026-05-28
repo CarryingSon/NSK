@@ -15,12 +15,12 @@ export default function InfoPage() {
           {
             icon: LayoutDashboard,
             title: "Administracijski UX",
-            text: "Aplikacija temelji na Next.js App Router arhitekturi z ločenim loginom, zaščitenim shellom in preglednim dashboard tokom.",
+            text: "Aplikacija temelji na Next.js App Router arhitekturi z ločenim loginom, zaščitenim shellom in poenostavljenim internim modulom za člane, tisk in obveščanje.",
           },
           {
             icon: Database,
             title: "Podatkovni sloj",
-            text: "Supabase poganja bazo, avtentikacijo in RLS politike za tabele members, events, event_registrations, coupons in print_records.",
+            text: "Supabase poganja bazo, avtentikacijo in RLS politike za tabele members in print_records, dodatni moduli pa so pripravljeni za nadaljnji razvoj.",
           },
           {
             icon: Shield,
@@ -30,7 +30,7 @@ export default function InfoPage() {
           {
             icon: Sparkles,
             title: "Pripravljen za rast",
-            text: "Komponente, akcije in podatkovni helperji so modularni, zato lahko brez večjih posegov dodaš dodatne module ali poročila.",
+            text: "Komponente, akcije in podatkovni helperji so modularni, zato lahko brez večjih posegov dodaš nov način obveščanja ali dodatna poročila.",
           },
         ].map((item) => (
           <div

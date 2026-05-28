@@ -60,7 +60,7 @@ export async function loginAction(
   revalidatePath("/", "layout");
 
   const redirectedFrom = getStringValue(formData, "redirectTo");
-  redirect(redirectedFrom || "/dashboard");
+  redirect(redirectedFrom || "/members");
 }
 
 export async function logoutAction() {

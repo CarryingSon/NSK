@@ -29,11 +29,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               className="mt-8 h-11 w-auto"
             />
             <h1 className="mt-6 max-w-md font-heading text-5xl font-semibold leading-tight text-foreground">
-              Poziralnik za interno vodenje članstva in dogodkov
+              Poziralnik za interno vodenje članstva in obveščanja
             </h1>
             <p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">
-              Usklajen administratorski portal za člansko ekipo NSK kluba, prijave,
-              obveščanje, kupončke in evidenco operativnega dela.
+              Usklajen administratorski portal za člansko ekipo NSK kluba,
+              evidenco tiska, obveščanje in osnovno administracijo.
             </p>
           </div>
 
@@ -73,7 +73,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               Prijava v sistem
             </h2>
             <p className="mt-3 text-base text-muted-foreground">
-              Prijavi se z e-pošto in geslom, da dostopaš do nadzorne plošče.
+              Prijavi se z e-pošto in geslom, da dostopaš do internega portala.
             </p>
 
             {!configured ? (

@@ -51,7 +51,6 @@ export async function createPrintRecordAction(
   }
 
   revalidatePath("/print-records");
-  revalidatePath("/dashboard");
 
   return {
     success: "Zapis tiska je bil uspešno dodan.",
@@ -74,5 +73,4 @@ export async function deletePrintRecordAction(formData: FormData) {
   }
 
   revalidatePath("/print-records");
-  revalidatePath("/dashboard");
 }

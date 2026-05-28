@@ -18,7 +18,7 @@ export default function NotFound() {
         </p>
         <div className="mt-8 flex justify-center">
           <Link
-            href="/dashboard"
+            href="/members"
             className={cn(
               buttonVariants({ variant: "default", size: "lg" }),
               "h-11 rounded-2xl px-6 shadow-lg shadow-primary/20",

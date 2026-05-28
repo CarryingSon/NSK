@@ -48,8 +48,8 @@ function SidebarBody({
             {appName}
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            Interni portal za članstvo, prijave, dogodke in osnovno klubsko
-            administracijo.
+            Interni portal za članstvo, evidenco tiska, obveščanje in osnovno
+            klubsko administracijo.
           </p>
         </div>
         {demoMode ? (
@@ -61,9 +61,7 @@ function SidebarBody({
 
       <nav className="flex-1 space-y-2">
         {primaryNavigation.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link

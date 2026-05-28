@@ -67,7 +67,6 @@ export async function saveMemberAction(
 
       revalidatePath(`/members/${parsed.data.id}`);
       revalidatePath("/members");
-      revalidatePath("/dashboard");
       redirect(`/members/${parsed.data.id}`);
     }
 
@@ -82,7 +81,6 @@ export async function saveMemberAction(
     }
 
     revalidatePath("/members");
-    revalidatePath("/dashboard");
     redirect(data?.id ? `/members/${data.id}` : "/members");
   } catch (error) {
     console.error("Napaka pri shranjevanju člana", error);
@@ -109,5 +107,4 @@ export async function deleteMemberAction(formData: FormData) {
   }
 
   revalidatePath("/members");
-  revalidatePath("/dashboard");
 }

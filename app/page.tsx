@@ -5,10 +5,10 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export default async function HomePage() {
   if (!isSupabaseConfigured()) {
-    redirect("/dashboard");
+    redirect("/members");
   }
 
   const user = await getCurrentUser();
 
-  redirect(user ? "/dashboard" : "/login");
+  redirect(user ? "/members" : "/login");
 }
