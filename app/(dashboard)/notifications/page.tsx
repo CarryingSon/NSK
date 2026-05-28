@@ -15,17 +15,17 @@ export default function NotificationsPage() {
           {
             icon: MailOpen,
             title: "E-poštna obvestila",
-            text: "Tu lahko pozneje povežeš email orodje in pripraviš predloge za obvestila članom.",
+            text: "Modul za pošiljanje bomo priklopili drugače, zato je tukaj za zdaj pripravljeno mesto za novo integracijo.",
           },
           {
             icon: MessageSquareText,
             title: "Operativna sporočila",
-            text: "Za interno obveščanje ekipe lahko dodaš delovni tok za osnutke in odobritve.",
+            text: "Za interno obveščanje ekipe lahko kasneje dodava osnutke, odobritve ali povezavo na drug servis.",
           },
           {
             icon: BellRing,
             title: "Sprožilci",
-            text: "Prijave, spremembe statusa in dogodki so dobra osnova za avtomatske opomnike.",
+            text: "Prijave, spremembe statusa in dogodki ostajajo dobra osnova za avtomatiko, ko bova izbrala nov pristop.",
           },
         ].map((item) => (
           <div

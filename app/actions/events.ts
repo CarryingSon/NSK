@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { requireUser } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { eventSchema } from "@/lib/validation";
 import type { ActionState } from "@/types/app";
@@ -44,6 +45,7 @@ export async function saveEventAction(
   };
 
   try {
+    await requireUser();
     const supabase = await createSupabaseServerClient();
 
     if (parsed.data.id) {
@@ -78,6 +80,7 @@ export async function deleteEventAction(formData: FormData) {
   }
 
   try {
+    await requireUser();
     const supabase = await createSupabaseServerClient();
     await supabase.from("events").delete().eq("id", id);
   } catch (error) {

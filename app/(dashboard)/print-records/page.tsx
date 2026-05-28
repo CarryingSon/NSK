@@ -1,7 +1,9 @@
 import { Newspaper } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
+import { PrintRecordForm } from "@/components/forms/print-record-form";
 import { PageHeader } from "@/components/page-header";
+import { DeletePrintRecordButton } from "@/components/print-records/delete-print-record-button";
 import {
   Table,
   TableBody,
@@ -10,24 +12,41 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getPrintRecords } from "@/lib/data";
+import { getMembersForSelect, getPrintRecords } from "@/lib/data";
 import { formatDateTime, getMemberFullName } from "@/lib/format";
 
 export default async function PrintRecordsPage() {
-  const records = await getPrintRecords();
+  const [records, members] = await Promise.all([
+    getPrintRecords(),
+    getMembersForSelect(),
+  ]);
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Evidenca tiska"
-        description="Osnovni pregled tiskovin in povezanih članov."
+        description="Beleženje tiskovin, količin in povezanih članov v eni interni evidenci."
       />
+
+      <section className="surface-glass rounded-[2rem] border border-white/60 p-6">
+        <div className="mb-6">
+          <h2 className="font-heading text-2xl font-semibold text-foreground">
+            Dodaj nov zapis
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Evidenca je pripravljena za spremljanje plakatov, letakov, skript in
+            drugih klubskih tiskovin.
+          </p>
+        </div>
+
+        <PrintRecordForm members={members} />
+      </section>
 
       {records.length === 0 ? (
         <EmptyState
           icon={Newspaper}
           title="Ni zapisov tiska"
-          description="Ko bo tabela print_records napolnjena, bodo tukaj vidni vsi zapisi tiska."
+          description="Ko vneseš prvi zapis, se bodo tukaj prikazali vsi izpisi in povezana zgodovina."
         />
       ) : (
         <section className="surface-glass overflow-hidden rounded-[2rem] border border-white/60">
@@ -39,6 +58,7 @@ export default async function PrintRecordsPage() {
                 <TableHead className="px-6 py-4">Količina</TableHead>
                 <TableHead className="px-6 py-4">Ustvarjeno</TableHead>
                 <TableHead className="px-6 py-4">Opombe</TableHead>
+                <TableHead className="px-6 py-4 text-right">Akcije</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -56,6 +76,14 @@ export default async function PrintRecordsPage() {
                   </TableCell>
                   <TableCell className="px-6 py-4 text-muted-foreground">
                     {record.notes || "—"}
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <div className="flex justify-end">
+                      <DeletePrintRecordButton
+                        id={record.id}
+                        title={record.title || "Brez naslova"}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -37,6 +37,16 @@ const optionalDateTime = z
   .transform((value) => (value.length > 0 ? new Date(value).toISOString() : null))
   .nullable();
 
+const optionalUuid = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) return null;
+  return value;
+}, z.string().uuid().nullable());
+
+const positiveInteger = z.preprocess((value) => {
+  const numberValue = Number(value);
+  return Number.isNaN(numberValue) ? value : numberValue;
+}, z.number().int().min(1, "Vnesi količino vsaj 1."));
+
 export const loginSchema = z.object({
   email: z.string().trim().email("Vnesi veljaven e-poštni naslov."),
   password: z.string().min(6, "Geslo mora imeti vsaj 6 znakov."),
@@ -105,5 +115,12 @@ export const registrationSchema = z.object({
     RegistrationStatus,
     RegistrationStatus,
   ]),
+  notes: optionalString,
+});
+
+export const printRecordSchema = z.object({
+  member_id: optionalUuid,
+  title: z.string().trim().min(2, "Vnesi naziv tiskovine."),
+  quantity: positiveInteger,
   notes: optionalString,
 });
