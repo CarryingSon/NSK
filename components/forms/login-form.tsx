@@ -25,15 +25,16 @@ export function LoginForm({
 
       <div className="space-y-2">
         <Label htmlFor="email" className="text-sm font-medium text-foreground">
-          E-pošta
+          Uporabniško ime ali e-pošta
         </Label>
         <Input
           id="email"
           name="email"
-          type="email"
+          type="text"
+          autoComplete="username"
           required
           disabled={disabled}
-          placeholder="ime@studentski-klub.si"
+          placeholder="admin"
           className="h-12 rounded-2xl bg-white/80 px-4 shadow-sm"
         />
       </div>
@@ -46,6 +47,7 @@ export function LoginForm({
           id="password"
           name="password"
           type="password"
+          autoComplete="current-password"
           required
           disabled={disabled}
           placeholder="Vnesi geslo"

@@ -38,8 +38,39 @@ const positiveInteger = z.preprocess((value) => {
   return Number.isNaN(numberValue) ? value : numberValue;
 }, z.number().int().min(1, "Vnesi količino vsaj 1."));
 
+// Interni admin se prijavi z uporabniškim imenom "admin", Supabase Auth pa pozna
+// samo e-poštne naslove. Preslikavo hranimo v ADMIN_EMAIL (ni NEXT_PUBLIC, ker
+// validation.ts uvažajo izključno strežniške akcije), da naslov ne konča v repozitoriju.
+export const adminUsername = "admin";
+
+const adminEmail = process.env.ADMIN_EMAIL?.trim();
+
+export function resolveLoginIdentifier(identifier: string) {
+  const value = identifier.trim();
+
+  if (!value || value.includes("@")) {
+    return value;
+  }
+
+  if (value.toLowerCase() === adminUsername && adminEmail) {
+    return adminEmail;
+  }
+
+  // Neznano uporabniško ime pustimo pri miru; refine ga zavrne kot neveljavnega.
+  return value;
+}
+
 export const loginSchema = z.object({
-  email: z.string().trim().email("Vnesi veljaven e-poštni naslov."),
+  // Polje sprejme uporabniško ime ali e-pošto; navzven je vedno e-pošta.
+  email: z
+    .string()
+    .trim()
+    .min(1, "Vnesi uporabniško ime ali e-pošto.")
+    .transform(resolveLoginIdentifier)
+    .refine(
+      (value) => z.email().safeParse(value).success,
+      "Vnesi veljavno uporabniško ime ali e-pošto.",
+    ),
   password: z.string().min(6, "Geslo mora imeti vsaj 6 znakov."),
 });
 
