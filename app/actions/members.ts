@@ -23,6 +23,20 @@ function getReturnPath(formData: FormData) {
   return value.startsWith("/") ? value : "/members";
 }
 
+function getSaveErrorMessage(error: unknown) {
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? String((error as { code?: string }).code)
+      : "";
+
+  // 23505 = kršitev enoličnosti; edini tak indeks na members je e-pošta.
+  if (code === "23505") {
+    return "Ta e-poštni naslov je že vpisan pri drugem članu.";
+  }
+
+  return "Shranjevanje člana ni uspelo. Poskusi znova, sicer preveri povezavo s Supabase.";
+}
+
 export async function saveMemberAction(
   _prevState: ActionState,
   formData: FormData,
@@ -57,6 +71,8 @@ export async function saveMemberAction(
     updated_at: new Date().toISOString(),
   };
 
+  let redirectTo: string;
+
   try {
     await requireUser();
     const supabase = await createSupabaseServerClient();
@@ -73,28 +89,29 @@ export async function saveMemberAction(
 
       revalidatePath(`/members/${id}`);
       revalidatePath("/members");
-      redirect(`/members/${id}`);
+      redirectTo = `/members/${id}`;
+    } else {
+      const { data, error } = await supabase
+        .from("members")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      revalidatePath("/members");
+      redirectTo = data?.id ? `/members/${data.id}` : "/members";
     }
-
-    const { data, error } = await supabase
-      .from("members")
-      .insert(payload)
-      .select("id")
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    revalidatePath("/members");
-    redirect(data?.id ? `/members/${data.id}` : "/members");
   } catch (error) {
     console.error("Napaka pri shranjevanju člana", error);
-    return {
-      error:
-        "Shranjevanje člana ni uspelo. Preveri, ali je e-pošta že uporabljena in ali je Supabase pravilno nastavljen.",
-    };
+    return { error: getSaveErrorMessage(error) };
   }
+
+  // redirect() vrže NEXT_REDIRECT, zato mora stati ZUNAJ try/catch - sicer ga
+  // catch pogoltne in uspešno shranjen član izpade kot napaka.
+  redirect(redirectTo);
 }
 
 export async function deleteMemberAction(formData: FormData) {

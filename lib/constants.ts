@@ -153,6 +153,64 @@ export const facultyOptionGroups: FacultyOptionGroup[] = [
 
 export const facultyOptions = facultyOptionGroups.flatMap((group) => group.options);
 
+// Srednje šole. Seznam ni izčrpen - v Sloveniji jih je krepko čez sto - zato je
+// polje v obrazcu iskalno IN dovoli prosto vnesen naziv. Tu so tiste, ki jih
+// člani NŠK najpogosteje obiskujejo; dodajanje novih je zgolj vpis v ta seznam.
+export const secondarySchoolOptionGroups: FacultyOptionGroup[] = [
+  createFacultyOptionGroup("Notranjska in Primorska", [
+    "Šolski center Postojna",
+    "Gimnazija Ilirska Bistrica",
+    "Gimnazija Jurija Vege Idrija",
+    "Gimnazija Nova Gorica",
+    "Gimnazija Koper",
+    "Srednja gozdarska in lesarska šola Postojna",
+  ]),
+  createFacultyOptionGroup("Ljubljana", [
+    "Gimnazija Bežigrad",
+    "Gimnazija Poljane",
+    "Gimnazija Vič",
+    "Gimnazija Šentvid",
+    "Gimnazija Ledina",
+    "Gimnazija Jožeta Plečnika Ljubljana",
+    "Gimnazija Moste",
+    "Škofijska klasična gimnazija",
+    "Srednja ekonomska šola Ljubljana",
+    "Srednja šola za gostinstvo in turizem v Ljubljani",
+    "Srednja medijska in grafična šola Ljubljana",
+    "Srednja šola za farmacijo, kozmetiko in zdravstvo Ljubljana",
+    "Srednja gradbena, geodetska in okoljevarstvena šola Ljubljana",
+  ]),
+  createFacultyOptionGroup("Gorenjska in Zasavje", [
+    "Gimnazija Kranj",
+    "Gimnazija Franceta Prešerna Kranj",
+    "Gimnazija Škofja Loka",
+    "Gimnazija Jesenice",
+    "Gimnazija Domžale",
+  ]),
+  createFacultyOptionGroup("Štajerska, Dolenjska in Prekmurje", [
+    "Prva gimnazija Maribor",
+    "II. gimnazija Maribor",
+    "III. gimnazija Maribor",
+    "I. gimnazija v Celju",
+    "Gimnazija Celje - Center",
+    "Gimnazija Novo mesto",
+    "Gimnazija Ptuj",
+    "Gimnazija Murska Sobota",
+    "Gimnazija Brežice",
+  ]),
+];
+
+// Skupen seznam za izbirnik: najprej srednje šole, nato visokošolski zavodi.
+export const schoolOptionGroups: FacultyOptionGroup[] = [
+  ...secondarySchoolOptionGroups.map((group) => ({
+    ...group,
+    label: `Srednje šole - ${group.label}`,
+  })),
+  ...facultyOptionGroups,
+];
+
+export const schoolOptions = schoolOptionGroups.flatMap((group) => group.options);
+
 export const notificationAudienceOptions: StatusOption<NotificationAudience>[] = [
   { value: "active", label: "Aktivni člani" },
   { value: "all", label: "Vsi člani z e-pošto" },

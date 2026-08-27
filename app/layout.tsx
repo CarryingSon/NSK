@@ -27,7 +27,17 @@ export default function RootLayout({
     <html
       lang="sl"
       className={`${manrope.variable} ${jetBrainsMono.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Shranjeno izbiro nanesemo pred izrisom, sicer ob vsakem nalaganju
+            utripne napačna shema. Mora biti navaden skript, ne komponenta. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.classList.add(t)}catch(e){}`,
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

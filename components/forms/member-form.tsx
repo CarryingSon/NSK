@@ -3,16 +3,13 @@
 import { useActionState } from "react";
 
 import { saveMemberAction } from "@/app/actions/members";
+import { SearchableSelect } from "@/components/forms/searchable-select";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  facultyOptionGroups,
-  facultyOptions,
-  membershipStatusOptions,
-} from "@/lib/constants";
+import { membershipStatusOptions, schoolOptionGroups } from "@/lib/constants";
 import { toDateInputValue } from "@/lib/format";
 import type { ActionState, Member } from "@/types/app";
 
@@ -21,9 +18,6 @@ const initialState: ActionState = {};
 export function MemberForm({ member }: { member?: Member | null }) {
   const [state, formAction] = useActionState(saveMemberAction, initialState);
   const currentFaculty = member?.faculty ?? "";
-  const hasCustomFaculty =
-    currentFaculty.length > 0 &&
-    !facultyOptions.some((option) => option.value === currentFaculty);
   const defaultMembershipYear =
     member?.membership_year ?? new Date().getFullYear();
   const defaultJoinedAt =
@@ -99,28 +93,19 @@ export function MemberForm({ member }: { member?: Member | null }) {
             </p>
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="faculty">Fakulteta / visokošolski zavod</Label>
-            <NativeSelect
+            <Label htmlFor="faculty">Šola oziroma fakulteta</Label>
+            <SearchableSelect
               id="faculty"
               name="faculty"
+              groups={schoolOptionGroups}
               defaultValue={currentFaculty}
+              placeholder="Začni tipkati - npr. Postojna, Bežigrad, FRI ..."
               required
-              className={selectClass}
-            >
-              <option value="">Izberi fakulteto ali zavod</option>
-              {hasCustomFaculty ? (
-                <option value={currentFaculty}>{currentFaculty}</option>
-              ) : null}
-              {facultyOptionGroups.map((group) => (
-                <optgroup key={group.label} label={group.label}>
-                  {group.options.map((facultyOption) => (
-                    <option key={facultyOption.value} value={facultyOption.value}>
-                      {facultyOption.label}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </NativeSelect>
+            />
+            <p className="text-xs text-muted-foreground">
+              Išče po srednjih šolah in fakultetah. Če šole ni na seznamu, jo
+              preprosto vpiši.
+            </p>
           </div>
         </div>
       </div>
