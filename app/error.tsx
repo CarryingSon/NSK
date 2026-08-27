@@ -14,7 +14,7 @@ export default function GlobalError({
   return (
     <html lang="sl">
       <body className="flex min-h-screen items-center justify-center px-6 py-20">
-        <div className="surface-glass w-full max-w-lg rounded-[2rem] border border-white/60 p-10 text-center">
+        <div className="surface-card w-full max-w-lg rounded-[18px] border border-border p-10 text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             Napaka
           </p>
@@ -25,7 +25,7 @@ export default function GlobalError({
             {error.message || "Pri nalaganju aplikacije je prišlo do nepričakovane napake."}
           </p>
           <div className="mt-8 flex justify-center">
-            <Button className="h-11 rounded-2xl px-6" onClick={reset}>
+            <Button className="h-11 rounded-xl px-6" onClick={reset}>
               <RotateCcw className="size-4" />
               Poskusi znova
             </Button>

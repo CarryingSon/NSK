@@ -12,17 +12,36 @@ function getStringValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
+const genericLoginError = "Prijava ni uspela. Preveri uporabniško ime in geslo.";
+
 function getLoginErrorMessage(error: unknown) {
-  if (
-    error &&
-    typeof error === "object" &&
-    "code" in error &&
-    error.code === "email_not_confirmed"
-  ) {
-    return "E-poštni naslov še ni potrjen. Preveri email in klikni potrditveno povezavo.";
+  if (!error || typeof error !== "object") {
+    return genericLoginError;
   }
 
-  return "Prijava ni uspela. Preveri e-pošto in geslo.";
+  const { code, status, name } = error as {
+    code?: string;
+    status?: number;
+    name?: string;
+  };
+
+  // Supabase ni dosegljiv - izpad omrežja, zaustavljen projekt, napaka DNS.
+  // Brez te veje je videti povsem enako kot napačno geslo, kar zavaja.
+  if (name === "AuthRetryableFetchError" || status === 0) {
+    return "Strežnik ni dosegljiv. Preveri povezavo in poskusi znova.";
+  }
+
+  if (status === 429 || code === "over_request_rate_limit") {
+    return "Preveč zaporednih poskusov. Počakaj minuto in poskusi znova.";
+  }
+
+  // Novejši Supabase za nepotrjen račun vrne invalid_credentials in te veje ne
+  // sproži, starejše različice in drugačne nastavitve pa jo še vedno vrnejo.
+  if (code === "email_not_confirmed") {
+    return "Račun še ni potrjen. Preveri e-pošto in klikni potrditveno povezavo.";
+  }
+
+  return genericLoginError;
 }
 
 export async function loginAction(
@@ -60,7 +79,7 @@ export async function loginAction(
   revalidatePath("/", "layout");
 
   const redirectedFrom = getStringValue(formData, "redirectTo");
-  redirect(redirectedFrom || "/members");
+  redirect(redirectedFrom || "/dashboard");
 }
 
 export async function logoutAction() {

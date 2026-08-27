@@ -25,16 +25,17 @@ export function LoginForm({
 
       <div className="space-y-2">
         <Label htmlFor="email" className="text-sm font-medium text-foreground">
-          E-pošta
+          Uporabniško ime ali e-pošta
         </Label>
         <Input
           id="email"
           name="email"
-          type="email"
+          type="text"
+          autoComplete="username"
           required
           disabled={disabled}
-          placeholder="ime@studentski-klub.si"
-          className="h-12 rounded-2xl bg-white/80 px-4 shadow-sm"
+          placeholder="admin"
+          className="h-12 rounded-xl bg-card px-4"
         />
       </div>
 
@@ -46,15 +47,16 @@ export function LoginForm({
           id="password"
           name="password"
           type="password"
+          autoComplete="current-password"
           required
           disabled={disabled}
           placeholder="Vnesi geslo"
-          className="h-12 rounded-2xl bg-white/80 px-4 shadow-sm"
+          className="h-12 rounded-xl bg-card px-4"
         />
       </div>
 
       {state.error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       ) : null}
@@ -63,7 +65,7 @@ export function LoginForm({
         type="submit"
         disabled={disabled}
         pendingLabel="Prijavljam ..."
-        className="h-12 w-full rounded-2xl text-base font-semibold shadow-lg shadow-primary/20"
+        className="h-12 w-full rounded-full text-base font-semibold"
       >
         Prijava
       </SubmitButton>

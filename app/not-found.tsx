@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export default function NotFound() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-20">
-      <div className="surface-glass w-full max-w-lg rounded-[2rem] border border-white/60 p-10 text-center">
+      <div className="surface-card w-full max-w-lg rounded-[18px] border border-border p-10 text-center">
         <p className="text-sm font-semibold uppercase tracking-[0.24em] text-muted-foreground">
           404
         </p>
@@ -18,10 +18,10 @@ export default function NotFound() {
         </p>
         <div className="mt-8 flex justify-center">
           <Link
-            href="/members"
+            href="/dashboard"
             className={cn(
               buttonVariants({ variant: "default", size: "lg" }),
-              "h-11 rounded-2xl px-6 shadow-lg shadow-primary/20",
+              "h-11 rounded-full px-6",
             )}
           >
             Nazaj na nadzorno ploščo

@@ -15,43 +15,43 @@ type StatusKind =
 const statusConfig: Record<StatusKind, { label: string; className: string }> = {
   active: {
     label: "Aktiven",
-    className: "bg-emerald-100 text-emerald-700",
+    className: "bg-success/15 text-success",
   },
   inactive: {
     label: "Neaktiven",
-    className: "bg-slate-100 text-slate-700",
+    className: "bg-muted-foreground/15 text-muted-foreground",
   },
   pending: {
     label: "V postopku",
-    className: "bg-amber-100 text-amber-800",
+    className: "bg-warning/15 text-warning",
   },
   upcoming: {
     label: "Prihajajoč",
-    className: "bg-sky-100 text-sky-800",
+    className: "bg-info/15 text-info",
   },
   ongoing: {
     label: "V teku",
-    className: "bg-violet-100 text-violet-800",
+    className: "bg-info/15 text-info",
   },
   completed: {
     label: "Zaključen",
-    className: "bg-emerald-100 text-emerald-700",
+    className: "bg-success/15 text-success",
   },
   cancelled: {
     label: "Odpovedan",
-    className: "bg-rose-100 text-rose-700",
+    className: "bg-destructive/15 text-destructive",
   },
   registered: {
     label: "Prijavljen",
-    className: "bg-amber-100 text-amber-800",
+    className: "bg-warning/15 text-warning",
   },
   confirmed: {
     label: "Potrjen",
-    className: "bg-emerald-100 text-emerald-700",
+    className: "bg-success/15 text-success",
   },
   attended: {
     label: "Udeležen",
-    className: "bg-sky-100 text-sky-700",
+    className: "bg-info/15 text-info",
   },
 };
 
@@ -59,7 +59,7 @@ export function StatusBadge({ status }: { status: StatusKind }) {
   const config = statusConfig[status];
 
   return (
-    <Badge className={`rounded-full border-0 px-3 py-1 text-xs font-semibold ${config.className}`}>
+    <Badge className={`rounded-full border-0 px-3 py-1 text-xs font-medium ${config.className}`}>
       {config.label}
     </Badge>
   );

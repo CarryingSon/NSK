@@ -28,7 +28,7 @@ export default async function PrintRecordsPage() {
         description="Beleženje tiskovin, količin in povezanih članov v eni interni evidenci."
       />
 
-      <section className="surface-glass rounded-[2rem] border border-white/60 p-6">
+      <section className="surface-card rounded-[18px] border border-border p-6">
         <div className="mb-6">
           <h2 className="font-heading text-2xl font-semibold text-foreground">
             Dodaj nov zapis
@@ -49,35 +49,35 @@ export default async function PrintRecordsPage() {
           description="Ko vneseš prvi zapis, se bodo tukaj prikazali vsi izpisi in povezana zgodovina."
         />
       ) : (
-        <section className="surface-glass overflow-hidden rounded-[2rem] border border-white/60">
+        <section className="surface-card overflow-hidden rounded-[18px] border border-border">
           <Table>
             <TableHeader>
-              <TableRow className="border-white/60">
-                <TableHead className="px-6 py-4">Naslov</TableHead>
-                <TableHead className="px-6 py-4">Član</TableHead>
-                <TableHead className="px-6 py-4">Količina</TableHead>
-                <TableHead className="px-6 py-4">Ustvarjeno</TableHead>
-                <TableHead className="px-6 py-4">Opombe</TableHead>
-                <TableHead className="px-6 py-4 text-right">Akcije</TableHead>
+              <TableRow className="border-border">
+                <TableHead className="px-4 py-4">Naslov</TableHead>
+                <TableHead className="px-4 py-4">Član</TableHead>
+                <TableHead className="px-4 py-4">Količina</TableHead>
+                <TableHead className="px-4 py-4">Ustvarjeno</TableHead>
+                <TableHead className="px-4 py-4">Opombe</TableHead>
+                <TableHead className="px-4 py-4 text-right">Akcije</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {records.map((record) => (
-                <TableRow key={record.id} className="border-white/50">
-                  <TableCell className="px-6 py-4 font-medium text-foreground">
+                <TableRow key={record.id} className="border-border">
+                  <TableCell className="px-4 py-4 font-medium text-foreground">
                     {record.title || "Brez naslova"}
                   </TableCell>
-                  <TableCell className="px-6 py-4">
+                  <TableCell className="px-4 py-4">
                     {getMemberFullName(record.member)}
                   </TableCell>
-                  <TableCell className="px-6 py-4">{record.quantity || 1}</TableCell>
-                  <TableCell className="px-6 py-4">
+                  <TableCell className="px-4 py-4">{record.quantity || 1}</TableCell>
+                  <TableCell className="px-4 py-4">
                     {formatDateTime(record.created_at)}
                   </TableCell>
-                  <TableCell className="px-6 py-4 text-muted-foreground">
+                  <TableCell className="px-4 py-4 text-muted-foreground">
                     {record.notes || "—"}
                   </TableCell>
-                  <TableCell className="px-6 py-4">
+                  <TableCell className="px-4 py-4">
                     <div className="flex justify-end">
                       <DeletePrintRecordButton
                         id={record.id}

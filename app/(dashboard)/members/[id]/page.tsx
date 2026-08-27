@@ -52,7 +52,7 @@ export default async function MemberDetailPage({
               href="/members"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "h-12 rounded-2xl px-6",
+                "h-12 rounded-full px-6",
               )}
             >
               Nazaj na člane
@@ -61,7 +61,7 @@ export default async function MemberDetailPage({
               href={`/members/${member.id}/edit`}
               className={cn(
                 buttonVariants({ variant: "default", size: "lg" }),
-                "h-12 rounded-2xl px-6 shadow-lg shadow-primary/20",
+                "h-12 rounded-full px-6",
               )}
             >
               Uredi
@@ -72,26 +72,32 @@ export default async function MemberDetailPage({
               returnTo="/members"
               variant="destructive"
               size="lg"
-              className="h-12 rounded-2xl px-6"
+              className="h-12 rounded-xl px-6"
             />
           </div>
         }
       />
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="surface-glass rounded-[2rem] border border-white/60 p-6">
+        <div className="surface-card rounded-[18px] border border-border p-6">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={member.membership_status} />
           </div>
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
-            <div className="rounded-[1.5rem] border border-white/70 bg-white/70 p-5">
+            <div className="rounded-[14px] border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">Osnovni podatki</p>
               <dl className="mt-4 space-y-3 text-sm">
                 <div>
                   <dt className="text-muted-foreground">Datum rojstva</dt>
                   <dd className="font-medium text-foreground">
                     {formatDate(member.birth_date)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">EMŠO</dt>
+                  <dd className="font-medium tabular-nums text-foreground">
+                    {member.emso || "—"}
                   </dd>
                 </div>
                 <div>
@@ -115,7 +121,7 @@ export default async function MemberDetailPage({
               </dl>
             </div>
 
-            <div className="rounded-[1.5rem] border border-white/70 bg-white/70 p-5">
+            <div className="rounded-[14px] border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">Kontakt</p>
               <dl className="mt-4 space-y-4 text-sm">
                 <div className="flex items-center gap-3">
@@ -138,7 +144,7 @@ export default async function MemberDetailPage({
             </div>
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] border border-white/70 bg-white/70 p-5">
+          <div className="mt-6 rounded-[14px] border border-border bg-card p-5">
             <p className="text-sm text-muted-foreground">Opombe</p>
             <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">
               {member.notes || "Ni dodatnih opomb."}
@@ -147,7 +153,7 @@ export default async function MemberDetailPage({
         </div>
 
         <div className="space-y-6">
-          <div className="surface-glass rounded-[2rem] border border-white/60 p-6">
+          <div className="surface-card rounded-[18px] border border-border p-6">
             <div className="flex items-center gap-3">
               <CalendarClock className="size-5 text-muted-foreground" />
               <h2 className="font-heading text-2xl font-semibold text-foreground">
@@ -183,20 +189,20 @@ export default async function MemberDetailPage({
             description="Ko bo član prijavljen na dogodek, se bo zgodovina prikazala tukaj."
           />
         ) : (
-          <div className="surface-glass overflow-hidden rounded-[2rem] border border-white/60">
+          <div className="surface-card overflow-hidden rounded-[18px] border border-border">
             <Table>
               <TableHeader>
-                <TableRow className="border-white/60">
-                  <TableHead className="px-6 py-4">Dogodek</TableHead>
-                  <TableHead className="px-6 py-4">Status</TableHead>
-                  <TableHead className="px-6 py-4">Prijava</TableHead>
-                  <TableHead className="px-6 py-4">Opombe</TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="px-4 py-4">Dogodek</TableHead>
+                  <TableHead className="px-4 py-4">Status</TableHead>
+                  <TableHead className="px-4 py-4">Prijava</TableHead>
+                  <TableHead className="px-4 py-4">Opombe</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.map((entry) => (
-                  <TableRow key={entry.id} className="border-white/50">
-                    <TableCell className="px-6 py-4">
+                  <TableRow key={entry.id} className="border-border">
+                    <TableCell className="px-4 py-4">
                       <div>
                         <p className="font-semibold text-foreground">
                           {entry.event?.title || "Dogodek ni več na voljo"}
@@ -208,13 +214,13 @@ export default async function MemberDetailPage({
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="px-4 py-4">
                       <StatusBadge status={entry.status} />
                     </TableCell>
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="px-4 py-4">
                       {formatDateTime(entry.registered_at)}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-muted-foreground">
+                    <TableCell className="px-4 py-4 text-muted-foreground">
                       {entry.notes || "—"}
                     </TableCell>
                   </TableRow>

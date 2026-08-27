@@ -31,6 +31,7 @@ export async function saveMemberAction(
     id: getOptionalId(formData, "id"),
     first_name: getStringValue(formData, "first_name"),
     last_name: getStringValue(formData, "last_name"),
+    emso: getStringValue(formData, "emso"),
     email: getStringValue(formData, "email"),
     phone: getStringValue(formData, "phone"),
     birth_date: getStringValue(formData, "birth_date"),

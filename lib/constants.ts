@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Bell,
+  LayoutDashboard,
   Info,
   LogOut,
   Newspaper,
@@ -20,6 +21,7 @@ export interface NavigationItem {
 }
 
 export const primaryNavigation: NavigationItem[] = [
+  { href: "/dashboard", label: "Nadzorna plošča", icon: LayoutDashboard },
   { href: "/members", label: "Člani", icon: Users },
   { href: "/print-records", label: "Evidenca tiska", icon: Newspaper },
   { href: "/notifications", label: "Obveščanje", icon: Bell },
@@ -165,4 +167,3 @@ export const notificationAudienceLabels: Record<NotificationAudience, string> = 
   pending: "Člani v postopku",
 };
 
-export const weekdays = ["Pon", "Tor", "Sre", "Čet", "Pet", "Sob", "Ned"];

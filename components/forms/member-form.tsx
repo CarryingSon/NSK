@@ -29,14 +29,12 @@ export function MemberForm({ member }: { member?: Member | null }) {
   const defaultJoinedAt =
     toDateInputValue(member?.joined_at) ||
     new Date().toISOString().slice(0, 10);
-  const fieldClass =
-    "h-12 rounded-xl border-slate-200 bg-white px-4 shadow-sm transition focus-visible:border-primary/40 focus-visible:ring-primary/10";
-  const selectClass =
-    "h-12 rounded-xl border-slate-200 bg-white px-4 shadow-sm focus:border-primary/40 focus:ring-primary/10";
-  const textareaClass =
-    "min-h-36 rounded-[1.25rem] border-slate-200 bg-white px-4 py-3 shadow-sm focus-visible:border-primary/40 focus-visible:ring-primary/10";
-  const sectionClass =
-    "rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-5 sm:p-6";
+  // Barve in robove prepustimo gradnikom (Input, NativeSelect, Textarea), da
+  // ostanejo vezani na žetone in delujejo tudi v temnem načinu. Tu le višine.
+  const fieldClass = "h-12";
+  const selectClass = "h-12";
+  const textareaClass = "min-h-36";
+  const sectionClass = "surface-muted rounded-[18px] p-6 sm:p-8";
 
   return (
     <form action={formAction} className="space-y-8">
@@ -85,6 +83,22 @@ export function MemberForm({ member }: { member?: Member | null }) {
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="emso">EMŠO</Label>
+            <Input
+              id="emso"
+              name="emso"
+              inputMode="numeric"
+              maxLength={13}
+              pattern="[0-9]{13}"
+              defaultValue={member?.emso ?? ""}
+              placeholder="13 števk"
+              className={fieldClass}
+            />
+            <p className="text-xs text-muted-foreground">
+              Neobvezno. Če je vnesen, mora imeti 13 števk in veljavno kontrolno številko.
+            </p>
+          </div>
+          <div className="space-y-2 md:col-span-2">
             <Label htmlFor="faculty">Fakulteta / visokošolski zavod</Label>
             <NativeSelect
               id="faculty"
@@ -241,7 +255,7 @@ export function MemberForm({ member }: { member?: Member | null }) {
       </div>
 
       {state.error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       ) : null}
@@ -250,7 +264,7 @@ export function MemberForm({ member }: { member?: Member | null }) {
         <SubmitButton
           type="submit"
           pendingLabel={member ? "Shranjujem ..." : "Dodajam ..."}
-          className="h-12 rounded-2xl px-6 text-base font-semibold shadow-lg shadow-primary/20"
+          className="h-12 rounded-full px-6 text-base font-semibold"
         >
           {member ? "Shrani spremembe" : "Dodaj člana"}
         </SubmitButton>

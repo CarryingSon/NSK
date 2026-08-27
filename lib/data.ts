@@ -1,12 +1,3 @@
-import {
-  addDays,
-  endOfMonth,
-  endOfWeek,
-  startOfMonth,
-  startOfWeek,
-} from "date-fns";
-
-import { parseMonthParam } from "@/lib/format";
 import { notificationAudienceOptions } from "@/lib/constants";
 import {
   getNotificationAudienceCounts,
@@ -16,25 +7,15 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 import type {
-  CalendarEvent,
-  Coupon,
-  DashboardStats,
+  DashboardOverview,
   EmailCampaign,
-  Event,
   Member,
   MemberFilters,
+  MemberOption,
   MemberRegistrationHistoryItem,
   NotificationAudienceCount,
   PrintRecordWithMember,
-  RegistrationWithRelations,
 } from "@/types/app";
-
-const emptyStats: DashboardStats = {
-  activeMembers: 0,
-  inactiveMembers: 0,
-  pendingApplications: 0,
-  upcomingEvents: 0,
-};
 
 async function getSupabaseOrNull() {
   if (!isSupabaseConfigured()) {
@@ -42,85 +23,6 @@ async function getSupabaseOrNull() {
   }
 
   return createSupabaseServerClient();
-}
-
-export async function getDashboardData(monthParam?: string) {
-  const monthDate = parseMonthParam(monthParam);
-  const calendarWindowStart = startOfWeek(startOfMonth(monthDate), {
-    weekStartsOn: 1,
-  });
-  const calendarWindowEnd = endOfWeek(endOfMonth(monthDate), {
-    weekStartsOn: 1,
-  });
-
-  const supabase = await getSupabaseOrNull();
-
-  if (!supabase) {
-    return {
-      stats: emptyStats,
-      events: [] as CalendarEvent[],
-      monthDate,
-      demoMode: true,
-    };
-  }
-
-  try {
-    const now = new Date();
-    const nextThirtyDays = addDays(now, 30);
-
-    const [
-      activeMembers,
-      inactiveMembers,
-      pendingApplications,
-      upcomingEvents,
-      eventsResult,
-    ] = await Promise.all([
-      supabase
-        .from("members")
-        .select("*", { count: "exact", head: true })
-        .eq("membership_status", "active"),
-      supabase
-        .from("members")
-        .select("*", { count: "exact", head: true })
-        .eq("membership_status", "inactive"),
-      supabase
-        .from("members")
-        .select("*", { count: "exact", head: true })
-        .eq("membership_status", "pending"),
-      supabase
-        .from("events")
-        .select("*", { count: "exact", head: true })
-        .gte("starts_at", now.toISOString())
-        .lte("starts_at", nextThirtyDays.toISOString()),
-      supabase
-        .from("events")
-        .select("id, title, location, starts_at, ends_at, status")
-        .gte("starts_at", calendarWindowStart.toISOString())
-        .lte("starts_at", calendarWindowEnd.toISOString())
-        .order("starts_at", { ascending: true }),
-    ]);
-
-    return {
-      stats: {
-        activeMembers: activeMembers.count ?? 0,
-        inactiveMembers: inactiveMembers.count ?? 0,
-        pendingApplications: pendingApplications.count ?? 0,
-        upcomingEvents: upcomingEvents.count ?? 0,
-      },
-      events: (eventsResult.data ?? []) as CalendarEvent[],
-      monthDate,
-      demoMode: false,
-    };
-  } catch (error) {
-    console.error("Napaka pri nalaganju dashboard podatkov", error);
-
-    return {
-      stats: emptyStats,
-      events: [] as CalendarEvent[],
-      monthDate,
-      demoMode: true,
-    };
-  }
 }
 
 export async function getMembers(filters: MemberFilters = {}) {
@@ -242,114 +144,26 @@ export async function getMemberRegistrationHistory(memberId: string) {
   })) as MemberRegistrationHistoryItem[];
 }
 
-export async function getEvents() {
+// Izbirnik potrebuje samo ime za prikaz in id za vrednost. Prej je šel skozi
+// getMembers(), ki pobere vse stolpce vseh članov - za spustni seznam odveč.
+export async function getMembersForSelect(): Promise<MemberOption[]> {
   const supabase = await getSupabaseOrNull();
 
   if (!supabase) {
-    return {
-      events: [] as Event[],
-      demoMode: true,
-    };
+    return [];
   }
 
   const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .order("starts_at", { ascending: true });
-
-  if (error) {
-    console.error("Napaka pri nalaganju dogodkov", error);
-    return {
-      events: [] as Event[],
-      demoMode: true,
-    };
-  }
-
-  return {
-    events: (data ?? []) as Event[],
-    demoMode: false,
-  };
-}
-
-export async function getEventsForSelect() {
-  const { events } = await getEvents();
-  return events;
-}
-
-export async function getMembersForSelect() {
-  const { members } = await getMembers();
-  return members;
-}
-
-export async function getRegistrations() {
-  const supabase = await getSupabaseOrNull();
-
-  if (!supabase) {
-    return {
-      registrations: [] as RegistrationWithRelations[],
-      demoMode: true,
-    };
-  }
-
-  const { data, error } = await supabase
-    .from("event_registrations")
-    .select(
-      "id, member_id, event_id, status, registered_at, notes, members:member_id ( id, first_name, last_name, email ), events:event_id ( id, title, starts_at, location )",
-    )
-    .order("registered_at", { ascending: false });
-
-  if (error) {
-    console.error("Napaka pri nalaganju prijav", error);
-    return {
-      registrations: [] as RegistrationWithRelations[],
-      demoMode: true,
-    };
-  }
-
-  const registrationRows = (data ?? []) as Array<{
-    id: string;
-    member_id: string | null;
-    event_id: string | null;
-    status: RegistrationWithRelations["status"];
-    registered_at: string;
-    notes: string | null;
-    members: RegistrationWithRelations["member"];
-    events: RegistrationWithRelations["event"];
-  }>;
-
-  return {
-    registrations: registrationRows.map((item) => ({
-      id: item.id,
-      member_id: item.member_id,
-      event_id: item.event_id,
-      status: item.status,
-      registered_at: item.registered_at,
-      notes: item.notes,
-      member: item.members,
-      event: item.events,
-    })) as RegistrationWithRelations[],
-    demoMode: false,
-  };
-}
-
-export async function getCoupons() {
-  const supabase = await getSupabaseOrNull();
-
-  if (!supabase) {
-    return [] as Coupon[];
-  }
-
-  const { data, error } = await supabase
-    .from("coupons")
-    .select("*")
+    .from("members")
+    .select("id, first_name, last_name")
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Napaka pri nalaganju kuponov", error);
-    return [] as Coupon[];
+    console.error("Napaka pri nalaganju članov za izbirnik", error);
+    return [];
   }
 
-  return (data ?? []) as Coupon[];
+  return (data ?? []) as MemberOption[];
 }
 
 export async function getPrintRecords() {
@@ -435,4 +249,75 @@ export async function getEmailCampaigns() {
   return groupEmailLogsIntoCampaigns(
     (data ?? []) as Database["public"]["Tables"]["email_logs"]["Row"][],
   );
+}
+
+// Povzetek za nadzorno ploščo. "Novo letos" se veže na joined_at (datum včlanitve),
+// ne na created_at, ker je za klub pomembno, kdaj je član pristopil, ne kdaj je bil
+// vnesen v sistem. Vseh šest poizvedb teče vzporedno, da je skupaj en omrežni obhod.
+export async function getDashboardOverview(): Promise<DashboardOverview> {
+  const year = new Date().getFullYear();
+  const yearStart = `${year}-01-01`;
+
+  const empty: DashboardOverview = {
+    year,
+    totalMembers: 0,
+    activeMembers: 0,
+    inactiveMembers: 0,
+    pendingMembers: 0,
+    newThisYear: 0,
+    newMembersThisYear: [],
+    recentActiveMembers: [],
+  };
+
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return empty;
+  }
+
+  try {
+    const [total, active, inactive, pending, newOnes, activeList] =
+      await Promise.all([
+        supabase.from("members").select("*", { count: "exact", head: true }),
+        supabase
+          .from("members")
+          .select("*", { count: "exact", head: true })
+          .eq("membership_status", "active"),
+        supabase
+          .from("members")
+          .select("*", { count: "exact", head: true })
+          .eq("membership_status", "inactive"),
+        supabase
+          .from("members")
+          .select("*", { count: "exact", head: true })
+          .eq("membership_status", "pending"),
+        supabase
+          .from("members")
+          .select("*")
+          .gte("joined_at", yearStart)
+          .order("joined_at", { ascending: false }),
+        supabase
+          .from("members")
+          .select("*")
+          .eq("membership_status", "active")
+          .order("created_at", { ascending: false })
+          .limit(8),
+      ]);
+
+    const newMembers = (newOnes.data ?? []) as Member[];
+
+    return {
+      year,
+      totalMembers: total.count ?? 0,
+      activeMembers: active.count ?? 0,
+      inactiveMembers: inactive.count ?? 0,
+      pendingMembers: pending.count ?? 0,
+      newThisYear: newMembers.length,
+      newMembersThisYear: newMembers.slice(0, 8),
+      recentActiveMembers: (activeList.data ?? []) as Member[],
+    };
+  } catch (error) {
+    console.error("Napaka pri nalaganju nadzorne plošče", error);
+    return empty;
+  }
 }

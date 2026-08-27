@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Izhod ukaza `vercel build` - zgrajeni svežnji, ne izvorna koda.
+    ".vercel/**",
   ]),
 ]);
 

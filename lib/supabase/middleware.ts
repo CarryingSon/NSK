@@ -38,9 +38,11 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() preveri podpis lokalno prek JWKS namesto klica na Auth strežnik,
+  // kar tej vmesni plasti prihrani en omrežni obhod na vsako zahtevo. Osvežitev
+  // potekle seje se ohrani, ker getClaims() interno kliče getSession().
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const user = claimsData?.claims?.sub ? claimsData.claims : null;
 
   const { pathname } = request.nextUrl;
   const isPublicPath = PUBLIC_PATHS.has(pathname);
@@ -58,7 +60,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isPublicPath) {
     const membersUrl = request.nextUrl.clone();
-    membersUrl.pathname = "/members";
+    membersUrl.pathname = "/dashboard";
     membersUrl.searchParams.delete("redirectedFrom");
     return NextResponse.redirect(membersUrl);
   }
