@@ -78,3 +78,7 @@ export function monthRange(value: Date) {
   const start = startOfMonth(value);
   return { start, end: addMonths(start, 1) };
 }
+
+export function startOfCurrentMonth() {
+  return startOfMonth(new Date());
+}

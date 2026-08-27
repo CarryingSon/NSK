@@ -3,26 +3,34 @@ import {
   getMemberFullName,
   monthRange,
   parseMonthParam,
+  startOfCurrentMonth,
   toMonthParam,
 } from "@/lib/format";
-import { notificationAudienceOptions } from "@/lib/constants";
 import {
-  getNotificationAudienceCounts,
-  groupEmailLogsIntoCampaigns,
+  emailDailyLimit,
+  notificationAudienceDescriptions,
+  notificationAudienceLabels,
+  notificationAudienceOrder,
+} from "@/lib/constants";
+import {
+  getAudienceStats,
+  getCampaignFailures,
+  getCampaignsWithProgress,
 } from "@/lib/notifications";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database";
 import type {
+  CampaignFailure,
+  CampaignWithProgress,
   DashboardOverview,
-  EmailCampaign,
   Member,
   MemberFilters,
   MemberOption,
   MemberRegistrationHistoryItem,
   PrintOverview,
   PrintMemberRow,
-  NotificationAudienceCount,
+  PrintMonthSummary,
+  NotificationAudienceStats,
 } from "@/types/app";
 
 async function getSupabaseOrNull() {
@@ -174,26 +182,39 @@ export async function getMembersForSelect(): Promise<MemberOption[]> {
   return (data ?? []) as MemberOption[];
 }
 
-export async function getNotificationAudiences() {
+// Brez Supabase povezave stran še vedno izriše obrazec, le brez števil.
+function emptyAudienceStats(): NotificationAudienceStats {
+  return {
+    options: notificationAudienceOrder.map((value) => ({
+      value,
+      label: notificationAudienceLabels[value],
+      description: notificationAudienceDescriptions[value],
+      count: 0,
+    })),
+    totalWithEmail: 0,
+    students: 0,
+    pupils: 0,
+    unknown: 0,
+    active: 0,
+    inactive: 0,
+    sentToday: 0,
+    remainingToday: emailDailyLimit,
+    dailyLimit: emailDailyLimit,
+  };
+}
+
+export async function getNotificationAudienceStats() {
   const supabase = await getSupabaseOrNull();
 
   if (!supabase) {
-    return notificationAudienceOptions.map((option) => ({
-      value: option.value,
-      label: option.label,
-      count: 0,
-    })) as NotificationAudienceCount[];
+    return emptyAudienceStats();
   }
 
   try {
-    return await getNotificationAudienceCounts(supabase);
+    return await getAudienceStats(supabase);
   } catch (error) {
-    console.error("Napaka pri nalaganju skupin za obveščanje", error);
-    return notificationAudienceOptions.map((option) => ({
-      value: option.value,
-      label: option.label,
-      count: 0,
-    })) as NotificationAudienceCount[];
+    console.error("Napaka pri nalaganju občinstev za obveščanje", error);
+    return emptyAudienceStats();
   }
 }
 
@@ -201,22 +222,30 @@ export async function getEmailCampaigns() {
   const supabase = await getSupabaseOrNull();
 
   if (!supabase) {
-    return [] as EmailCampaign[];
+    return [] as CampaignWithProgress[];
   }
 
-  const { data, error } = await supabase
-    .from("email_logs")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    return await getCampaignsWithProgress(supabase);
+  } catch (error) {
+    console.error("Napaka pri nalaganju zgodovine obvestil", error);
+    return [] as CampaignWithProgress[];
+  }
+}
 
-  if (error) {
-    console.error("Napaka pri nalaganju email zgodovine", error);
-    return [] as EmailCampaign[];
+export async function getCampaignFailureList(campaignId: string) {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return [] as CampaignFailure[];
   }
 
-  return groupEmailLogsIntoCampaigns(
-    (data ?? []) as Database["public"]["Tables"]["email_logs"]["Row"][],
-  );
+  try {
+    return await getCampaignFailures(supabase, campaignId);
+  } catch (error) {
+    console.error("Napaka pri nalaganju neuspelih naslovov", error);
+    return [] as CampaignFailure[];
+  }
 }
 
 // Povzetek za nadzorno ploščo. "Novo letos" se veže na joined_at (datum včlanitve),
@@ -333,6 +362,8 @@ export async function getPrintOverview(monthParam?: string): Promise<PrintOvervi
     totalQuota: 0,
     totalRemaining: 0,
     membersCopied: 0,
+    totalMembers: 0,
+    readOnly: toMonthParam(month) !== toMonthParam(startOfCurrentMonth()),
     rows: [],
   };
 
@@ -349,8 +380,9 @@ export async function getPrintOverview(monthParam?: string): Promise<PrintOvervi
     "id, member_id, title, quantity, notes, created_at, members:member_id ( id, first_name, last_name )";
 
   try {
-    const [quota, current, prior] = await Promise.all([
+    const [quota, memberCount, current, prior] = await Promise.all([
       getPrintMonthlyQuota(),
+      supabase.from("members").select("*", { count: "exact", head: true }),
       supabase
         .from("print_records")
         .select(select)
@@ -411,7 +443,9 @@ export async function getPrintOverview(monthParam?: string): Promise<PrintOvervi
       .sort((a, b) => b.used - a.used);
 
     const totalUsed = rows.reduce((sum, r) => sum + r.used, 0);
-    const totalQuota = rows.length * quota;
+    // Kvoto dobi vsak član kluba, ne le tisti, ki so ta mesec kopirali.
+    const totalMembers = memberCount.count ?? 0;
+    const totalQuota = totalMembers * quota;
 
     return {
       ...base,
@@ -421,9 +455,63 @@ export async function getPrintOverview(monthParam?: string): Promise<PrintOvervi
       totalQuota,
       totalRemaining: totalQuota - totalUsed,
       membersCopied: rows.filter((r) => r.used > 0).length,
+      totalMembers,
     };
   } catch (error) {
     console.error("Napaka pri nalaganju evidence tiska", error);
     return base;
   }
+}
+
+// Meseci, za katere obstajajo zapisi, plus tekoči. Iz tega nastane seznam
+// mesečnih poročil; pretekli so samo za branje.
+export async function getPrintMonths(): Promise<PrintMonthSummary[]> {
+  const current = toMonthParam(startOfCurrentMonth());
+  const supabase = await getSupabaseOrNull();
+
+  const empty: PrintMonthSummary = {
+    param: current,
+    label: formatMonthLabel(startOfCurrentMonth()),
+    totalCopies: 0,
+    membersCopied: 0,
+    isCurrent: true,
+  };
+
+  if (!supabase) {
+    return [empty];
+  }
+
+  const { data, error } = await supabase
+    .from("print_records")
+    .select("member_id, quantity, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Napaka pri branju mesecev evidence tiska", error);
+    return [empty];
+  }
+
+  const byMonth = new Map<string, { total: number; members: Set<string> }>();
+
+  for (const row of data ?? []) {
+    const param = toMonthParam(new Date(row.created_at));
+    const entry = byMonth.get(param) ?? { total: 0, members: new Set<string>() };
+    entry.total += row.quantity ?? 0;
+    if (row.member_id) entry.members.add(row.member_id);
+    byMonth.set(param, entry);
+  }
+
+  if (!byMonth.has(current)) {
+    byMonth.set(current, { total: 0, members: new Set() });
+  }
+
+  return [...byMonth.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([param, v]) => ({
+      param,
+      label: formatMonthLabel(parseMonthParam(param)),
+      totalCopies: v.total,
+      membersCopied: v.members.size,
+      isCurrent: param === current,
+    }));
 }

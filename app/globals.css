@@ -307,6 +307,120 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* --- Urejevalnik vsebine obvestila --- */
+  /* Tailwindov reset pobere sloge naslovom in seznamom, contenteditable pa jih
+     vseeno ustvarja - tu jih dobijo nazaj, da je vnos podoben končni e-pošti. */
+  .rich-text-editor:empty::before {
+    content: attr(data-placeholder);
+    color: var(--muted-foreground);
+    pointer-events: none;
+  }
+
+  .rich-text-editor p {
+    margin: 0 0 0.85rem 0;
+  }
+
+  .rich-text-editor h2 {
+    @apply font-heading text-xl font-semibold;
+    margin: 1.4rem 0 0.6rem 0;
+  }
+
+  .rich-text-editor h3 {
+    @apply font-heading text-lg font-semibold;
+    margin: 1.2rem 0 0.5rem 0;
+  }
+
+  .rich-text-editor ul,
+  .rich-text-editor ol {
+    margin: 0 0 0.85rem 0;
+    padding-left: 1.4rem;
+  }
+
+  .rich-text-editor ul {
+    list-style: disc;
+  }
+
+  .rich-text-editor ol {
+    list-style: decimal;
+  }
+
+  .rich-text-editor li {
+    margin: 0 0 0.35rem 0;
+  }
+
+  .rich-text-editor a {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+
+  .rich-text-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 0.85rem 0;
+  }
+
+  .rich-text-editor blockquote {
+    margin: 0 0 0.85rem 0;
+    padding: 0.5rem 1rem;
+    border-left: 3px solid var(--primary);
+    color: var(--muted-foreground);
+  }
+
+  /* Predogled poslane e-pošte v zgodovini je namenoma bel "papir": v bazi je
+     vsebina brez slogov (te dobi šele predloga e-pošte), zato jih tu dodamo,
+     da je predogled podoben poslanemu sporočilu. */
+  .email-preview p {
+    margin: 0 0 0.85rem 0;
+    line-height: 1.65;
+  }
+
+  .email-preview h2 {
+    @apply font-heading text-xl font-semibold;
+    margin: 1.4rem 0 0.6rem 0;
+  }
+
+  .email-preview h3 {
+    @apply font-heading text-lg font-semibold;
+    margin: 1.2rem 0 0.5rem 0;
+  }
+
+  .email-preview ul,
+  .email-preview ol {
+    margin: 0 0 0.85rem 0;
+    padding-left: 1.4rem;
+  }
+
+  .email-preview ul {
+    list-style: disc;
+  }
+
+  .email-preview ol {
+    list-style: decimal;
+  }
+
+  .email-preview li {
+    margin: 0 0 0.35rem 0;
+  }
+
+  .email-preview blockquote {
+    margin: 0 0 0.85rem 0;
+    padding: 0.5rem 1rem;
+    border-left: 3px solid #f36717;
+  }
+
+  .email-preview a {
+    color: #f36717;
+    text-decoration: underline;
+  }
+
+  .email-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 0.85rem 0;
+  }
 }
 
 @keyframes login-drift {

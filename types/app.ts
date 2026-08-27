@@ -1,14 +1,19 @@
 import type {
+  CampaignStatus,
+  CampaignType,
   Database,
-  EmailLogStatus,
+  MemberSegment,
   MembershipStatus,
+  NotificationAudience,
+  QueueItemStatus,
   RegistrationStatus,
 } from "@/types/database";
 
 export type Member = Database["public"]["Tables"]["members"]["Row"];
 export type Event = Database["public"]["Tables"]["events"]["Row"];
 export type PrintRecord = Database["public"]["Tables"]["print_records"]["Row"];
-export type EmailLog = Database["public"]["Tables"]["email_logs"]["Row"];
+export type EmailCampaign = Database["public"]["Tables"]["email_campaigns"]["Row"];
+export type EmailQueueItem = Database["public"]["Tables"]["email_queue"]["Row"];
 
 // Ožji izsek člana za spustne sezname - dovolj za prikaz imena in izbiro vrednosti.
 export type MemberOption = Pick<Member, "id" | "first_name" | "last_name">;
@@ -70,7 +75,18 @@ export interface PrintOverview {
   totalQuota: number;
   totalRemaining: number;
   membersCopied: number;
+  totalMembers: number;
+  // Pretekli meseci so poročilo: prikažejo se enako, a se jih ne da spreminjati.
+  readOnly: boolean;
   rows: PrintMemberRow[];
+}
+
+export interface PrintMonthSummary {
+  param: string;
+  label: string;
+  totalCopies: number;
+  membersCopied: number;
+  isCurrent: boolean;
 }
 
 export interface StatusOption<TValue extends string> {
@@ -83,35 +99,59 @@ export interface MemberFilters {
   status?: MembershipStatus | "all";
 }
 
-export type NotificationAudience = "all" | "active" | "inactive" | "pending";
-
-export interface NotificationAudienceCount {
+// Skupina prejemnikov s številom članov, ki jih zajame - izbirnik jo pokaže
+// takoj ob izbiri, brez dodatnega klica na strežnik.
+export interface NotificationAudienceOption {
   value: NotificationAudience;
   label: string;
+  description: string;
   count: number;
 }
 
-export interface EmailCampaign {
-  subject: string;
-  body: string | null;
-  sentAt: string;
-  totalSent: number;
-  successCount: number;
+// Razčlenitev članske baze po skupinah, ki jo pokaže panel pod izbirnikom.
+export interface NotificationAudienceStats {
+  options: NotificationAudienceOption[];
+  totalWithEmail: number;
+  students: number;
+  pupils: number;
+  unknown: number;
+  active: number;
+  inactive: number;
+  // Koliko e-pošte je danes že odšlo in koliko je še ostane do dnevne omejitve.
+  sentToday: number;
+  remainingToday: number;
+  dailyLimit: number;
+}
+
+// Kampanja skupaj s štetjem iz čakalne vrste - osnova za zgodovino in napredek.
+export interface CampaignWithProgress extends EmailCampaign {
+  pendingCount: number;
+  sentCount: number;
   failedCount: number;
-  metadata: string | null;
-  failedRecipients: Array<{
-    email: string;
-    error: string | null;
-  }>;
 }
 
-export interface EmailLogMetadata {
-  audience: NotificationAudience;
-  createdByEmail?: string | null;
-  sentByName?: string | null;
+export interface CampaignFailure {
+  email: string;
+  name: string;
+  error: string | null;
 }
 
-export interface EmailDeliveryResult {
-  status: EmailLogStatus;
-  errorMessage?: string | null;
+// Rezultat ene serije pošiljanja. Stran ga uporabi za napredek in za odločitev,
+// ali sme sprožiti naslednjo serijo.
+export interface DispatchBatchResult {
+  sent: number;
+  failed: number;
+  pending: number;
+  done: boolean;
+  // Serija se ustavi, ko je dosežena dnevna omejitev - takrat ni napaka, le čakanje.
+  dailyLimitReached: boolean;
+  message: string;
 }
+
+export type {
+  CampaignStatus,
+  CampaignType,
+  MemberSegment,
+  NotificationAudience,
+  QueueItemStatus,
+};

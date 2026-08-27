@@ -63,7 +63,7 @@ npm run dev
 
 Datoteka [supabase/schema.sql](/Users/jurekrizman/Documents/NŠK%20-%20po/supabase/schema.sql) vsebuje:
 
-- tabele `members`, `print_records` in `email_logs`
+- tabele `members`, `print_records`, `email_campaigns` in `email_queue`
 - `updated_at` trigger za `members` in `events`
 - osnovne indekse
 - omogočen RLS na vseh glavnih tabelah
@@ -71,10 +71,27 @@ Datoteka [supabase/schema.sql](/Users/jurekrizman/Documents/NŠK%20-%20po/supaba
 
 ## Email obveščanje
 
-- Modul obveščanja po vzoru Kurnika zapisuje vsak poslan email v tabelo `email_logs`.
-- Zgodovina obvestil združuje posamezne zapise v kampanje po `subject + časovno okno`.
+- Obvestilo se sestavi na `/notifications`: naslov, podnaslov na oranžni glavi, vsebina
+  v bogatem urejevalniku, neobvezen CTA gumb in nastavitve pošiljanja.
+- Občinstvo je lahko celotno članstvo, **samo študenti** ali **samo dijaki**. Skupina se
+  izpelje iz polja `faculty` (šola oziroma fakulteta) prek `classifySchool()` v
+  [lib/constants.ts](/Users/jurekrizman/Documents/NŠK%20-%20po/lib/constants.ts) - najprej
+  po seznamih šol, nato po besednih značilnicah. Kar se ne uvrsti, ostane dosegljivo prek
+  občinstva "vsi člani".
+- Pošiljanje ne teče v eni zahtevi: kampanja se zapiše v `email_campaigns`, prejemniki v
+  `email_queue`, nato pa stran zgodovine pošilja v serijah po 20 sporočil, dokler ni vrsta
+  prazna ali dokler ni dosežena dnevna omejitev.
+- Vsaka vrstica se pred pošiljanjem pogojno prevzame (`status = 'sending'`), zato dva
+  odprta zavihka ne pošljeta istega sporočila dvakrat.
+- Dnevna omejitev je `emailDailyLimit` (450, z rezervo pod Gmailovih 500), posamezna
+  kampanja pa ima svojo, nižjo omejitev.
+- Vsebina iz urejevalnika se pred zapisom očisti v
+  [lib/email-content.ts](/Users/jurekrizman/Documents/NŠK%20-%20po/lib/email-content.ts) -
+  v e-pošto gre samo ozek nabor oznak.
 - Pošiljanje uporablja SMTP, zato lahko priklopiš Gmail, Outlook ali drug ponudnik.
-- Email HTML je oblikovan z NŠK brandingom in podpira ohranjanje odstavkov iz obrazca.
+
+Za obstoječo bazo zaženi
+[supabase/migrate-notifications.sql](/Users/jurekrizman/Documents/NŠK%20-%20po/supabase/migrate-notifications.sql).
 
 ## Deploy na Vercel
 

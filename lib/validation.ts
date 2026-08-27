@@ -1,7 +1,8 @@
 import { z } from "zod";
 
+import { emailDailyLimit } from "@/lib/constants";
+import { hasRichTextContent, sanitizeRichText } from "@/lib/email-content";
 import type { MembershipStatus } from "@/types/database";
-import type { NotificationAudience } from "@/types/app";
 
 const optionalString = z
   .string()
@@ -132,18 +133,76 @@ export const printQuotaSchema = z.object({
   }, z.number().int().min(1, "Kvota mora biti vsaj 1.").max(100000, "Kvota je previsoka.")),
 });
 
-export const notificationSchema = z.object({
-  audience: z.enum([
-    "all",
-    "active",
-    "inactive",
-    "pending",
-  ] as [
-    NotificationAudience,
-    NotificationAudience,
-    NotificationAudience,
-    NotificationAudience,
-  ]),
-  subject: z.string().trim().min(3, "Zadeva mora imeti vsaj 3 znake."),
-  body: z.string().trim().min(10, "Sporočilo mora imeti vsaj 10 znakov."),
+// Kampanja obveščanja. Vsebina je HTML iz urejevalnika, zato jo očistimo že v
+// shemi - naprej gre samo tisto, kar se sme prikazati v e-pošti.
+export const campaignSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(3, "Naslov obvestila mora imeti vsaj 3 znake.")
+      .max(150, "Naslov obvestila je predolg."),
+    subtitle: z
+      .string()
+      .trim()
+      .max(120, "Podnaslov je predolg.")
+      .transform((value) => (value.length > 0 ? value : null))
+      .nullable(),
+    content: z
+      .string()
+      .transform((value) => sanitizeRichText(value))
+      .refine((value) => hasRichTextContent(value), {
+        message: "Vsebina obvestila ne sme biti prazna.",
+      }),
+    ctaLabel: z
+      .string()
+      .trim()
+      .max(60, "Besedilo gumba je predolgo.")
+      .transform((value) => (value.length > 0 ? value : null))
+      .nullable(),
+    ctaUrl: z
+      .string()
+      .trim()
+      .transform((value) => (value.length > 0 ? value : null))
+      .nullable()
+      .refine(
+        (value) => value === null || /^https?:\/\//i.test(value),
+        "URL gumba se mora začeti s http:// ali https://",
+      ),
+    campaignType: z.enum(["obvestilo", "dogodek", "ugodnost", "novice"]),
+    audience: z.enum([
+      "all",
+      "students",
+      "pupils",
+      "active",
+      "inactive",
+      "pending",
+    ]),
+    dailyLimit: z.preprocess((value) => {
+      const parsed = Number(value);
+      return Number.isNaN(parsed) ? value : parsed;
+    }, z
+      .number()
+      .int()
+      .min(1, "Dnevna omejitev mora biti vsaj 1.")
+      .max(
+        emailDailyLimit,
+        `Dnevna omejitev ne sme presegati ${emailDailyLimit} sporočil.`,
+      )),
+  })
+  // Gumb brez naslova ali naslov brez besedila v e-pošti nista uporabna, zato
+  // sta polji vezani druga na drugo.
+  .refine((value) => !(value.ctaLabel && !value.ctaUrl), {
+    message: "Gumb potrebuje tudi URL.",
+    path: ["ctaUrl"],
+  })
+  .refine((value) => !(value.ctaUrl && !value.ctaLabel), {
+    message: "Gumb potrebuje tudi besedilo.",
+    path: ["ctaLabel"],
+  });
+
+// Testno pošiljanje uporabi isto shemo za vsebino, naslov prejemnika pa je
+// posebej - obrazec ga pošlje samo pri testu.
+export const testEmailSchema = z.object({
+  testEmail: z.email("Vnesi veljaven e-poštni naslov za test."),
 });

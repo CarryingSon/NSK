@@ -8,8 +8,7 @@ import { SubmitButton } from "@/components/forms/submit-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
-import { getMemberFullName } from "@/lib/format";
+import { MemberPicker } from "@/components/print-records/member-picker";
 import type { ActionState, MemberOption } from "@/types/app";
 
 const initialState: ActionState = {};
@@ -36,16 +35,7 @@ export function AddMemberCopies({ members }: { members: MemberOption[] }) {
       <form action={formAction} className="flex flex-wrap items-end gap-4">
         <div className="min-w-56 flex-1 space-y-1.5">
           <Label htmlFor="print-member">Član</Label>
-          <NativeSelect id="print-member" name="member_id" defaultValue="" required>
-            <option value="" disabled>
-              Izberi člana
-            </option>
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {getMemberFullName(member)}
-              </option>
-            ))}
-          </NativeSelect>
+          <MemberPicker id="print-member" members={members} />
         </div>
 
         <div className="w-32 space-y-1.5">

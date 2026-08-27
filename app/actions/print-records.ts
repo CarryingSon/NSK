@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PRINT_QUOTA_KEY } from "@/lib/data";
-import { monthRange, parseMonthParam } from "@/lib/format";
+import {
+  monthRange,
+  parseMonthParam,
+  startOfCurrentMonth,
+  toMonthParam,
+} from "@/lib/format";
 import { printCopiesSchema, printQuotaSchema } from "@/lib/validation";
 import type { ActionState } from "@/types/app";
 
@@ -97,6 +102,14 @@ export async function deleteMemberPrintMonthAction(formData: FormData) {
   }
 
   const month = parseMonthParam(monthParam);
+
+  // Skrit gumb ni zaščita: pretekli meseci so poročila, zato brisanje zavrnemo
+  // tudi, če zahteva pride mimo vmesnika.
+  if (toMonthParam(month) !== toMonthParam(startOfCurrentMonth())) {
+    console.warn("Zavrnjen poskus brisanja preteklega meseca", monthParam);
+    return;
+  }
+
   const { start, end } = monthRange(month);
 
   try {

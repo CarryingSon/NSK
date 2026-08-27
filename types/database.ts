@@ -17,7 +17,21 @@ export type RegistrationStatus =
   | "confirmed"
   | "cancelled"
   | "attended";
-export type EmailLogStatus = "sent" | "failed";
+// Stanje enega prejemnika v čakalni vrsti.
+export type QueueItemStatus = "pending" | "sending" | "sent" | "failed";
+// Stanje celotne kampanje: v vrsti, se pošilja, na pavzi, končana.
+export type CampaignStatus = "queued" | "sending" | "paused" | "sent";
+export type CampaignType = "obvestilo" | "dogodek" | "ugodnost" | "novice";
+// Iz šole člana izpeljana skupina. "unknown" pomeni, da šole ni bilo mogoče
+// uvrstiti - član ostane dosegljiv prek skupine "vsi člani".
+export type MemberSegment = "student" | "pupil" | "unknown";
+export type NotificationAudience =
+  | "all"
+  | "students"
+  | "pupils"
+  | "active"
+  | "inactive"
+  | "pending";
 
 export interface Database {
   public: {
@@ -176,28 +190,76 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["print_records"]["Insert"]>;
         Relationships: [];
       };
-      email_logs: {
+      email_campaigns: {
         Row: {
           id: string;
+          title: string;
+          subtitle: string | null;
+          content_html: string;
+          cta_label: string | null;
+          cta_url: string | null;
+          campaign_type: CampaignType;
+          audience: NotificationAudience;
+          daily_limit: number;
+          status: CampaignStatus;
+          total_recipients: number;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          subtitle?: string | null;
+          content_html: string;
+          cta_label?: string | null;
+          cta_url?: string | null;
+          campaign_type?: CampaignType;
+          audience?: NotificationAudience;
+          daily_limit?: number;
+          status?: CampaignStatus;
+          total_recipients?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["email_campaigns"]["Insert"]>;
+        Relationships: [];
+      };
+      email_queue: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          member_id: string | null;
           to_email: string;
-          subject: string;
-          body: string | null;
-          status: EmailLogStatus;
+          first_name: string | null;
+          last_name: string | null;
+          segment: MemberSegment | null;
+          status: QueueItemStatus;
           error_message: string | null;
-          metadata: string | null;
+          attempts: number;
+          claimed_at: string | null;
+          sent_at: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
+          campaign_id: string;
+          member_id?: string | null;
           to_email: string;
-          subject: string;
-          body?: string | null;
-          status?: EmailLogStatus;
+          first_name?: string | null;
+          last_name?: string | null;
+          segment?: MemberSegment | null;
+          status?: QueueItemStatus;
           error_message?: string | null;
-          metadata?: string | null;
+          attempts?: number;
+          claimed_at?: string | null;
+          sent_at?: string | null;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["email_logs"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["email_queue"]["Insert"]>;
         Relationships: [];
       };
     };

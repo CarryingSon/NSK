@@ -1,33 +1,60 @@
 import Link from "next/link";
-import { format } from "date-fns";
 import {
-  Calendar,
   CheckCircle,
   History,
   Mail,
+  Pause,
+  Play,
+  RotateCcw,
   Users,
   XCircle,
 } from "lucide-react";
 
-import { DeleteEmailCampaignButton } from "@/components/notifications/delete-email-campaign-button";
+import {
+  requeueFailedAction,
+  setCampaignPausedAction,
+} from "@/app/actions/notifications";
+import { CampaignDispatcher } from "@/components/notifications/campaign-dispatcher";
+import { DeleteCampaignButton } from "@/components/notifications/delete-campaign-button";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-import { getEmailCampaigns } from "@/lib/data";
-import { notificationAudienceLabels } from "@/lib/constants";
-import type { EmailLogMetadata } from "@/types/app";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  campaignStatusLabels,
+  campaignTypeLabels,
+  notificationAudienceLabels,
+} from "@/lib/constants";
+import { getCampaignFailureList, getEmailCampaigns } from "@/lib/data";
+import { formatDateTime } from "@/lib/format";
+import { isEmailConfigured } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
+import type { CampaignFailure } from "@/types/app";
 
 export default async function NotificationHistoryPage() {
   const campaigns = await getEmailCampaigns();
+  const emailConfigured = isEmailConfigured();
+
+  // Neuspele naslove naložimo samo za kampanje, ki jih sploh imajo.
+  const failuresByCampaign = new Map<string, CampaignFailure[]>(
+    await Promise.all(
+      campaigns
+        .filter((campaign) => campaign.failedCount > 0)
+        .map(
+          async (campaign) =>
+            [
+              campaign.id,
+              await getCampaignFailureList(campaign.id),
+            ] as const,
+        ),
+    ),
+  );
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Zgodovina obvestil"
-        description="Pregled vseh poslanih obvestil članom, združenih po kampanjah kot v Kurniku."
+        description="Vsako obvestilo s svojo čakalno vrsto: koliko je poslanega, kaj še čaka in kje je pošiljanje spodletelo."
         action={
           <Link
             href="/notifications"
@@ -36,7 +63,7 @@ export default async function NotificationHistoryPage() {
               "h-12 rounded-full px-6 text-base font-semibold",
             )}
           >
-            Nazaj na obveščanje
+            Novo obvestilo
           </Link>
         }
       />
@@ -44,137 +71,168 @@ export default async function NotificationHistoryPage() {
       {campaigns.length === 0 ? (
         <EmptyState
           icon={History}
-          title="Ni poslanih obvestil"
-          description="Ko pošlješ prvo obvestilo, se bo tukaj prikazala zgodovina kampanj in uspešnost dostave."
+          title="Ni pripravljenih obvestil"
+          description="Ko sestaviš prvo obvestilo in ga uvrstiš v čakalno vrsto, se bo tukaj prikazal potek pošiljanja."
         />
       ) : (
         <div className="grid gap-5">
-          {campaigns.map((campaign, index) => {
-            let metadata: EmailLogMetadata | null = null;
-
-            if (campaign.metadata) {
-              try {
-                metadata = JSON.parse(campaign.metadata) as EmailLogMetadata;
-              } catch {
-                metadata = null;
-              }
-            }
-
+          {campaigns.map((campaign) => {
+            const total = campaign.total_recipients;
+            const processed = campaign.sentCount + campaign.failedCount;
             const successRate =
-              campaign.totalSent > 0
-                ? Math.round((campaign.successCount / campaign.totalSent) * 100)
+              processed > 0
+                ? Math.round((campaign.sentCount / processed) * 100)
                 : 0;
+            const failures = failuresByCampaign.get(campaign.id) ?? [];
+            const paused = campaign.status === "paused";
 
             return (
-              <Card
-                key={`${campaign.subject}-${campaign.sentAt}-${index}`}
-                className="surface-card rounded-[18px] border border-border bg-card"
+              <article
+                key={campaign.id}
+                className="surface-card space-y-5 rounded-[18px] border border-border p-6"
               >
-                <CardHeader className="px-6 pt-6">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-2">
-                      <CardTitle className="flex items-center gap-2 text-xl">
-                        <Mail className="size-5 text-primary" />
-                        {campaign.subject}
-                      </CardTitle>
-                      <CardDescription className="flex flex-wrap items-center gap-4">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="size-4" />
-                          {format(new Date(campaign.sentAt), "dd.MM.yyyy 'ob' HH:mm")}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="size-4" />
-                          {campaign.totalSent} prejemnikov
-                        </span>
-                        {metadata?.audience ? (
-                          <span>{notificationAudienceLabels[metadata.audience]}</span>
-                        ) : null}
-                      </CardDescription>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-start">
-                      <Badge
-                        variant={
-                          successRate === 100
-                            ? "default"
-                            : successRate > 0
-                              ? "secondary"
-                              : "destructive"
-                        }
-                      >
-                        {successRate}% uspešnih
-                      </Badge>
-                      <DeleteEmailCampaignButton
-                        subject={campaign.subject}
-                        sentAt={campaign.sentAt}
-                        totalSent={campaign.totalSent}
-                      />
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-4 px-6 pb-6">
-                  <div className="flex flex-wrap gap-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="size-4 text-success" />
-                      <span>
-                        <strong>{campaign.successCount}</strong> uspešno poslanih
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-2">
+                    <h2 className="flex items-center gap-2 font-heading text-xl font-semibold text-foreground">
+                      <Mail className="size-5 shrink-0 text-primary" />
+                      {campaign.title}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      <span>{formatDateTime(campaign.created_at)}</span>
+                      <span className="flex items-center gap-1">
+                        <Users className="size-4" />
+                        {total} prejemnikov
                       </span>
+                      <span>
+                        {notificationAudienceLabels[campaign.audience]}
+                      </span>
+                      <span>{campaignTypeLabels[campaign.campaign_type]}</span>
+                      {campaign.created_by ? (
+                        <span>Pripravil: {campaign.created_by}</span>
+                      ) : null}
                     </div>
-                    {campaign.failedCount > 0 ? (
-                      <div className="flex items-center gap-2 text-sm">
-                        <XCircle className="size-4 text-destructive" />
-                        <span>
-                          <strong>{campaign.failedCount}</strong> neuspešnih
-                        </span>
-                      </div>
-                    ) : null}
                   </div>
 
-                  {campaign.failedRecipients.length > 0 ? (
-                    <details className="rounded-[14px] border border-destructive/25 bg-destructive/10/70 px-4 py-3">
-                      <summary className="cursor-pointer text-sm font-medium text-destructive">
-                        Prikaži neuspešno poslane emaile ({campaign.failedCount})
-                      </summary>
-                      <div className="mt-3 space-y-3">
-                        {campaign.failedRecipients.map((recipient) => (
-                          <div
-                            key={`${campaign.subject}-${recipient.email}`}
-                            className="rounded-xl border border-destructive/25 bg-card px-3 py-2 text-sm"
-                          >
-                            <p className="font-medium text-foreground">{recipient.email}</p>
-                            {recipient.error ? (
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {recipient.error}
-                              </p>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-                  ) : null}
+                  <div className="flex items-center gap-2 self-start">
+                    <Badge
+                      variant={
+                        campaign.status === "sent"
+                          ? "default"
+                          : paused
+                            ? "outline"
+                            : "secondary"
+                      }
+                    >
+                      {campaignStatusLabels[campaign.status]}
+                    </Badge>
+                    <DeleteCampaignButton
+                      campaignId={campaign.id}
+                      title={campaign.title}
+                      totalRecipients={total}
+                      pendingCount={campaign.pendingCount}
+                    />
+                  </div>
+                </div>
 
-                  {metadata?.createdByEmail ? (
-                    <p className="text-sm text-muted-foreground">
-                      Poslal: {metadata.createdByEmail}
-                    </p>
-                  ) : null}
+                <CampaignDispatcher
+                  campaignId={campaign.id}
+                  total={total}
+                  initialSent={campaign.sentCount}
+                  initialFailed={campaign.failedCount}
+                  initialPending={campaign.pendingCount}
+                  disabled={!emailConfigured || paused}
+                />
 
-                  {campaign.body ? (
-                    <details className="rounded-[14px] border border-border bg-card px-4 py-3">
-                      <summary className="cursor-pointer text-sm font-medium text-foreground">
-                        Prikaži vsebino sporočila
-                      </summary>
-                      <div
-                        // Predogled e-pošte je namenoma bel "papir": vsebina sporočila nosi lastne
-                        // barve in predpostavlja svetlo podlago, zato barve teme tu ne uporabimo.
-                        className="mt-4 overflow-hidden rounded-[12px] border border-border bg-white p-4 text-[#1d1d1f]"
-                        dangerouslySetInnerHTML={{ __html: campaign.body }}
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="size-4 text-success" />
+                    {successRate}% uspešnih dostav
+                  </span>
+
+                  {campaign.pendingCount > 0 ? (
+                    <form action={setCampaignPausedAction}>
+                      <input
+                        type="hidden"
+                        name="campaign_id"
+                        value={campaign.id}
                       />
-                    </details>
+                      <input
+                        type="hidden"
+                        name="paused"
+                        value={paused ? "false" : "true"}
+                      />
+                      <Button type="submit" variant="ghost" size="sm">
+                        {paused ? (
+                          <>
+                            <Play className="size-4" />
+                            Nadaljuj
+                          </>
+                        ) : (
+                          <>
+                            <Pause className="size-4" />
+                            Zaustavi
+                          </>
+                        )}
+                      </Button>
+                    </form>
                   ) : null}
-                </CardContent>
-              </Card>
+
+                  {campaign.failedCount > 0 ? (
+                    <form action={requeueFailedAction}>
+                      <input
+                        type="hidden"
+                        name="campaign_id"
+                        value={campaign.id}
+                      />
+                      <Button type="submit" variant="ghost" size="sm">
+                        <RotateCcw className="size-4" />
+                        Vrni {campaign.failedCount} neuspelih v vrsto
+                      </Button>
+                    </form>
+                  ) : null}
+                </div>
+
+                {failures.length > 0 ? (
+                  <details className="rounded-[14px] border border-destructive/25 bg-destructive/10 px-4 py-3">
+                    <summary className="cursor-pointer text-sm font-medium text-destructive">
+                      Prikaži neuspešno poslane emaile ({campaign.failedCount})
+                    </summary>
+                    <div className="mt-3 space-y-2">
+                      {failures.map((failure) => (
+                        <div
+                          key={`${campaign.id}-${failure.email}`}
+                          className="rounded-xl border border-destructive/25 bg-card px-3 py-2 text-sm"
+                        >
+                          <p className="font-medium text-foreground">
+                            {failure.name || failure.email}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {failure.email}
+                          </p>
+                          {failure.error ? (
+                            <p className="mt-1 flex items-start gap-1.5 text-xs text-destructive">
+                              <XCircle className="mt-0.5 size-3.5 shrink-0" />
+                              {failure.error}
+                            </p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+
+                <details className="rounded-[14px] border border-border bg-card px-4 py-3">
+                  <summary className="cursor-pointer text-sm font-medium text-foreground">
+                    Prikaži vsebino sporočila
+                  </summary>
+                  {/* Vsebina je očiščena že ob shranjevanju kampanje, tu jo samo
+                      izrišemo na belem "papirju", ker predpostavlja svetlo podlago. */}
+                  <div
+                    className="email-preview mt-4 overflow-hidden rounded-[12px] border border-border bg-white p-5 text-[#1d1d1f]"
+                    dangerouslySetInnerHTML={{ __html: campaign.content_html }}
+                  />
+                </details>
+              </article>
             );
           })}
         </div>

@@ -109,10 +109,12 @@ export function PrintMembersTable({
   rows,
   monthParam,
   monthLabel,
+  readOnly = false,
 }: {
   rows: PrintMemberRow[];
   monthParam: string;
   monthLabel: string;
+  readOnly?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -158,7 +160,9 @@ export function PrintMembersTable({
                 <th className="py-3 pr-4 font-medium">Porabljeno ({monthLabel})</th>
                 <th className="py-3 pr-4 font-medium">Preostalo</th>
                 <th className="py-3 pr-4 font-medium">Prejšnji mesec</th>
-                <th className="py-3 pr-6 text-right font-medium">Akcije</th>
+                {readOnly ? null : (
+                  <th className="py-3 pr-6 text-right font-medium">Akcije</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -200,6 +204,7 @@ export function PrintMembersTable({
                       <td className="py-4 pr-4 tabular-nums text-muted-foreground">
                         {row.previousMonth}
                       </td>
+                      {readOnly ? null : (
                       <td className="py-4 pr-6">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -286,11 +291,12 @@ export function PrintMembersTable({
                           </AlertDialog>
                         </div>
                       </td>
+                      )}
                     </tr>
 
                     {isFormOpen ? (
                       <tr className="border-b border-border">
-                        <td colSpan={6} className="surface-muted px-6 py-4">
+                        <td colSpan={readOnly ? 5 : 6} className="surface-muted px-6 py-4">
                           <CopiesForm
                             memberId={row.memberId}
                             mode={form.mode}
@@ -302,7 +308,7 @@ export function PrintMembersTable({
 
                     {isOpen ? (
                       <tr className="border-b border-border">
-                        <td colSpan={6} className="surface-muted px-6 py-4">
+                        <td colSpan={readOnly ? 5 : 6} className="surface-muted px-6 py-4">
                           <p className="mb-3 text-[0.8125rem] font-medium text-muted-foreground">
                             Posamezni zapisi ({row.entries.length})
                           </p>

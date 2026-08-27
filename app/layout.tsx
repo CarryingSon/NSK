@@ -29,16 +29,17 @@ export default function RootLayout({
       className={`${manrope.variable} ${jetBrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <head>
+      <body>
         {/* Shranjeno izbiro nanesemo pred izrisom, sicer ob vsakem nalaganju
-            utripne napačna shema. Mora biti navaden skript, ne komponenta. */}
+            utripne napačna shema. Ročnega <head> tu ne sme biti - Next v tem
+            primeru neha vstavljati metapodatke, med njimi ikone. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.classList.add(t)}catch(e){}`,
           }}
         />
-      </head>
-      <body>{children}</body>
+        {children}
+      </body>
     </html>
   );
 }

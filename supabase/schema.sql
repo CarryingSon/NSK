@@ -93,15 +93,44 @@ insert into public.app_settings (key, value)
 values ('print_monthly_quota', '300')
 on conflict (key) do nothing;
 
-create table if not exists public.email_logs (
+-- Obveščanje: kampanja hrani vsebino, čakalna vrsta pa enega prejemnika na
+-- vrstico. Pošiljanje teče v serijah, zato mora biti stanje vsakega prejemnika
+-- vidno posebej.
+create table if not exists public.email_campaigns (
   id uuid primary key default gen_random_uuid(),
+  title text not null,
+  subtitle text,
+  content_html text not null,
+  cta_label text,
+  cta_url text,
+  campaign_type text not null default 'obvestilo',
+  audience text not null default 'all',
+  daily_limit integer not null default 250,
+  status text not null default 'queued',
+  total_recipients integer not null default 0,
+  created_by text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+
+create table if not exists public.email_queue (
+  id uuid primary key default gen_random_uuid(),
+  campaign_id uuid not null references public.email_campaigns(id) on delete cascade,
+  member_id uuid references public.members(id) on delete set null,
   to_email text not null,
-  subject text not null,
-  body text,
-  status text not null default 'sent',
+  first_name text,
+  last_name text,
+  segment text,
+  status text not null default 'pending',
   error_message text,
-  metadata text,
-  created_at timestamptz not null default now()
+  attempts integer not null default 0,
+  -- Trenutek prevzema vrstice v pošiljanje. Prekinjena serija pusti vrstico v
+  -- stanju 'sending'; po petih minutah jo naslednji zagon vrne v vrsto.
+  claimed_at timestamptz,
+  sent_at timestamptz,
+  created_at timestamptz not null default now(),
+  constraint email_queue_campaign_email_unique unique (campaign_id, to_email)
 );
 
 create index if not exists members_status_idx on public.members (membership_status);
@@ -113,8 +142,11 @@ create index if not exists event_registrations_member_idx on public.event_regist
 create index if not exists event_registrations_event_idx on public.event_registrations (event_id);
 create index if not exists coupons_active_idx on public.coupons (active);
 create index if not exists print_records_member_idx on public.print_records (member_id);
-create index if not exists email_logs_created_at_idx on public.email_logs (created_at desc);
-create index if not exists email_logs_subject_idx on public.email_logs (subject);
+create index if not exists email_campaigns_created_at_idx on public.email_campaigns (created_at desc);
+create index if not exists email_campaigns_status_idx on public.email_campaigns (status);
+create index if not exists email_queue_campaign_idx on public.email_queue (campaign_id);
+create index if not exists email_queue_status_idx on public.email_queue (campaign_id, status);
+create index if not exists email_queue_sent_at_idx on public.email_queue (sent_at desc);
 
 drop trigger if exists set_members_updated_at on public.members;
 create trigger set_members_updated_at
@@ -128,12 +160,19 @@ before update on public.events
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists set_email_campaigns_updated_at on public.email_campaigns;
+create trigger set_email_campaigns_updated_at
+before update on public.email_campaigns
+for each row
+execute function public.set_updated_at();
+
 alter table public.members enable row level security;
 alter table public.events enable row level security;
 alter table public.event_registrations enable row level security;
 alter table public.coupons enable row level security;
 alter table public.print_records enable row level security;
-alter table public.email_logs enable row level security;
+alter table public.email_campaigns enable row level security;
+alter table public.email_queue enable row level security;
 alter table public.app_settings enable row level security;
 
 drop policy if exists "Authenticated users can manage members" on public.members;
@@ -184,9 +223,17 @@ to authenticated
 using (true)
 with check (true);
 
-drop policy if exists "Authenticated users can manage email logs" on public.email_logs;
-create policy "Authenticated users can manage email logs"
-on public.email_logs
+drop policy if exists "Authenticated users can manage email campaigns" on public.email_campaigns;
+create policy "Authenticated users can manage email campaigns"
+on public.email_campaigns
+for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated users can manage email queue" on public.email_queue;
+create policy "Authenticated users can manage email queue"
+on public.email_queue
 for all
 to authenticated
 using (true)

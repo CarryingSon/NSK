@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Printer } from "lucide-react";
+import { FileText, Lock, Printer } from "lucide-react";
 
 import { AddMemberCopies } from "@/components/print-records/add-member-copies";
 import { PrintMembersTable } from "@/components/print-records/print-members-table";
-import { getMembersForSelect, getPrintOverview } from "@/lib/data";
+import { getMembersForSelect, getPrintMonths, getPrintOverview } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 interface PrintRecordsPageProps {
@@ -14,16 +14,11 @@ export default async function PrintRecordsPage({
   searchParams,
 }: PrintRecordsPageProps) {
   const { month } = await searchParams;
-  const [overview, members] = await Promise.all([
+  const [overview, members, months] = await Promise.all([
     getPrintOverview(month),
     getMembersForSelect(),
+    getPrintMonths(),
   ]);
-
-  const months = [
-    { param: overview.monthParam, label: overview.monthLabel },
-    { param: overview.previousParam, label: overview.previousLabel },
-  ];
-  const active = month ?? overview.monthParam;
 
   const cards = [
     {
@@ -35,9 +30,8 @@ export default async function PrintRecordsPage({
     {
       label: "Preostale kopije",
       value: overview.totalRemaining,
-      hint: `Od ${overview.totalQuota} skupaj`,
-      tone:
-        overview.totalRemaining < 0 ? "text-destructive" : "text-success",
+      hint: `Od ${overview.totalQuota} skupaj (${overview.totalMembers} × ${overview.quota})`,
+      tone: overview.totalRemaining < 0 ? "text-destructive" : "text-success",
     },
     {
       label: "Članov kopiralo",
@@ -46,6 +40,8 @@ export default async function PrintRecordsPage({
       tone: "text-foreground",
     },
   ];
+
+  const reports = months.filter((m) => !m.isCurrent);
 
   return (
     <div className="space-y-8">
@@ -62,14 +58,14 @@ export default async function PrintRecordsPage({
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-2">
-          {months.map((m) => (
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {months.slice(0, 4).map((m) => (
             <Link
               key={m.param}
               href={`/print-records?month=${m.param}`}
               className={cn(
                 "rounded-full px-4 py-2 text-[0.9375rem] font-medium transition-colors",
-                m.param === active
+                m.param === overview.monthParam
                   ? "bg-primary text-primary-foreground"
                   : "surface-card text-muted-foreground hover:text-foreground",
               )}
@@ -79,6 +75,19 @@ export default async function PrintRecordsPage({
           ))}
         </div>
       </div>
+
+      {overview.readOnly ? (
+        <div className="flex items-center gap-3 rounded-[14px] border border-border bg-muted px-5 py-4">
+          <Lock className="size-4 shrink-0 text-muted-foreground" />
+          <p className="text-[0.9375rem] text-muted-foreground">
+            <strong className="font-medium text-foreground">
+              Poročilo za {overview.monthLabel}.
+            </strong>{" "}
+            Pretekli meseci so zaklenjeni — kopij za nazaj ni mogoče vpisovati
+            ali popravljati.
+          </p>
+        </div>
+      ) : null}
 
       <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
@@ -99,15 +108,54 @@ export default async function PrintRecordsPage({
         ))}
       </section>
 
-      <div className="flex justify-end">
-        <AddMemberCopies members={members} />
-      </div>
+      {overview.readOnly ? null : (
+        <div className="flex justify-end">
+          <AddMemberCopies members={members} />
+        </div>
+      )}
 
       <PrintMembersTable
         rows={overview.rows}
         monthParam={overview.monthParam}
         monthLabel={overview.monthLabel}
+        readOnly={overview.readOnly}
       />
+
+      {reports.length > 0 ? (
+        <section className="surface-card overflow-hidden rounded-[18px]">
+          <div className="border-b border-border p-6">
+            <h2 className="font-heading text-2xl font-semibold tracking-[-0.02em]">
+              Mesečna poročila
+            </h2>
+            <p className="mt-2 text-[0.9375rem] text-muted-foreground">
+              Zaključeni meseci. Klik odpre enak pregled, samo brez urejanja.
+            </p>
+          </div>
+
+          <ul>
+            {reports.map((report) => (
+              <li key={report.param} className="border-b border-border last:border-0">
+                <Link
+                  href={`/print-records?month=${report.param}`}
+                  className="flex items-center justify-between gap-4 px-6 py-4 transition-colors hover:bg-accent"
+                >
+                  <span className="flex items-center gap-3">
+                    <FileText className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="font-medium">{report.label}</span>
+                  </span>
+                  <span className="text-[0.9375rem] text-muted-foreground">
+                    <strong className="font-semibold tabular-nums text-foreground">
+                      {report.totalCopies}
+                    </strong>{" "}
+                    kopij · {report.membersCopied}{" "}
+                    {report.membersCopied === 1 ? "član" : "članov"}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

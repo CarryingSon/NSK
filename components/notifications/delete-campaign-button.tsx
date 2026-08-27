@@ -2,7 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 
-import { deleteEmailCampaignAction } from "@/app/actions/notifications";
+import { deleteCampaignAction } from "@/app/actions/notifications";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,14 +16,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-export function DeleteEmailCampaignButton({
-  subject,
-  sentAt,
-  totalSent,
+export function DeleteCampaignButton({
+  campaignId,
+  title,
+  totalRecipients,
+  pendingCount,
 }: {
-  subject: string;
-  sentAt: string;
-  totalSent: number;
+  campaignId: string;
+  title: string;
+  totalRecipients: number;
+  pendingCount: number;
 }) {
   return (
     <AlertDialog>
@@ -31,21 +33,24 @@ export function DeleteEmailCampaignButton({
         render={<Button variant="ghost" size="icon-sm" className="text-destructive" />}
       >
         <Trash2 className="size-4" />
-        <span className="sr-only">Izbriši kampanjo</span>
+        <span className="sr-only">Izbriši obvestilo</span>
       </AlertDialogTrigger>
       <AlertDialogContent className="rounded-[18px] border border-border bg-card p-0">
         <AlertDialogHeader className="px-6 pt-6">
-          <AlertDialogTitle>Izbrišem zgodovino obvestila?</AlertDialogTitle>
+          <AlertDialogTitle>Izbrišem obvestilo?</AlertDialogTitle>
           <AlertDialogDescription>
-            Za obvestilo <strong>{subject}</strong> bo izbrisanih <strong>{totalSent}</strong>{" "}
-            zapisov pošiljanja. Ta korak je nepovraten.
+            Obvestilo <strong>{title}</strong> in vseh {totalRecipients} zapisov
+            pošiljanja bo izbrisanih.
+            {pendingCount > 0
+              ? ` ${pendingCount} sporočil še čaka v vrsti in ne bo poslanih.`
+              : ""}{" "}
+            Ta korak je nepovraten.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel className="rounded-xl">Prekliči</AlertDialogCancel>
-          <form action={deleteEmailCampaignAction}>
-            <input type="hidden" name="subject" value={subject} />
-            <input type="hidden" name="sent_at" value={sentAt} />
+          <form action={deleteCampaignAction}>
+            <input type="hidden" name="campaign_id" value={campaignId} />
             <AlertDialogAction
               type="submit"
               variant="destructive"

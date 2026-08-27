@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Bell,
+  History,
   LayoutDashboard,
   Info,
   LogOut,
@@ -9,10 +10,38 @@ import {
   Users,
 } from "lucide-react";
 
-import type { MembershipStatus } from "@/types/database";
-import type { NotificationAudience, StatusOption } from "@/types/app";
+import type {
+  CampaignStatus,
+  CampaignType,
+  MemberSegment,
+  MembershipStatus,
+  NotificationAudience,
+} from "@/types/database";
+import type { StatusOption } from "@/types/app";
 
 export const appName = "Poziralnik";
+
+// Podatki kluba za nogo e-pošte. Povzeti z nsk-klub.si; TikToka, YouTuba in
+// LinkedIna klub na spletni strani nima, zato jih tu ni.
+export const club = {
+  name: "Notranjski študentski klub",
+  shortName: "NŠK",
+  street: "Gerbičeva ulica 32",
+  city: "1380 Cerknica",
+  email: "nsk.klub@gmail.com",
+  phone: "041 301 244",
+  phoneHref: "tel:+38641301244",
+  website: "https://www.nsk-klub.si",
+  links: [
+    { label: "Ugodnosti", href: "https://www.nsk-klub.si/ugodnosti" },
+    { label: "Aktualno", href: "https://www.nsk-klub.si/aktualno" },
+    { label: "Postani član", href: "https://www.nsk-klub.si/pridruzi-se" },
+  ],
+  social: [
+    { label: "Instagram", href: "https://www.instagram.com/nsk_klub/" },
+    { label: "Facebook", href: "https://www.facebook.com/klub.nsk/" },
+  ],
+} as const;
 
 export interface NavigationItem {
   href: string;
@@ -25,7 +54,7 @@ export const primaryNavigation: NavigationItem[] = [
   { href: "/members", label: "Člani", icon: Users },
   { href: "/print-records", label: "Evidenca tiska", icon: Newspaper },
   { href: "/notifications", label: "Obveščanje", icon: Bell },
-  { href: "/notifications/history", label: "Zgodovina obvestil", icon: Bell },
+  { href: "/notifications/history", label: "Zgodovina obvestil", icon: History },
   { href: "/settings", label: "Nastavitve", icon: Settings },
   { href: "/info", label: "Info", icon: Info },
 ];
@@ -207,17 +236,178 @@ export const schoolOptionGroups: FacultyOptionGroup[] = [
   ...facultyOptionGroups,
 ];
 
-export const notificationAudienceOptions: StatusOption<NotificationAudience>[] = [
-  { value: "active", label: "Aktivni člani" },
-  { value: "all", label: "Vsi člani z e-pošto" },
-  { value: "inactive", label: "Neaktivni člani" },
-  { value: "pending", label: "Člani v postopku" },
+
+// --- Obveščanje ---
+
+// Polje "šola oziroma fakulteta" dovoli prosto vnesen naziv, zato skupine ne
+// moremo prebrati iz stolpca. Uvrstitev zato izpeljemo iz naziva: najprej
+// natančno ujemanje s seznamoma zgoraj, nato besedne značilnice. Kar se ne
+// uvrsti, ostane "unknown" in je dosegljivo prek skupine "vsi člani".
+const pupilSchoolNames = new Set(
+  secondarySchoolOptionGroups.flatMap((group) =>
+    group.options.map((option) => normalizeSchoolName(option.value)),
+  ),
+);
+
+const studentSchoolNames = new Set(
+  facultyOptionGroups.flatMap((group) =>
+    group.options.map((option) => normalizeSchoolName(option.value)),
+  ),
+);
+
+// Šumniki odpadejo, da "šolski center" ujame tudi "solski center".
+function normalizeSchoolName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+const pupilMarkers = [
+  "gimnazij",
+  "srednja sola",
+  "srednja s",
+  "srednje sole",
+  "solski center",
+  // Pogosti okrajšavi v prostem vnosu: "ŠC Postojna", "SŠ Josipa Jurčiča".
+  "sc ",
+  "ss ",
+  "dijaski",
+  "biotehniski izobrazevalni center",
+  "izobrazevalni center",
+  "poklicna sola",
+  "srednja poklicna",
+  "vzgojiteljska",
+  "waldorfska",
 ];
+
+const studentMarkers = [
+  "fakultet",
+  "univerz",
+  "akademij",
+  "visoka sola",
+  "visja sola",
+  "visokosolski",
+  "college",
+  "institut",
+  "(ul ",
+  "(um ",
+  "(up ",
+  "(ung ",
+  "(unm ",
+  "(nu,",
+];
+
+/**
+ * Iz naziva šole izpelje skupino člana.
+ *
+ * Vrstni red je pomemben: "Srednja šola za farmacijo ..." nosi besedo "šola",
+ * "Visoka šola za ..." pa tudi, zato dijaške značilnice preverimo prej samo pri
+ * natančnem ujemanju, sicer pa je "visoka/višja šola" močnejši signal.
+ */
+export function classifySchool(value?: string | null): MemberSegment {
+  if (!value) {
+    return "unknown";
+  }
+
+  const normalized = normalizeSchoolName(value);
+
+  if (!normalized) {
+    return "unknown";
+  }
+
+  if (pupilSchoolNames.has(normalized)) {
+    return "pupil";
+  }
+
+  if (studentSchoolNames.has(normalized)) {
+    return "student";
+  }
+
+  // "Visoka šola" in "višja šola" sta izjemi, ki bi ju sicer ujel vzorec
+  // "srednja š..." iz dijaškega seznama, zato ju preverimo najprej.
+  if (normalized.includes("visoka sola") || normalized.includes("visja sola")) {
+    return "student";
+  }
+
+  if (pupilMarkers.some((marker) => normalized.includes(marker))) {
+    return "pupil";
+  }
+
+  if (studentMarkers.some((marker) => normalized.includes(marker))) {
+    return "student";
+  }
+
+  return "unknown";
+}
+
+export const memberSegmentLabels: Record<MemberSegment, string> = {
+  student: "Študenti",
+  pupil: "Dijaki",
+  unknown: "Neopredeljeni",
+};
+
+// Gmail SMTP dovoli 500 sporočil na dan za brezplačen račun. 450 pusti rezervo
+// za prijave, opomnike in ostalo pošto kluba.
+export const emailDailyLimit = 450;
+
+// Privzeta omejitev ene kampanje. Manjša od dnevne, ker klub redko pošilja vsem
+// naenkrat in je bolje, da eno obvestilo ne požre celotne kvote.
+export const defaultCampaignDailyLimit = 250;
+
+// Koliko sporočil pošljemo v eni seriji. Serverless funkcija ne sme teči predolgo,
+// Gmail pa zavrne prehitre sunke - 20 sporočil je približno 20 sekund.
+export const campaignBatchSize = 20;
 
 export const notificationAudienceLabels: Record<NotificationAudience, string> = {
   all: "Vsi člani z e-pošto",
+  students: "Študenti",
+  pupils: "Dijaki",
   active: "Aktivni člani",
   inactive: "Neaktivni člani",
   pending: "Člani v postopku",
 };
 
+export const notificationAudienceDescriptions: Record<
+  NotificationAudience,
+  string
+> = {
+  all: "Vsak član z vpisano e-pošto, ne glede na šolo in status.",
+  students: "Člani, ki obiskujejo fakulteto, akademijo ali visoko šolo.",
+  pupils: "Člani, ki obiskujejo srednjo šolo ali gimnazijo.",
+  active: "Člani s statusom Aktiven.",
+  inactive: "Člani s statusom Neaktiven.",
+  pending: "Člani s statusom V postopku.",
+};
+
+// Vrstni red v izbirniku: najprej to, kar klub pošilja najpogosteje.
+export const notificationAudienceOrder: NotificationAudience[] = [
+  "all",
+  "students",
+  "pupils",
+  "active",
+  "inactive",
+  "pending",
+];
+
+export const campaignTypeOptions: StatusOption<CampaignType>[] = [
+  { value: "obvestilo", label: "Obvestilo" },
+  { value: "dogodek", label: "Dogodek" },
+  { value: "ugodnost", label: "Ugodnost" },
+  { value: "novice", label: "Novice" },
+];
+
+export const campaignTypeLabels: Record<CampaignType, string> = {
+  obvestilo: "Obvestilo",
+  dogodek: "Dogodek",
+  ugodnost: "Ugodnost",
+  novice: "Novice",
+};
+
+export const campaignStatusLabels: Record<CampaignStatus, string> = {
+  queued: "V čakalni vrsti",
+  sending: "Pošiljanje",
+  paused: "Na pavzi",
+  sent: "Poslano",
+};
