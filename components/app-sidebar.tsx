@@ -16,7 +16,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { appName, logoutItem, primaryNavigation } from "@/lib/constants";
+import type { NavigationItem } from "@/lib/constants";
+import {
+  appName,
+  logoutItem,
+  primaryNavigation,
+  secondaryNavigation,
+} from "@/lib/constants";
 import { getInitials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +34,28 @@ function SidebarBody({
   demoMode: boolean;
 }) {
   const pathname = usePathname();
+
+  function renderLink(item: NavigationItem) {
+    const isActive =
+      pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        aria-current={isActive ? "page" : undefined}
+        className={cn(
+          "flex items-center gap-3 rounded-[10px] px-3 py-2 text-[0.9375rem] text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+          isActive && "bg-sidebar-accent font-medium text-sidebar-foreground",
+        )}
+      >
+        <item.icon
+          className={cn("size-[1.125rem]", isActive && "text-primary")}
+        />
+        {item.label}
+      </Link>
+    );
+  }
 
   return (
     <div className="surface-sidebar flex h-full flex-col px-4 py-6 text-sidebar-foreground">
@@ -57,31 +85,14 @@ function SidebarBody({
       </div>
 
       <nav className="mt-8 flex-1 space-y-0.5">
-        {primaryNavigation.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-3 rounded-[10px] px-3 py-2 text-[0.9375rem] text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                isActive &&
-                  "bg-sidebar-accent font-medium text-sidebar-foreground",
-              )}
-            >
-              <item.icon
-                className={cn("size-[1.125rem]", isActive && "text-primary")}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
+        {primaryNavigation.map(renderLink)}
       </nav>
 
-      <div className="mt-6 border-t border-sidebar-border pt-5">
+      <div className="mt-6 space-y-0.5 border-t border-sidebar-border pt-4">
+        {secondaryNavigation.map(renderLink)}
+      </div>
+
+      <div className="mt-4 border-t border-sidebar-border pt-5">
         <div className="flex items-center gap-3 px-1">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-[0.8125rem] font-medium text-primary-foreground">
             {getInitials(email ?? appName)}

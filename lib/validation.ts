@@ -84,12 +84,14 @@ export const memberSchema = z.object({
   id: z.string().uuid().optional(),
   first_name: z.string().trim().min(2, "Ime je obvezno."),
   last_name: z.string().trim().min(2, "Priimek je obvezen."),
+  // Na prijavnici je EMŠO obvezen - klub ga potrebuje za evidenco članstva.
+  // Ločeni sporočili: prazno polje in tipkarska napaka nista ista težava.
   emso: z
     .string()
     .trim()
     .transform((value) => value.replace(/\s/g, ""))
-    .transform((value) => (value.length > 0 ? value : null))
-    .refine((value) => value === null || isValidEmso(value), {
+    .refine((value) => value.length > 0, { message: "Vnesi EMŠO." })
+    .refine((value) => value.length === 0 || isValidEmso(value), {
       message: "EMŠO mora imeti 13 števk in veljavno kontrolno številko.",
     }),
   email: z
@@ -205,4 +207,38 @@ export const campaignSchema = z
 // posebej - obrazec ga pošlje samo pri testu.
 export const testEmailSchema = z.object({
   testEmail: z.email("Vnesi veljaven e-poštni naslov za test."),
+});
+
+// Prijavnica z javnega obrazca. Pravila so ohlapnejša od memberSchema, ker jo
+// izpolnjuje obiskovalec brez pomoči: EMŠO in status članstva doda klub pozneje,
+// ob prenosu prijave med člane.
+export const applicationSchema = z.object({
+  first_name: z.string().trim().min(2, "Vnesi ime."),
+  last_name: z.string().trim().min(2, "Vnesi priimek."),
+  email: z.email("Vnesi veljaven e-poštni naslov."),
+  phone: optionalString,
+  birth_date: optionalDate,
+  // Na prijavnici je EMŠO obvezen - klub ga potrebuje za evidenco članstva.
+  // Ločeni sporočili: prazno polje in tipkarska napaka nista ista težava.
+  emso: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/\s/g, ""))
+    .refine((value) => value.length > 0, { message: "Vnesi EMŠO." })
+    .refine((value) => value.length === 0 || isValidEmso(value), {
+      message: "EMŠO mora imeti 13 števk in veljavno kontrolno številko.",
+    }),
+  address: optionalString,
+  postal_code: optionalString,
+  city: optionalString,
+  school: z.string().trim().min(2, "Vnesi šolo oziroma fakulteto."),
+  study_program: optionalString,
+  study_year: optionalString,
+  member_type: z.enum(["student", "pupil"]),
+  message: optionalString,
+});
+
+export const applicationStatusSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["pending", "approved", "rejected"]),
 });

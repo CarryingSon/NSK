@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 
 import { campaignTypeLabels, club } from "@/lib/constants";
 import { escapeHtml, sanitizeRichText } from "@/lib/email-content";
+import { getSiteUrl } from "@/lib/site-url";
 import { getEmailCredentials } from "@/lib/supabase/env";
 import type { CampaignType } from "@/types/database";
 
@@ -45,27 +46,6 @@ export interface CampaignEmailContent {
 }
 
 /**
- * Osnova za slike v e-pošti. Relativne poti v e-pošti ne delujejo - odjemalec
- * sporočila nima pojma, s katerega gostitelja prihaja - zato morajo biti
- * naslovi absolutni in javno dosegljivi.
- */
-function getAssetBaseUrl() {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
-
-  if (explicit) {
-    return explicit.replace(/\/$/, "");
-  }
-
-  const vercelDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-
-  if (vercelDomain) {
-    return `https://${vercelDomain}`;
-  }
-
-  return "https://nsk-rust.vercel.app";
-}
-
-/**
  * Sestavi e-pošto obvestila. Postavitev sloni na tabelah in vrstičnih slogih,
  * ker Gmail in Outlook odstranita <style> v glavi in ne poznata flexboxa.
  * Vse je sredinsko poravnano, logotip pa stoji nad oranžnim pasom.
@@ -79,7 +59,9 @@ export function buildCampaignEmailHtml({
   campaignType = "obvestilo",
   recipientName,
 }: CampaignEmailContent) {
-  const assets = getAssetBaseUrl();
+  // Slike v e-pošti potrebujejo absolutne naslove - relativne poti nimajo
+  // gostitelja, na katerega bi se vezale.
+  const assets = getSiteUrl();
   const safeContent = sanitizeRichText(contentHtml);
 
   // Odstavki iz urejevalnika pridejo brez slogov; tipografijo dodamo tu, da je

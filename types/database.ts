@@ -7,6 +7,8 @@ export type Json =
   | Json[];
 
 export type MembershipStatus = "active" | "inactive" | "pending";
+// Obdelava prijavnice, oddane prek javnega obrazca.
+export type ApplicationStatus = "pending" | "approved" | "rejected";
 export type EventStatus =
   | "upcoming"
   | "ongoing"
@@ -188,6 +190,58 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["print_records"]["Insert"]>;
+        Relationships: [];
+      };
+      membership_applications: {
+        Row: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string | null;
+          birth_date: string | null;
+          emso: string | null;
+          address: string | null;
+          postal_code: string | null;
+          city: string | null;
+          school: string;
+          study_program: string | null;
+          study_year: string | null;
+          member_type: MemberSegment;
+          proof_path: string | null;
+          message: string | null;
+          status: ApplicationStatus;
+          processed_at: string | null;
+          processed_by: string | null;
+          member_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone?: string | null;
+          birth_date?: string | null;
+          emso: string;
+          address?: string | null;
+          postal_code?: string | null;
+          city?: string | null;
+          school: string;
+          study_program?: string | null;
+          study_year?: string | null;
+          member_type?: MemberSegment;
+          proof_path?: string | null;
+          message?: string | null;
+          status?: ApplicationStatus;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          member_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["membership_applications"]["Insert"]
+        >;
         Relationships: [];
       };
       email_campaigns: {

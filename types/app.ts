@@ -1,4 +1,5 @@
 import type {
+  ApplicationStatus,
   CampaignStatus,
   CampaignType,
   Database,
@@ -12,6 +13,8 @@ import type {
 export type Member = Database["public"]["Tables"]["members"]["Row"];
 export type Event = Database["public"]["Tables"]["events"]["Row"];
 export type PrintRecord = Database["public"]["Tables"]["print_records"]["Row"];
+export type MembershipApplication =
+  Database["public"]["Tables"]["membership_applications"]["Row"];
 export type EmailCampaign = Database["public"]["Tables"]["email_campaigns"]["Row"];
 export type EmailQueueItem = Database["public"]["Tables"]["email_queue"]["Row"];
 
@@ -148,7 +151,21 @@ export interface DispatchBatchResult {
   message: string;
 }
 
+// Prijavnica s podpisano povezavo do potrdila - vedro je zasebno, zato se
+// povezava ustvari šele ob izrisu seznama in po eni uri poteče.
+export interface ApplicationRow extends MembershipApplication {
+  proofUrl: string | null;
+}
+
+export interface ApplicationCounts {
+  all: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
 export type {
+  ApplicationStatus,
   CampaignStatus,
   CampaignType,
   MemberSegment,

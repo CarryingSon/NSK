@@ -20,6 +20,8 @@ import {
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
+  ApplicationCounts,
+  ApplicationRow,
   CampaignFailure,
   CampaignWithProgress,
   DashboardOverview,
@@ -32,6 +34,7 @@ import type {
   PrintMonthSummary,
   NotificationAudienceStats,
 } from "@/types/app";
+import type { ApplicationStatus } from "@/types/database";
 
 async function getSupabaseOrNull() {
   if (!isSupabaseConfigured()) {
@@ -514,4 +517,76 @@ export async function getPrintMonths(): Promise<PrintMonthSummary[]> {
       membersCopied: v.members.size,
       isCurrent: param === current,
     }));
+}
+
+const emptyApplicationCounts: ApplicationCounts = {
+  all: 0,
+  pending: 0,
+  approved: 0,
+  rejected: 0,
+};
+
+/**
+ * Prijave za članstvo, po potrebi filtrirane po stanju.
+ *
+ * Potrdila živijo v zasebnem vedru, zato jih ni mogoče povezati naravnost -
+ * za vsako naredimo podpisano povezavo, ki po eni uri poteče.
+ */
+export async function getApplications(status: ApplicationStatus | "all" = "all") {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return { rows: [] as ApplicationRow[], counts: emptyApplicationCounts };
+  }
+
+  try {
+    let query = supabase
+      .from("membership_applications")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (status !== "all") {
+      query = query.eq("status", status);
+    }
+
+    const [{ data, error }, { data: statusRows, error: statusError }] =
+      await Promise.all([
+        query,
+        supabase.from("membership_applications").select("status"),
+      ]);
+
+    if (error) {
+      throw error;
+    }
+
+    if (statusError) {
+      throw statusError;
+    }
+
+    const counts = { ...emptyApplicationCounts };
+
+    for (const row of statusRows ?? []) {
+      counts.all += 1;
+      counts[row.status] += 1;
+    }
+
+    const rows = await Promise.all(
+      (data ?? []).map(async (application) => {
+        if (!application.proof_path) {
+          return { ...application, proofUrl: null };
+        }
+
+        const { data: signed } = await supabase.storage
+          .from("potrdila")
+          .createSignedUrl(application.proof_path, 60 * 60);
+
+        return { ...application, proofUrl: signed?.signedUrl ?? null };
+      }),
+    );
+
+    return { rows: rows as ApplicationRow[], counts };
+  } catch (error) {
+    console.error("Napaka pri nalaganju prijav za članstvo", error);
+    return { rows: [] as ApplicationRow[], counts: emptyApplicationCounts };
+  }
 }

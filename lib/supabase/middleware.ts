@@ -4,7 +4,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseCredentials, isSupabaseConfigured } from "@/lib/supabase/env";
 import type { Database } from "@/types/database";
 
+// Prijavna stran: neprijavljenega spusti noter, prijavljenega odbije na ploščo.
 const PUBLIC_PATHS = new Set(["/login"]);
+
+// Javni obrazec za včlanitev. Teče v iframeu na klubski spletni strani, zato
+// mora biti dosegljiv vsem - in za razliko od prijavne strani tudi prijavljenim,
+// da si ga admin lahko ogleda iz aplikacije.
+const OPEN_PATHS = ["/vclanitev"];
 
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -45,6 +51,11 @@ export async function updateSession(request: NextRequest) {
   const user = claimsData?.claims?.sub ? claimsData.claims : null;
 
   const { pathname } = request.nextUrl;
+
+  if (OPEN_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
+    return response;
+  }
+
   const isPublicPath = PUBLIC_PATHS.has(pathname);
 
   if (!user && !isPublicPath) {

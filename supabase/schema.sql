@@ -93,6 +93,34 @@ insert into public.app_settings (key, value)
 values ('print_monthly_quota', '300')
 on conflict (key) do nothing;
 
+-- Prijave za članstvo z javnega obrazca. Vanje pišejo neprijavljeni obiskovalci,
+-- zato ima ta tabela edina politiko za vlogo "anon" - in še ta samo za vstavljanje.
+create table if not exists public.membership_applications (
+  id uuid primary key default gen_random_uuid(),
+  first_name text not null,
+  last_name text not null,
+  email text not null,
+  phone text,
+  birth_date date,
+  emso text not null,
+  address text,
+  postal_code text,
+  city text,
+  school text not null,
+  study_program text,
+  study_year text,
+  member_type text not null default 'student',
+  proof_path text,
+  message text,
+  status text not null default 'pending',
+  processed_at timestamptz,
+  processed_by text,
+  member_id uuid references public.members(id) on delete set null,
+  created_at timestamptz not null default now(),
+  -- Kontrolna števka se preverja v aplikaciji; tu le oblika.
+  constraint membership_applications_emso_format check (emso ~ '^[0-9]{13}$')
+);
+
 -- Obveščanje: kampanja hrani vsebino, čakalna vrsta pa enega prejemnika na
 -- vrstico. Pošiljanje teče v serijah, zato mora biti stanje vsakega prejemnika
 -- vidno posebej.
@@ -142,6 +170,8 @@ create index if not exists event_registrations_member_idx on public.event_regist
 create index if not exists event_registrations_event_idx on public.event_registrations (event_id);
 create index if not exists coupons_active_idx on public.coupons (active);
 create index if not exists print_records_member_idx on public.print_records (member_id);
+create index if not exists membership_applications_created_at_idx on public.membership_applications (created_at desc);
+create index if not exists membership_applications_status_idx on public.membership_applications (status);
 create index if not exists email_campaigns_created_at_idx on public.email_campaigns (created_at desc);
 create index if not exists email_campaigns_status_idx on public.email_campaigns (status);
 create index if not exists email_queue_campaign_idx on public.email_queue (campaign_id);
@@ -171,6 +201,7 @@ alter table public.events enable row level security;
 alter table public.event_registrations enable row level security;
 alter table public.coupons enable row level security;
 alter table public.print_records enable row level security;
+alter table public.membership_applications enable row level security;
 alter table public.email_campaigns enable row level security;
 alter table public.email_queue enable row level security;
 alter table public.app_settings enable row level security;
@@ -223,6 +254,35 @@ to authenticated
 using (true)
 with check (true);
 
+drop policy if exists "Anyone can submit an application" on public.membership_applications;
+create policy "Anyone can submit an application"
+on public.membership_applications
+for insert
+to anon, authenticated
+with check (true);
+
+drop policy if exists "Authenticated users can read applications" on public.membership_applications;
+create policy "Authenticated users can read applications"
+on public.membership_applications
+for select
+to authenticated
+using (true);
+
+drop policy if exists "Authenticated users can update applications" on public.membership_applications;
+create policy "Authenticated users can update applications"
+on public.membership_applications
+for update
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated users can delete applications" on public.membership_applications;
+create policy "Authenticated users can delete applications"
+on public.membership_applications
+for delete
+to authenticated
+using (true);
+
 drop policy if exists "Authenticated users can manage email campaigns" on public.email_campaigns;
 create policy "Authenticated users can manage email campaigns"
 on public.email_campaigns
@@ -238,3 +298,7 @@ for all
 to authenticated
 using (true)
 with check (true);
+
+-- Vedro za potrdila o vpisu in njegove politike so v supabase/migrate-applications.sql:
+-- storage.buckets in storage.objects nista v shemi public, zato ju ta datoteka
+-- namenoma ne ustvarja.

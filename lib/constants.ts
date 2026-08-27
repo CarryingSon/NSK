@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Bell,
+  ClipboardList,
   History,
   LayoutDashboard,
   Info,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 
 import type {
+  ApplicationStatus,
   CampaignStatus,
   CampaignType,
   MemberSegment,
@@ -21,8 +23,9 @@ import type { StatusOption } from "@/types/app";
 
 export const appName = "Poziralnik";
 
-// Podatki kluba za nogo e-pošte. Povzeti z nsk-klub.si; TikToka, YouTuba in
-// LinkedIna klub na spletni strani nima, zato jih tu ni.
+// Podatki kluba za nogo e-pošte in stran Info. Povzeti z nsk-klub.si
+// (avgust 2026); TikToka, YouTuba in LinkedIna klub na spletni strani nima,
+// zato jih tu ni.
 export const club = {
   name: "Notranjski študentski klub",
   shortName: "NŠK",
@@ -31,6 +34,12 @@ export const club = {
   email: "nsk.klub@gmail.com",
   phone: "041 301 244",
   phoneHref: "tel:+38641301244",
+  // Na spletni strani je številka pripisana predsednici.
+  phoneOwner: "Liza",
+  officeHours: "Petek in sobota, 18:00-20:00",
+  taxNumber: "96005564",
+  registrationNumber: "5737877000",
+  iban: "SI56 0400 0027 8210 006",
   website: "https://www.nsk-klub.si",
   links: [
     { label: "Ugodnosti", href: "https://www.nsk-klub.si/ugodnosti" },
@@ -59,12 +68,19 @@ export interface NavigationItem {
   icon: LucideIcon;
 }
 
+// Delo s člani, tiskom in obveščanjem - to odpiraš vsak dan.
 export const primaryNavigation: NavigationItem[] = [
   { href: "/dashboard", label: "Nadzorna plošča", icon: LayoutDashboard },
   { href: "/members", label: "Člani", icon: Users },
+  { href: "/applications", label: "Prijave članov", icon: ClipboardList },
   { href: "/print-records", label: "Evidenca tiska", icon: Newspaper },
   { href: "/notifications", label: "Obveščanje", icon: Bell },
   { href: "/notifications/history", label: "Zgodovina obvestil", icon: History },
+];
+
+// Nastavitve in podatki kluba stojijo ob profilu na dnu: odpreš ju redko,
+// zato ne zaslužita mesta med dnevnimi opravili.
+export const secondaryNavigation: NavigationItem[] = [
   { href: "/settings", label: "Nastavitve", icon: Settings },
   { href: "/info", label: "Info", icon: Info },
 ];
@@ -73,6 +89,69 @@ export const logoutItem = {
   label: "Odjava",
   icon: LogOut,
 };
+
+export const applicationStatusLabels: Record<ApplicationStatus, string> = {
+  pending: "V obdelavi",
+  approved: "Odobreno",
+  rejected: "Zavrnjeno",
+};
+
+// Zavihki filtra nad seznamom prijav. "all" ni stanje prijave, zato stoji
+// posebej in ne v applicationStatusLabels.
+export const applicationFilters: Array<{
+  value: ApplicationStatus | "all";
+  label: string;
+}> = [
+  { value: "all", label: "Vse" },
+  { value: "pending", label: "V obdelavi" },
+  { value: "approved", label: "Odobrene" },
+  { value: "rejected", label: "Zavrnjene" },
+];
+
+// Pot javnega obrazca. Ena konstanta, ker jo potrebujejo koda za vgradnjo,
+// predogled in izjema v zaščiti poti.
+export const applicationFormPath = "/vclanitev";
+
+export interface BoardMember {
+  name: string;
+  role?: string;
+  email?: string;
+}
+
+// Sestava organov kluba, kot je objavljena na nsk-klub.si (avgust 2026).
+export const clubBoard: BoardMember[] = [
+  { name: "Liza Perko", role: "Predsednica", email: "lizaperko.nsk@gmail.com" },
+  { name: "Juna Jesenšek", role: "Podpredsednica" },
+  { name: "Hana Jesenšek", role: "Tajnica" },
+  { name: "Nikita Čuček", role: "Svetnica" },
+  { name: "Luka Petavs", role: "Blagajničar" },
+  { name: "Neža Horvat", role: "Predstavnica dijaške sekcije" },
+];
+
+export const clubSupervisoryBoard: BoardMember[] = [
+  { name: "Miha Prudič" },
+  { name: "Ambrož Puntar" },
+  { name: "David Tomšič" },
+];
+
+export const clubMembership = {
+  eligibility:
+    "Študenti in dijaki s stalnim prebivališčem v občini Cerknica, Loška Dolina ali Bloke.",
+  requirements: [
+    "Originalno potrdilo o vpisu za tekoče študijsko oziroma šolsko leto",
+    "Izpolnjena pristopna izjava",
+    "Podpis za obdelavo osebnih podatkov",
+  ],
+  channels: [
+    "Osebno v času uradnih ur kluba",
+    "Prek spletnega obrazca na nsk-klub.si",
+  ],
+};
+
+export const clubPartners = [
+  "Zveza študentskih klubov Slovenije",
+  "Občina Cerknica",
+];
 
 export const membershipStatusOptions: StatusOption<MembershipStatus>[] = [
   { value: "active", label: "Aktiven" },
