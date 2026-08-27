@@ -37,9 +37,19 @@ export const club = {
     { label: "Aktualno", href: "https://www.nsk-klub.si/aktualno" },
     { label: "Postani član", href: "https://www.nsk-klub.si/pridruzi-se" },
   ],
+  // "icon" se preslika v /public/email/<icon>.png. E-pošta potrebuje rastrsko
+  // sliko na absolutnem naslovu - Gmail SVG ne prikaže.
   social: [
-    { label: "Instagram", href: "https://www.instagram.com/nsk_klub/" },
-    { label: "Facebook", href: "https://www.facebook.com/klub.nsk/" },
+    {
+      label: "Instagram",
+      href: "https://www.instagram.com/nsk_klub/",
+      icon: "instagram",
+    },
+    {
+      label: "Facebook",
+      href: "https://www.facebook.com/klub.nsk/",
+      icon: "facebook",
+    },
   ],
 } as const;
 

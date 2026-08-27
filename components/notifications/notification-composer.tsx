@@ -120,10 +120,11 @@ export function NotificationComposer({
             <div>
               <p className="font-semibold">Email povezava še ni nastavljena</p>
               <p className="mt-1">
-                Dodaj SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in SMTP_FROM v
-                .env.local, nato ponovno zaženi aplikacijo. Obvestilo lahko
-                pripraviš in uvrstiš v vrsto tudi brez tega, poslati pa ga ne bo
-                mogoče.
+                Dodaj SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in SMTP_FROM
+                med spremenljivke okolja - lokalno v .env.local, na Vercelu med
+                nastavitve projekta - in ponovno zaženi oziroma odloži
+                aplikacijo. Obvestilo lahko pripraviš in uvrstiš v vrsto tudi
+                brez tega, poslati pa ga ne bo mogoče.
               </p>
             </div>
           </div>
@@ -131,30 +132,36 @@ export function NotificationComposer({
       ) : null}
 
       <Section title="Naslov in podnaslov">
-        <div className="space-y-2">
-          <Label htmlFor="title">Naslov obvestila</Label>
-          <Input
-            id="title"
-            name="title"
-            required
-            maxLength={150}
-            placeholder="Vnesite naslov obvestila"
-            className="h-12"
-          />
-          <Hint>Glavni naslov, ki bo prikazan v emailu in v zadevi sporočila.</Hint>
-        </div>
+        {/* Dve kratki polji drug ob drugem: čez celo širino bi bila vnosna
+            polja nesorazmerno dolga za nekaj besed besedila. */}
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="title">Naslov obvestila</Label>
+            <Input
+              id="title"
+              name="title"
+              required
+              maxLength={150}
+              placeholder="Vnesite naslov obvestila"
+              className="h-12"
+            />
+            <Hint>
+              Glavni naslov, ki bo prikazan v emailu in v zadevi sporočila.
+            </Hint>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="subtitle">Podnaslov pod logotipom</Label>
-          <Input
-            id="subtitle"
-            name="subtitle"
-            maxLength={120}
-            defaultValue="Pozor člani NŠK-ja!"
-            placeholder="Pozor člani NŠK-ja!"
-            className="h-12"
-          />
-          <Hint>Besedilo na oranžni glavi pod imenom kluba.</Hint>
+          <div className="space-y-2">
+            <Label htmlFor="subtitle">Podnaslov pod logotipom</Label>
+            <Input
+              id="subtitle"
+              name="subtitle"
+              maxLength={120}
+              defaultValue="Pozor člani NŠK-ja!"
+              placeholder="Pozor člani NŠK-ja!"
+              className="h-12"
+            />
+            <Hint>Besedilo na oranžni glavi pod imenom kluba.</Hint>
+          </div>
         </div>
       </Section>
 
@@ -192,91 +199,116 @@ export function NotificationComposer({
       </Section>
 
       <Section title="Nastavitve pošiljanja">
-        <div className="space-y-2">
-          <Label htmlFor="campaign_type">Tip obvestila</Label>
-          <NativeSelect
-            id="campaign_type"
-            name="campaign_type"
-            defaultValue="obvestilo"
-            className="h-12"
-          >
-            {campaignTypeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </NativeSelect>
+        {/* Tri kratka polja v vrsti; panel s prejemniki pod njimi izkoristi
+            celo širino za razčlenitev članstva. */}
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="campaign_type">Tip obvestila</Label>
+            <NativeSelect
+              id="campaign_type"
+              name="campaign_type"
+              defaultValue="obvestilo"
+              className="h-12"
+            >
+              {campaignTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="audience">Občinstvo</Label>
+            <NativeSelect
+              id="audience"
+              name="audience"
+              value={audience}
+              onChange={(event) =>
+                setAudience(event.target.value as NotificationAudience)
+              }
+              className="h-12"
+            >
+              {stats.options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label} ({option.count})
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="daily_limit">
+              Dnevna omejitev (max {stats.dailyLimit})
+            </Label>
+            <Input
+              id="daily_limit"
+              name="daily_limit"
+              type="number"
+              min={1}
+              max={stats.dailyLimit}
+              defaultValue={defaultCampaignDailyLimit}
+              className="h-12"
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="audience">Občinstvo</Label>
-          <NativeSelect
-            id="audience"
-            name="audience"
-            value={audience}
-            onChange={(event) =>
-              setAudience(event.target.value as NotificationAudience)
-            }
-            className="h-12"
-          >
-            {stats.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label} ({option.count})
-              </option>
-            ))}
-          </NativeSelect>
-
-          <div className="rounded-[14px] border border-border bg-card px-4 py-3.5">
+        <div className="rounded-[14px] border border-border bg-card px-5 py-4">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3">
-              <Users className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                <Users className="size-5" />
+              </div>
               <div>
-                <p className="font-heading text-[1.0625rem] font-semibold text-foreground">
-                  {selected?.count ?? 0} prejemnikov
+                <p className="font-heading text-2xl font-semibold text-foreground">
+                  {selected?.count ?? 0}{" "}
+                  <span className="text-base font-medium text-muted-foreground">
+                    prejemnikov
+                  </span>
                 </p>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Študenti: {stats.students} &middot; Dijaki: {stats.pupils}{" "}
-                  &middot; Neopredeljeni: {stats.unknown} &middot; Skupaj z
-                  e-pošto: {stats.totalWithEmail}
-                </p>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
                   {selected?.description}
                 </p>
               </div>
             </div>
+
+            <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4 lg:shrink-0 lg:text-right">
+              {[
+                { label: "Študenti", value: stats.students },
+                { label: "Dijaki", value: stats.pupils },
+                { label: "Neopredeljeni", value: stats.unknown },
+                { label: "Skupaj z e-pošto", value: stats.totalWithEmail },
+              ].map((item) => (
+                <div key={item.label}>
+                  <dt className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                    {item.label}
+                  </dt>
+                  <dd className="mt-1 font-heading text-lg font-semibold text-foreground">
+                    {item.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
-          {stats.unknown > 0 &&
-          (audience === "students" || audience === "pupils") ? (
-            <div className="flex items-start gap-2 rounded-[14px] border border-border bg-muted/50 px-4 py-3 text-xs leading-5 text-muted-foreground">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-              <span>
-                Skupina se prebere iz polja &raquo;šola oziroma fakulteta&laquo;.
-                {stats.unknown} članov ima vpisano šolo, ki je ni bilo mogoče
-                uvrstiti - ti ostanejo dosegljivi prek občinstva &raquo;vsi
-                člani&laquo;.
-              </span>
-            </div>
-          ) : null}
+          <p className="mt-4 border-t border-border pt-3 text-xs leading-5 text-muted-foreground">
+            Gmail dovoli {stats.dailyLimit} sporočil na dan. Danes je poslanih{" "}
+            {stats.sentToday}, na voljo je še {stats.remainingToday}.
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="daily_limit">
-            Dnevna omejitev pošiljanja (max {stats.dailyLimit})
-          </Label>
-          <Input
-            id="daily_limit"
-            name="daily_limit"
-            type="number"
-            min={1}
-            max={stats.dailyLimit}
-            defaultValue={defaultCampaignDailyLimit}
-            className="h-12"
-          />
-          <Hint>
-            Gmail omejitev: {stats.dailyLimit} sporočil na dan. Danes je poslanih{" "}
-            {stats.sentToday}, na voljo je še {stats.remainingToday}.
-          </Hint>
-        </div>
+        {stats.unknown > 0 &&
+        (audience === "students" || audience === "pupils") ? (
+          <div className="flex items-start gap-2 rounded-[14px] border border-border bg-muted/50 px-4 py-3 text-xs leading-5 text-muted-foreground">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            <span>
+              Skupina se prebere iz polja &raquo;šola oziroma fakulteta&laquo;.{" "}
+              {stats.unknown} članov ima vpisano šolo, ki je ni bilo mogoče
+              uvrstiti - ti ostanejo dosegljivi prek občinstva &raquo;vsi
+              člani&laquo;.
+            </span>
+          </div>
+        ) : null}
 
         {feedback ? (
           <div

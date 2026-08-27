@@ -318,7 +318,7 @@ export function RichTextEditor({
         data-placeholder="Napiši obvestilo. Uporabi orodno vrstico za naslove, sezname, povezave in slike."
         onInput={sync}
         onBlur={sync}
-        className="rich-text-editor min-h-72 w-full px-4 py-4 text-[0.9375rem] leading-relaxed text-foreground outline-none focus-visible:outline-none"
+        className="rich-text-editor min-h-96 w-full px-5 py-4 text-[0.9375rem] leading-relaxed text-foreground outline-none focus-visible:outline-none"
       />
 
       <input type="hidden" name={name} value={value} />

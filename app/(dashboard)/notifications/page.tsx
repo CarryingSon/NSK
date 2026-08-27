@@ -34,15 +34,13 @@ export default async function NotificationsPage() {
         }
       />
 
-      {/* Obrazec je en sam stolpec: obvestilo se piše od vrha navzdol, zato
-          stranska vsebina samo odvrača pozornost. */}
-      <div className="max-w-4xl">
-        <NotificationComposer
-          stats={stats}
-          emailConfigured={isEmailConfigured()}
-          testEmail={user?.email ?? ""}
-        />
-      </div>
+      {/* Širino odmerja že AppShell (76rem), zato tu ni dodatne omejitve -
+          obrazec se drži iste mreže kot člani in evidenca tiska. */}
+      <NotificationComposer
+        stats={stats}
+        emailConfigured={isEmailConfigured()}
+        testEmail={user?.email ?? ""}
+      />
     </div>
   );
 }

@@ -45,8 +45,30 @@ export interface CampaignEmailContent {
 }
 
 /**
+ * Osnova za slike v e-pošti. Relativne poti v e-pošti ne delujejo - odjemalec
+ * sporočila nima pojma, s katerega gostitelja prihaja - zato morajo biti
+ * naslovi absolutni in javno dosegljivi.
+ */
+function getAssetBaseUrl() {
+  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (explicit) {
+    return explicit.replace(/\/$/, "");
+  }
+
+  const vercelDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+
+  if (vercelDomain) {
+    return `https://${vercelDomain}`;
+  }
+
+  return "https://nsk-rust.vercel.app";
+}
+
+/**
  * Sestavi e-pošto obvestila. Postavitev sloni na tabelah in vrstičnih slogih,
  * ker Gmail in Outlook odstranita <style> v glavi in ne poznata flexboxa.
+ * Vse je sredinsko poravnano, logotip pa stoji nad oranžnim pasom.
  */
 export function buildCampaignEmailHtml({
   title,
@@ -57,49 +79,55 @@ export function buildCampaignEmailHtml({
   campaignType = "obvestilo",
   recipientName,
 }: CampaignEmailContent) {
+  const assets = getAssetBaseUrl();
   const safeContent = sanitizeRichText(contentHtml);
 
   // Odstavki iz urejevalnika pridejo brez slogov; tipografijo dodamo tu, da je
-  // ista v e-pošti in v predogledu.
+  // ista v e-pošti in v predogledu. Seznami ostanejo brez pik: sredinsko
+  // poravnane alineje z vodilnimi pikami izpadejo razmetano.
   const styledContent = safeContent
     .replace(
       /<p>/g,
-      '<p style="margin:0 0 18px 0;font-size:16px;line-height:1.65;color:#1d1d1f;">',
+      '<p style="margin:0 0 18px 0;font-size:16px;line-height:1.65;color:#1d1d1f;text-align:center;">',
     )
     .replace(
       /<h2>/g,
-      '<h2 style="margin:28px 0 12px 0;font-size:21px;line-height:1.3;color:#1d1d1f;letter-spacing:-0.02em;">',
+      '<h2 style="margin:30px 0 12px 0;font-size:22px;line-height:1.3;color:#1d1d1f;letter-spacing:-0.02em;text-align:center;">',
     )
     .replace(
       /<h3>/g,
-      '<h3 style="margin:24px 0 10px 0;font-size:18px;line-height:1.35;color:#1d1d1f;letter-spacing:-0.015em;">',
+      '<h3 style="margin:24px 0 10px 0;font-size:18px;line-height:1.35;color:#1d1d1f;letter-spacing:-0.015em;text-align:center;">',
     )
     .replace(
       /<ul>/g,
-      '<ul style="margin:0 0 18px 0;padding-left:22px;font-size:16px;line-height:1.65;color:#1d1d1f;">',
+      '<ul style="margin:0 0 18px 0;padding:0;list-style:none;font-size:16px;line-height:1.65;color:#1d1d1f;text-align:center;">',
     )
     .replace(
       /<ol>/g,
-      '<ol style="margin:0 0 18px 0;padding-left:22px;font-size:16px;line-height:1.65;color:#1d1d1f;">',
+      '<ol style="margin:0 0 18px 0;padding:0;list-style:none;font-size:16px;line-height:1.65;color:#1d1d1f;text-align:center;">',
     )
     .replace(/<li>/g, '<li style="margin:0 0 8px 0;">')
     .replace(
       /<blockquote>/g,
-      '<blockquote style="margin:0 0 18px 0;padding:12px 18px;border-left:3px solid #f36717;background-color:#fdf3ec;font-size:16px;line-height:1.6;color:#1d1d1f;">',
+      '<blockquote style="margin:0 0 18px 0;padding:14px 20px;background-color:#fdf3ec;border-radius:12px;font-size:16px;line-height:1.6;color:#1d1d1f;text-align:center;">',
+    )
+    .replace(
+      /<img /g,
+      '<img align="center" ',
     );
 
   const greeting = recipientName
-    ? `<p style="margin:0 0 18px 0;font-size:16px;line-height:1.65;color:#1d1d1f;">Živjo ${escapeHtml(
+    ? `<p style="margin:0 0 18px 0;font-size:16px;line-height:1.65;color:#1d1d1f;text-align:center;">Živjo ${escapeHtml(
         recipientName,
       )},</p>`
     : "";
 
   const ctaBlock =
     ctaLabel && ctaUrl
-      ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:28px 0 6px 0;">
+      ? `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:30px auto 6px auto;">
             <tr>
               <td style="border-radius:999px;background-color:#f36717;">
-                <a href="${escapeHtml(ctaUrl)}" style="display:inline-block;padding:14px 30px;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px;">${escapeHtml(
+                <a href="${escapeHtml(ctaUrl)}" style="display:inline-block;padding:15px 34px;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px;">${escapeHtml(
                   ctaLabel,
                 )}</a>
               </td>
@@ -107,15 +135,23 @@ export function buildCampaignEmailHtml({
           </table>`
       : "";
 
-  const subtitleBlock = subtitle
-    ? `<p style="margin:8px 0 0 0;font-size:15px;line-height:1.4;color:#ffffff;opacity:0.92;">${escapeHtml(
-        subtitle,
-      )}</p>`
-    : "";
+  // Brez podnaslova pas ostane kot tanka oranžna črta - klubska barva mora
+  // ostati vidna tudi pri sporočilu brez njega.
+  const bannerRow = subtitle
+    ? `<tr>
+            <td style="background-color:#f36717;padding:14px 32px;text-align:center;">
+              <p style="margin:0;font-size:15px;line-height:1.45;font-weight:600;color:#ffffff;">${escapeHtml(
+                subtitle,
+              )}</p>
+            </td>
+          </tr>`
+    : `<tr>
+            <td style="background-color:#f36717;height:6px;line-height:6px;font-size:0;">&nbsp;</td>
+          </tr>`;
 
   const typeBlock =
     campaignType !== "obvestilo"
-      ? `<p style="margin:0 0 14px 0;font-size:12px;font-weight:bold;letter-spacing:0.16em;text-transform:uppercase;color:#f36717;">${escapeHtml(
+      ? `<p style="margin:0 0 14px 0;font-size:12px;font-weight:bold;letter-spacing:0.16em;text-transform:uppercase;color:#f36717;text-align:center;">${escapeHtml(
           campaignTypeLabels[campaignType],
         )}</p>`
       : "";
@@ -127,10 +163,15 @@ export function buildCampaignEmailHtml({
     )
     .join('<span style="color:#d2d2d7;">&bull;</span>');
 
-  const socialLinks = club.social
+  // Ikone so slike v tabeli, ne flex - poštni odjemalci flexboxa ne poznajo.
+  const socialIcons = club.social
     .map(
       (link) =>
-        `<a href="${link.href}" style="display:inline-block;margin:0 6px;padding:8px 16px;border:1px solid #d2d2d7;border-radius:999px;color:#1d1d1f;text-decoration:none;font-size:13px;">${link.label}</a>`,
+        `<td style="padding:0 7px;">
+                    <a href="${link.href}" style="text-decoration:none;">
+                      <img src="${assets}/email/${link.icon}.png" width="36" height="36" alt="${link.label}" style="display:block;width:36px;height:36px;border:0;border-radius:999px;" />
+                    </a>
+                  </td>`,
     )
     .join("");
 
@@ -152,29 +193,30 @@ export function buildCampaignEmailHtml({
         <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#ffffff;border:1px solid #eadfd2;border-radius:18px;overflow:hidden;">
 
           <tr>
-            <td style="background-color:#f36717;padding:22px 32px;text-align:center;">
-              <p style="margin:0;font-size:12px;font-weight:bold;letter-spacing:0.18em;text-transform:uppercase;color:#ffffff;">
-                ${club.name}
-              </p>
-              ${subtitleBlock}
+            <td style="padding:30px 32px 24px 32px;text-align:center;">
+              <a href="${club.website}" style="text-decoration:none;">
+                <img src="${assets}/email/nsk-logo.png" width="260" alt="${club.name}" style="display:inline-block;width:260px;max-width:80%;height:auto;border:0;" />
+              </a>
             </td>
           </tr>
 
+          ${bannerRow}
+
           <tr>
-            <td style="padding:34px 32px 8px 32px;">
+            <td style="padding:36px 32px 8px 32px;text-align:center;">
               ${typeBlock}
-              <h1 style="margin:0;font-size:27px;line-height:1.25;color:#1d1d1f;letter-spacing:-0.02em;">
+              <h1 style="margin:0;font-size:34px;line-height:1.18;color:#1d1d1f;letter-spacing:-0.025em;font-weight:700;">
                 ${escapeHtml(title)}
               </h1>
             </td>
           </tr>
 
           <tr>
-            <td style="padding:22px 32px 30px 32px;">
+            <td style="padding:24px 40px 34px 40px;text-align:center;">
               ${greeting}
               ${styledContent}
               ${ctaBlock}
-              <p style="margin:26px 0 0 0;font-size:16px;line-height:1.65;color:#1d1d1f;">
+              <p style="margin:30px 0 0 0;font-size:16px;line-height:1.65;color:#1d1d1f;text-align:center;">
                 Lep pozdrav,<br />
                 <strong>Ekipa ${club.shortName}</strong>
               </p>
@@ -188,8 +230,12 @@ export function buildCampaignEmailHtml({
           </tr>
 
           <tr>
-            <td style="padding:24px 32px 8px 32px;text-align:center;">
-              ${socialLinks}
+            <td style="padding:26px 32px 10px 32px;text-align:center;">
+              <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;">
+                <tr>
+                  ${socialIcons}
+                </tr>
+              </table>
             </td>
           </tr>
 
