@@ -1,96 +1,113 @@
-import { Newspaper } from "lucide-react";
+import Link from "next/link";
+import { Printer } from "lucide-react";
 
-import { EmptyState } from "@/components/empty-state";
-import { PrintRecordForm } from "@/components/forms/print-record-form";
-import { PageHeader } from "@/components/page-header";
-import { DeletePrintRecordButton } from "@/components/print-records/delete-print-record-button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { getMembersForSelect, getPrintRecords } from "@/lib/data";
-import { formatDateTime, getMemberFullName } from "@/lib/format";
+import { AddMemberCopies } from "@/components/print-records/add-member-copies";
+import { PrintMembersTable } from "@/components/print-records/print-members-table";
+import { getMembersForSelect, getPrintOverview } from "@/lib/data";
+import { cn } from "@/lib/utils";
 
-export default async function PrintRecordsPage() {
-  const [records, members] = await Promise.all([
-    getPrintRecords(),
+interface PrintRecordsPageProps {
+  searchParams: Promise<{ month?: string }>;
+}
+
+export default async function PrintRecordsPage({
+  searchParams,
+}: PrintRecordsPageProps) {
+  const { month } = await searchParams;
+  const [overview, members] = await Promise.all([
+    getPrintOverview(month),
     getMembersForSelect(),
   ]);
 
+  const months = [
+    { param: overview.monthParam, label: overview.monthLabel },
+    { param: overview.previousParam, label: overview.previousLabel },
+  ];
+  const active = month ?? overview.monthParam;
+
+  const cards = [
+    {
+      label: "Skupaj kopij",
+      value: overview.totalUsed,
+      hint: overview.monthLabel,
+      tone: "text-foreground",
+    },
+    {
+      label: "Preostale kopije",
+      value: overview.totalRemaining,
+      hint: `Od ${overview.totalQuota} skupaj`,
+      tone:
+        overview.totalRemaining < 0 ? "text-destructive" : "text-success",
+    },
+    {
+      label: "Članov kopiralo",
+      value: overview.membersCopied,
+      hint: `Kvota: ${overview.quota} kopij/član`,
+      tone: "text-foreground",
+    },
+  ];
+
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Evidenca tiska"
-        description="Beleženje tiskovin, količin in povezanih članov v eni interni evidenci."
-      />
-
-      <section className="surface-card rounded-[18px] border border-border p-6">
-        <div className="mb-6">
-          <h2 className="font-heading text-2xl font-semibold text-foreground">
-            Dodaj nov zapis
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Evidenca je pripravljena za spremljanje plakatov, letakov, skript in
-            drugih klubskih tiskovin.
-          </p>
+      <div className="mb-2 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-[14px] bg-primary/10 text-primary">
+            <Printer className="size-6" />
+          </span>
+          <div>
+            <h1 className="display-lg text-foreground">Evidenca tiska</h1>
+            <p className="mt-2 text-[1.0625rem] text-muted-foreground">
+              Sledenje porabe kopij in tiskov
+            </p>
+          </div>
         </div>
 
-        <PrintRecordForm members={members} />
+        <div className="flex shrink-0 gap-2">
+          {months.map((m) => (
+            <Link
+              key={m.param}
+              href={`/print-records?month=${m.param}`}
+              className={cn(
+                "rounded-full px-4 py-2 text-[0.9375rem] font-medium transition-colors",
+                m.param === active
+                  ? "bg-primary text-primary-foreground"
+                  : "surface-card text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {m.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.map((card) => (
+          <div key={card.label} className="surface-card rounded-[18px] p-6">
+            <p className="text-[0.9375rem] text-muted-foreground">{card.label}</p>
+            <p
+              className={cn(
+                "mt-3 font-heading text-5xl font-semibold tabular-nums",
+                card.tone,
+              )}
+            >
+              {card.value}
+            </p>
+            <p className="mt-2 text-[0.875rem] text-muted-foreground">
+              {card.hint}
+            </p>
+          </div>
+        ))}
       </section>
 
-      {records.length === 0 ? (
-        <EmptyState
-          icon={Newspaper}
-          title="Ni zapisov tiska"
-          description="Ko vneseš prvi zapis, se bodo tukaj prikazali vsi izpisi in povezana zgodovina."
-        />
-      ) : (
-        <section className="surface-card overflow-hidden rounded-[18px] border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border">
-                <TableHead className="px-4 py-4">Naslov</TableHead>
-                <TableHead className="px-4 py-4">Član</TableHead>
-                <TableHead className="px-4 py-4">Količina</TableHead>
-                <TableHead className="px-4 py-4">Ustvarjeno</TableHead>
-                <TableHead className="px-4 py-4">Opombe</TableHead>
-                <TableHead className="px-4 py-4 text-right">Akcije</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {records.map((record) => (
-                <TableRow key={record.id} className="border-border">
-                  <TableCell className="px-4 py-4 font-medium text-foreground">
-                    {record.title || "Brez naslova"}
-                  </TableCell>
-                  <TableCell className="px-4 py-4">
-                    {getMemberFullName(record.member)}
-                  </TableCell>
-                  <TableCell className="px-4 py-4">{record.quantity || 1}</TableCell>
-                  <TableCell className="px-4 py-4">
-                    {formatDateTime(record.created_at)}
-                  </TableCell>
-                  <TableCell className="px-4 py-4 text-muted-foreground">
-                    {record.notes || "—"}
-                  </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <div className="flex justify-end">
-                      <DeletePrintRecordButton
-                        id={record.id}
-                        title={record.title || "Brez naslova"}
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </section>
-      )}
+      <div className="flex justify-end">
+        <AddMemberCopies members={members} />
+      </div>
+
+      <PrintMembersTable
+        rows={overview.rows}
+        monthParam={overview.monthParam}
+        monthLabel={overview.monthLabel}
+      />
     </div>
   );
 }

@@ -32,11 +32,14 @@ function SidebarBody({
   return (
     <div className="surface-sidebar flex h-full flex-col px-4 py-6 text-sidebar-foreground">
       <div className="px-2">
+        {/* Logotip je prvi viden element, zato ga Next zazna kot LCP; priority
+            ga naloži takoj namesto z zamikom. */}
         <Image
           src="/nsk-logo.svg"
           alt="NSK Klub"
           width={352}
           height={66}
+          priority
           className="h-7 w-auto dark:brightness-0 dark:invert"
         />
         <h2 className="mt-4 font-heading text-[1.375rem] font-semibold tracking-[-0.02em]">

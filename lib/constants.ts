@@ -151,8 +151,6 @@ export const facultyOptionGroups: FacultyOptionGroup[] = [
   ]),
 ];
 
-export const facultyOptions = facultyOptionGroups.flatMap((group) => group.options);
-
 // Srednje šole. Seznam ni izčrpen - v Sloveniji jih je krepko čez sto - zato je
 // polje v obrazcu iskalno IN dovoli prosto vnesen naziv. Tu so tiste, ki jih
 // člani NŠK najpogosteje obiskujejo; dodajanje novih je zgolj vpis v ta seznam.
@@ -208,8 +206,6 @@ export const schoolOptionGroups: FacultyOptionGroup[] = [
   })),
   ...facultyOptionGroups,
 ];
-
-export const schoolOptions = schoolOptionGroups.flatMap((group) => group.options);
 
 export const notificationAudienceOptions: StatusOption<NotificationAudience>[] = [
   { value: "active", label: "Aktivni člani" },

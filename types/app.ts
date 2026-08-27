@@ -42,6 +42,37 @@ export interface MemberRegistrationHistoryItem {
   event: Pick<Event, "id" | "title" | "starts_at" | "location" | "status"> | null;
 }
 
+export interface PrintEntry {
+  id: string;
+  title: string | null;
+  quantity: number;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface PrintMemberRow {
+  memberId: string;
+  fullName: string;
+  used: number;
+  remaining: number;
+  previousMonth: number;
+  entries: PrintEntry[];
+}
+
+// Mesečni pregled porabe kopij: kartice na vrhu in vrstice po članih.
+export interface PrintOverview {
+  monthParam: string;
+  monthLabel: string;
+  previousParam: string;
+  previousLabel: string;
+  quota: number;
+  totalUsed: number;
+  totalQuota: number;
+  totalRemaining: number;
+  membersCopied: number;
+  rows: PrintMemberRow[];
+}
+
 export interface StatusOption<TValue extends string> {
   value: TValue;
   label: string;

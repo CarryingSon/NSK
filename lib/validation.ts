@@ -22,16 +22,6 @@ const optionalDate = z
   .transform((value) => (value.length > 0 ? value : null))
   .nullable();
 
-const optionalUuid = z.preprocess((value) => {
-  if (value === "" || value === null || value === undefined) return null;
-  return value;
-}, z.string().uuid().nullable());
-
-const positiveInteger = z.preprocess((value) => {
-  const numberValue = Number(value);
-  return Number.isNaN(numberValue) ? value : numberValue;
-}, z.number().int().min(1, "Vnesi količino vsaj 1."));
-
 // Interni admin se prijavi z uporabniškim imenom "admin", Supabase Auth pa pozna
 // samo e-poštne naslove. Preslikavo hranimo v ADMIN_EMAIL (ni NEXT_PUBLIC, ker
 // validation.ts uvažajo izključno strežniške akcije), da naslov ne konča v repozitoriju.
@@ -124,11 +114,22 @@ export const memberSchema = z.object({
   notes: optionalString,
 });
 
-export const printRecordSchema = z.object({
-  member_id: optionalUuid,
-  title: z.string().trim().min(2, "Vnesi naziv tiskovine."),
-  quantity: positiveInteger,
-  notes: optionalString,
+// Poraba kopij: "Dodaj" prišteje, "Prilagodi" odšteje. Obe poti sprejmeta samo
+// pozitivno število, predznak določi akcija - tako se ne da pomotoma prišteti minusa.
+export const printCopiesSchema = z.object({
+  member_id: z.string().uuid("Izberi člana."),
+  quantity: z.preprocess((value) => {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? value : parsed;
+  }, z.number().int().min(1, "Vnesi vsaj 1 kopijo.")),
+  note: optionalString,
+});
+
+export const printQuotaSchema = z.object({
+  quota: z.preprocess((value) => {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? value : parsed;
+  }, z.number().int().min(1, "Kvota mora biti vsaj 1.").max(100000, "Kvota je previsoka.")),
 });
 
 export const notificationSchema = z.object({

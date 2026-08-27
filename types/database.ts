@@ -22,6 +22,20 @@ export type EmailLogStatus = "sent" | "failed";
 export interface Database {
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string;
+          value: string;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["app_settings"]["Insert"]>;
+        Relationships: [];
+      };
       members: {
         Row: {
           id: string;

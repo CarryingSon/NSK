@@ -81,6 +81,18 @@ create table if not exists public.print_records (
   created_at timestamptz not null default now()
 );
 
+-- Nastavitve aplikacije kot pari ključ/vrednost. Zaenkrat hrani samo mesečno
+-- kvoto kopij na člana, a se brez migracije razširi na karkoli drugega.
+create table if not exists public.app_settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.app_settings (key, value)
+values ('print_monthly_quota', '300')
+on conflict (key) do nothing;
+
 create table if not exists public.email_logs (
   id uuid primary key default gen_random_uuid(),
   to_email text not null,
@@ -122,6 +134,7 @@ alter table public.event_registrations enable row level security;
 alter table public.coupons enable row level security;
 alter table public.print_records enable row level security;
 alter table public.email_logs enable row level security;
+alter table public.app_settings enable row level security;
 
 drop policy if exists "Authenticated users can manage members" on public.members;
 create policy "Authenticated users can manage members"
@@ -158,6 +171,14 @@ with check (true);
 drop policy if exists "Authenticated users can manage print records" on public.print_records;
 create policy "Authenticated users can manage print records"
 on public.print_records
+for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated users can manage settings" on public.app_settings;
+create policy "Authenticated users can manage settings"
+on public.app_settings
 for all
 to authenticated
 using (true)

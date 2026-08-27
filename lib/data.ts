@@ -1,3 +1,10 @@
+import {
+  formatMonthLabel,
+  getMemberFullName,
+  monthRange,
+  parseMonthParam,
+  toMonthParam,
+} from "@/lib/format";
 import { notificationAudienceOptions } from "@/lib/constants";
 import {
   getNotificationAudienceCounts,
@@ -13,8 +20,9 @@ import type {
   MemberFilters,
   MemberOption,
   MemberRegistrationHistoryItem,
+  PrintOverview,
+  PrintMemberRow,
   NotificationAudienceCount,
-  PrintRecordWithMember,
 } from "@/types/app";
 
 async function getSupabaseOrNull() {
@@ -166,46 +174,6 @@ export async function getMembersForSelect(): Promise<MemberOption[]> {
   return (data ?? []) as MemberOption[];
 }
 
-export async function getPrintRecords() {
-  const supabase = await getSupabaseOrNull();
-
-  if (!supabase) {
-    return [] as PrintRecordWithMember[];
-  }
-
-  const { data, error } = await supabase
-    .from("print_records")
-    .select(
-      "id, member_id, title, quantity, notes, created_at, members:member_id ( id, first_name, last_name )",
-    )
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Napaka pri nalaganju evidence tiska", error);
-    return [] as PrintRecordWithMember[];
-  }
-
-  const printRows = (data ?? []) as Array<{
-    id: string;
-    member_id: string | null;
-    title: string | null;
-    quantity: number | null;
-    notes: string | null;
-    created_at: string;
-    members: PrintRecordWithMember["member"];
-  }>;
-
-  return printRows.map((item) => ({
-    id: item.id,
-    member_id: item.member_id,
-    title: item.title,
-    quantity: item.quantity,
-    notes: item.notes,
-    created_at: item.created_at,
-    member: item.members,
-  })) as PrintRecordWithMember[];
-}
-
 export async function getNotificationAudiences() {
   const supabase = await getSupabaseOrNull();
 
@@ -319,5 +287,143 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
   } catch (error) {
     console.error("Napaka pri nalaganju nadzorne plošče", error);
     return empty;
+  }
+}
+
+export const PRINT_QUOTA_KEY = "print_monthly_quota";
+const DEFAULT_PRINT_QUOTA = 300;
+
+export async function getPrintMonthlyQuota() {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return DEFAULT_PRINT_QUOTA;
+  }
+
+  const { data, error } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", PRINT_QUOTA_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Napaka pri branju kvote kopij", error);
+    return DEFAULT_PRINT_QUOTA;
+  }
+
+  const parsed = Number(data?.value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_PRINT_QUOTA;
+}
+
+// Mesečni pregled porabe kopij. Vrstice sestavimo iz zapisov izbranega meseca,
+// porabo prejšnjega meseca pa pripnemo za primerjavo. Popravki so zapisi z
+// negativno količino, zato preprosto seštevanje deluje za oboje.
+export async function getPrintOverview(monthParam?: string): Promise<PrintOverview> {
+  const month = parseMonthParam(monthParam);
+  const previous = new Date(month);
+  previous.setMonth(previous.getMonth() - 1);
+
+  const base: PrintOverview = {
+    monthParam: toMonthParam(month),
+    monthLabel: formatMonthLabel(month),
+    previousParam: toMonthParam(previous),
+    previousLabel: formatMonthLabel(previous),
+    quota: DEFAULT_PRINT_QUOTA,
+    totalUsed: 0,
+    totalQuota: 0,
+    totalRemaining: 0,
+    membersCopied: 0,
+    rows: [],
+  };
+
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return base;
+  }
+
+  const now = monthRange(month);
+  const before = monthRange(previous);
+
+  const select =
+    "id, member_id, title, quantity, notes, created_at, members:member_id ( id, first_name, last_name )";
+
+  try {
+    const [quota, current, prior] = await Promise.all([
+      getPrintMonthlyQuota(),
+      supabase
+        .from("print_records")
+        .select(select)
+        .gte("created_at", now.start.toISOString())
+        .lt("created_at", now.end.toISOString())
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("print_records")
+        .select("member_id, quantity")
+        .gte("created_at", before.start.toISOString())
+        .lt("created_at", before.end.toISOString()),
+    ]);
+
+    if (current.error) throw current.error;
+
+    type Row = {
+      id: string;
+      member_id: string | null;
+      title: string | null;
+      quantity: number | null;
+      notes: string | null;
+      created_at: string;
+      members: { id: string; first_name: string; last_name: string } | null;
+    };
+
+    const priorByMember = new Map<string, number>();
+    for (const r of (prior.data ?? []) as { member_id: string | null; quantity: number | null }[]) {
+      if (!r.member_id) continue;
+      priorByMember.set(r.member_id, (priorByMember.get(r.member_id) ?? 0) + (r.quantity ?? 0));
+    }
+
+    const byMember = new Map<string, PrintMemberRow>();
+    for (const row of (current.data ?? []) as Row[]) {
+      if (!row.member_id || !row.members) continue;
+
+      const existing = byMember.get(row.member_id) ?? {
+        memberId: row.member_id,
+        fullName: getMemberFullName(row.members),
+        used: 0,
+        remaining: 0,
+        previousMonth: priorByMember.get(row.member_id) ?? 0,
+        entries: [],
+      };
+
+      existing.used += row.quantity ?? 0;
+      existing.entries.push({
+        id: row.id,
+        title: row.title,
+        quantity: row.quantity ?? 0,
+        notes: row.notes,
+        created_at: row.created_at,
+      });
+      byMember.set(row.member_id, existing);
+    }
+
+    const rows = [...byMember.values()]
+      .map((r) => ({ ...r, remaining: quota - r.used }))
+      .sort((a, b) => b.used - a.used);
+
+    const totalUsed = rows.reduce((sum, r) => sum + r.used, 0);
+    const totalQuota = rows.length * quota;
+
+    return {
+      ...base,
+      quota,
+      rows,
+      totalUsed,
+      totalQuota,
+      totalRemaining: totalQuota - totalUsed,
+      membersCopied: rows.filter((r) => r.used > 0).length,
+    };
+  } catch (error) {
+    console.error("Napaka pri nalaganju evidence tiska", error);
+    return base;
   }
 }
