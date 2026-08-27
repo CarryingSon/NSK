@@ -32,7 +32,7 @@ export default async function EditMemberPage({ params }: EditMemberPageProps) {
             href={`/members/${member.id}`}
             className={cn(
               buttonVariants({ variant: "outline", size: "lg" }),
-              "h-12 rounded-2xl px-6",
+              "h-12 rounded-full px-6",
             )}
           >
             Nazaj na pregled
@@ -40,7 +40,7 @@ export default async function EditMemberPage({ params }: EditMemberPageProps) {
         }
       />
 
-      <section className="surface-glass rounded-[2rem] border border-white/60 p-6 sm:p-8">
+      <section>
         <MemberForm member={member} />
       </section>
     </div>

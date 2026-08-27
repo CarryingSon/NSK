@@ -17,8 +17,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-16">
-      <div className="surface-glass grid w-full max-w-5xl overflow-hidden rounded-[2.5rem] border border-white/60 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="relative hidden bg-[radial-gradient(circle_at_top_left,rgba(243,103,23,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(46,49,146,0.18),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.78))] px-10 py-12 lg:flex lg:flex-col lg:justify-between">
+      <div className="surface-card grid w-full max-w-5xl overflow-hidden rounded-[18px] border border-border lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="surface-muted relative hidden border-r border-border px-10 py-12 lg:flex lg:flex-col lg:justify-between">
           <div>
             <div className="brand-chip">Interni klubski sistem</div>
             <Image
@@ -37,9 +37,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-primary/10 bg-white/92 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
+          <div className="rounded-[18px] border border-primary/10 bg-card p-6">
             <div className="flex items-center gap-4">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <div className="flex size-14 items-center justify-center rounded-xl bg-primary/12 text-primary">
                 <ShieldCheck className="size-7" />
               </div>
               <div>
@@ -54,17 +54,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </section>
 
-        <section className="bg-white/82 px-6 py-10 sm:px-10 sm:py-12">
+        <section className="bg-card px-6 py-10 sm:px-10 sm:py-12">
           <div className="mx-auto max-w-md">
-            <div className="flex size-16 items-center justify-center rounded-3xl bg-[linear-gradient(135deg,#f36717_0%,#d95d13_100%)] shadow-[0_18px_34px_rgba(243,103,23,0.24)]">
-              <ShieldCheck className="size-7 text-white" />
+            <div className="flex size-16 items-center justify-center rounded-[18px] bg-primary">
+              <ShieldCheck className="size-7 text-primary-foreground" />
             </div>
             <Image
               src="/nsk-logo.svg"
               alt="NSK Klub"
               width={352}
               height={66}
-              className="mt-6 h-10 w-auto"
+              className="mt-6 h-10 w-auto lg:hidden"
             />
             <p className="mt-6 text-sm font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               {appName}
@@ -77,7 +77,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </p>
 
             {!configured ? (
-              <div className="mt-8 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+              <div className="mt-8 rounded-[14px] border border-warning/25 bg-warning/10 px-5 py-4 text-sm text-warning">
                 Supabase še ni nastavljen. Dodaj okoljski spremenljivki
                 <span className="mx-1 font-mono">NEXT_PUBLIC_SUPABASE_URL</span> in
                 <span className="mx-1 font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>,

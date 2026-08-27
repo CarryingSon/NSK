@@ -30,83 +30,81 @@ function SidebarBody({
   const pathname = usePathname();
 
   return (
-    <div className="surface-sidebar flex h-full flex-col rounded-[2rem] border border-white/10 px-5 py-6 text-sidebar-foreground">
-      <div className="mb-8 px-1">
-        <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/72">
-          NSK klub
-        </div>
-        <div className="mt-5 rounded-[1.75rem] border border-white/10 bg-white px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
-          <Image
-            src="/nsk-logo.svg"
-            alt="NSK Klub"
-            width={352}
-            height={66}
-            className="h-9 w-auto"
-          />
-          <div className="mt-4 h-px bg-gradient-to-r from-[#f36717] via-[#f7c3a2] to-transparent" />
-          <h2 className="mt-4 font-heading text-3xl font-semibold text-[#182168]">
-            {appName}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Interni portal za članstvo, evidenco tiska, obveščanje in osnovno
-            klubsko administracijo.
-          </p>
-        </div>
+    <div className="surface-sidebar flex h-full flex-col px-4 py-6 text-sidebar-foreground">
+      <div className="px-2">
+        <Image
+          src="/nsk-logo.svg"
+          alt="NSK Klub"
+          width={352}
+          height={66}
+          className="h-7 w-auto dark:brightness-0 dark:invert"
+        />
+        <h2 className="mt-4 font-heading text-[1.375rem] font-semibold tracking-[-0.02em]">
+          {appName}
+        </h2>
+        <p className="mt-1 text-[0.8125rem] leading-5 text-muted-foreground">
+          Interni klubski portal
+        </p>
+
         {demoMode ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-white/20 bg-white/10 px-4 py-3 text-sm text-white/82">
+          <div className="mt-4 rounded-[12px] border border-warning/25 bg-warning/10 px-3 py-2 text-[0.8125rem] text-warning">
             Demo prikaz brez povezane Supabase instance.
           </div>
         ) : null}
       </div>
 
-      <nav className="flex-1 space-y-2">
+      <nav className="mt-8 flex-1 space-y-0.5">
         {primaryNavigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-white/72 transition hover:bg-white/10 hover:text-white",
+                "flex items-center gap-3 rounded-[10px] px-3 py-2 text-[0.9375rem] text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
                 isActive &&
-                  "bg-white text-[#182168] shadow-[0_16px_30px_rgba(15,23,42,0.18)] ring-1 ring-white/30",
+                  "bg-sidebar-accent font-medium text-sidebar-foreground",
               )}
             >
-              <item.icon className="size-4" />
+              <item.icon
+                className={cn("size-[1.125rem]", isActive && "text-primary")}
+              />
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-6 rounded-[1.75rem] border border-white/10 bg-white/10 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.15)]">
-        <div className="flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground">
+      <div className="mt-6 border-t border-sidebar-border pt-5">
+        <div className="flex items-center gap-3 px-1">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-[0.8125rem] font-medium text-primary-foreground">
             {getInitials(email ?? appName)}
           </div>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-white">
-              {demoMode ? "Demo način" : "Prijavljen uporabnik"}
+            <p className="truncate text-[0.8125rem] text-muted-foreground">
+              {demoMode ? "Demo način" : "Prijavljen"}
             </p>
-            <p className="truncate text-sm text-white/72">
+            <p className="truncate text-[0.875rem] font-medium">
               {email ?? "Brez aktivne prijave"}
             </p>
           </div>
         </div>
-      </div>
 
-      <form action={logoutAction} className="mt-4">
-        <SubmitButton
-          type="submit"
-          variant="outline"
-          pendingLabel="Odjavljam ..."
-          className="h-12 w-full justify-center rounded-2xl border-white/10 bg-white/10 text-white shadow-[0_10px_24px_rgba(15,23,42,0.15)] hover:bg-white/14"
-        >
-          <logoutItem.icon className="size-4" />
-          {logoutItem.label}
-        </SubmitButton>
-      </form>
+        <form action={logoutAction} className="mt-4">
+          <SubmitButton
+            type="submit"
+            variant="outline"
+            pendingLabel="Odjavljam ..."
+            className="h-10 w-full justify-center"
+          >
+            <logoutItem.icon className="size-4" />
+            {logoutItem.label}
+          </SubmitButton>
+        </form>
+      </div>
     </div>
   );
 }
@@ -125,11 +123,7 @@ export function AppSidebar({
       <Sheet>
         <SheetTrigger
           render={
-            <Button
-              variant="outline"
-              size="icon-lg"
-              className="rounded-2xl border-white/10 bg-[#182168] text-white shadow-[0_12px_28px_rgba(24,33,104,0.28)] hover:bg-[#222b86]"
-            />
+            <Button variant="outline" size="icon-lg" className="rounded-full" />
           }
         >
           <Menu className="size-5" />
@@ -137,16 +131,16 @@ export function AppSidebar({
         </SheetTrigger>
         <SheetContent
           side="left"
-          className="w-[90vw] max-w-[23rem] border-r border-white/50 bg-transparent p-0 shadow-none"
+          className="w-[85vw] max-w-[20rem] border-r border-sidebar-border bg-sidebar p-0"
           showCloseButton={false}
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Glavna navigacija</SheetTitle>
-            <SheetDescription>Dostop do modulov aplikacije Poziralnik.</SheetDescription>
+            <SheetDescription>
+              Dostop do modulov aplikacije Poziralnik.
+            </SheetDescription>
           </SheetHeader>
-          <div className="h-full p-4">
-            <SidebarBody email={email} demoMode={demoMode} />
-          </div>
+          <SidebarBody email={email} demoMode={demoMode} />
         </SheetContent>
       </Sheet>
     );

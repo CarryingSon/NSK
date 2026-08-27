@@ -35,7 +35,7 @@ export function NotificationForm({
         {audiences.map((audience) => (
           <div
             key={audience.value}
-            className="rounded-[1.5rem] border border-white/70 bg-white/70 px-4 py-3"
+            className="rounded-[14px] border border-border bg-card px-4 py-3"
           >
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               {audience.label}
@@ -48,7 +48,7 @@ export function NotificationForm({
       </div>
 
       {!emailConfigured ? (
-        <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+        <div className="rounded-[14px] border border-warning/25 bg-warning/10 px-5 py-4 text-sm text-warning">
           <div className="flex items-start gap-3">
             <Settings2 className="mt-0.5 size-4 shrink-0" />
             <div>
@@ -62,9 +62,9 @@ export function NotificationForm({
         </div>
       ) : null}
 
-      <div className="rounded-[2rem] border border-white/70 bg-white/72 p-5">
+      <div className="rounded-[18px] border border-border bg-card p-5">
         <div className="flex items-start gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-primary/12 text-primary">
             <Bell className="size-5" />
           </div>
           <div>
@@ -97,7 +97,7 @@ export function NotificationForm({
               name="subject"
               required
               placeholder="Npr. Pomembno obvestilo za člane"
-              className="h-11 rounded-2xl bg-white/75 px-4"
+              className="h-11 rounded-xl bg-card px-4"
             />
           </div>
 
@@ -108,19 +108,19 @@ export function NotificationForm({
               name="body"
               required
               placeholder="Napiši obvestilo. Odstavki in prelomi vrstic bodo ohranjeni tudi v emailu."
-              className="min-h-48 rounded-[1.5rem] bg-white/75 px-4 py-3"
+              className="min-h-48 rounded-[14px] bg-card px-4 py-3"
             />
           </div>
         </div>
 
         {state.error ? (
-          <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="mt-5 rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {state.error}
           </div>
         ) : null}
 
         {state.success ? (
-          <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <div className="mt-5 rounded-xl border border-success/25 bg-success/10 px-4 py-3 text-sm text-success">
             {state.success}
           </div>
         ) : null}
@@ -130,7 +130,7 @@ export function NotificationForm({
             type="submit"
             disabled={!emailConfigured}
             pendingLabel="Pošiljam ..."
-            className="h-12 rounded-2xl px-6 text-base font-semibold shadow-lg shadow-primary/20"
+            className="h-12 rounded-full px-6 text-base font-semibold"
           >
             <Mail className="size-4" />
             Pošlji obvestilo

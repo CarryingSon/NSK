@@ -61,7 +61,7 @@ export default async function DashboardPage() {
             href="/members/new"
             className={cn(
               buttonVariants({ variant: "default", size: "lg" }),
-              "h-12 rounded-2xl px-6 text-base font-semibold shadow-lg shadow-primary/20",
+              "h-12 rounded-full px-6 text-base font-semibold",
             )}
           >
             Dodaj člana
@@ -74,10 +74,10 @@ export default async function DashboardPage() {
           <Link
             key={stat.label}
             href={stat.href}
-            className="surface-glass group rounded-[2rem] border border-white/60 p-6 transition hover:border-primary/30"
+            className="surface-card group rounded-[18px] border border-border p-6 transition hover:border-primary/30"
           >
             <div className="flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <stat.icon className="size-5" />
               </span>
               <p className="text-sm font-medium text-muted-foreground">
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
             href="/members"
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "rounded-2xl",
+              "rounded-full",
             )}
           >
             Vsi člani
@@ -120,20 +120,20 @@ export default async function DashboardPage() {
             description={`Ko se bo kdo včlanil v letu ${overview.year}, se bo pojavil tukaj.`}
           />
         ) : (
-          <div className="surface-glass overflow-hidden rounded-[2rem] border border-white/60">
+          <div className="surface-card overflow-hidden rounded-[18px] border border-border">
             <Table className="min-w-full">
               <TableHeader>
-                <TableRow className="border-white/60">
-                  <TableHead className="px-6 py-4">Član</TableHead>
-                  <TableHead className="px-6 py-4">Fakulteta</TableHead>
-                  <TableHead className="px-6 py-4">Včlanjen</TableHead>
-                  <TableHead className="px-6 py-4">Status</TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="px-4 py-4">Član</TableHead>
+                  <TableHead className="px-4 py-4">Fakulteta</TableHead>
+                  <TableHead className="px-4 py-4">Včlanjen</TableHead>
+                  <TableHead className="px-4 py-4">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {overview.newMembersThisYear.map((member) => (
-                  <TableRow key={member.id} className="border-white/50">
-                    <TableCell className="px-6 py-4">
+                  <TableRow key={member.id} className="border-border">
+                    <TableCell className="px-4 py-4">
                       <Link
                         href={`/members/${member.id}`}
                         className="font-semibold text-foreground hover:text-primary"
@@ -144,13 +144,13 @@ export default async function DashboardPage() {
                         {member.email || "Ni e-pošte"}
                       </p>
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-muted-foreground">
+                    <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                       {member.faculty || "Ni podatka"}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-sm">
+                    <TableCell className="px-4 py-4 text-sm">
                       {formatDate(member.joined_at)}
                     </TableCell>
-                    <TableCell className="px-6 py-4">
+                    <TableCell className="px-4 py-4">
                       <StatusBadge status={member.membership_status} />
                     </TableCell>
                   </TableRow>
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
             href="/members?status=active"
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "rounded-2xl",
+              "rounded-full",
             )}
           >
             Prikaži vse aktivne
@@ -190,20 +190,20 @@ export default async function DashboardPage() {
             description="Ko bodo člani z aktivnim statusom v bazi, bodo prikazani tukaj."
           />
         ) : (
-          <div className="surface-glass overflow-hidden rounded-[2rem] border border-white/60">
+          <div className="surface-card overflow-hidden rounded-[18px] border border-border">
             <Table className="min-w-full">
               <TableHeader>
-                <TableRow className="border-white/60">
-                  <TableHead className="px-6 py-4">Član</TableHead>
-                  <TableHead className="px-6 py-4">Fakulteta</TableHead>
-                  <TableHead className="px-6 py-4">Kontakt</TableHead>
-                  <TableHead className="px-6 py-4">Leto članstva</TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="px-4 py-4">Član</TableHead>
+                  <TableHead className="px-4 py-4">Fakulteta</TableHead>
+                  <TableHead className="px-4 py-4">Kontakt</TableHead>
+                  <TableHead className="px-4 py-4">Leto članstva</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {overview.recentActiveMembers.map((member) => (
-                  <TableRow key={member.id} className="border-white/50">
-                    <TableCell className="px-6 py-4">
+                  <TableRow key={member.id} className="border-border">
+                    <TableCell className="px-4 py-4">
                       <Link
                         href={`/members/${member.id}`}
                         className="font-semibold text-foreground hover:text-primary"
@@ -214,16 +214,16 @@ export default async function DashboardPage() {
                         {member.city || "Brez mesta"}
                       </p>
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-muted-foreground">
+                    <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                       {member.faculty || "Ni podatka"}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-sm">
+                    <TableCell className="px-4 py-4 text-sm">
                       <p>{member.email || "Ni e-pošte"}</p>
                       <p className="text-muted-foreground">
                         {member.phone || "Ni telefona"}
                       </p>
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-sm">
+                    <TableCell className="px-4 py-4 text-sm">
                       {member.membership_year || "Ni podatka"}
                     </TableCell>
                   </TableRow>

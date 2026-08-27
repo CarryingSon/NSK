@@ -28,12 +28,12 @@ export function DeleteEmailCampaignButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger
-        render={<Button variant="ghost" size="icon-sm" className="text-rose-600" />}
+        render={<Button variant="ghost" size="icon-sm" className="text-destructive" />}
       >
         <Trash2 className="size-4" />
         <span className="sr-only">Izbriši kampanjo</span>
       </AlertDialogTrigger>
-      <AlertDialogContent className="rounded-[1.75rem] border border-white/60 bg-white/95 p-0">
+      <AlertDialogContent className="rounded-[18px] border border-border bg-card p-0">
         <AlertDialogHeader className="px-6 pt-6">
           <AlertDialogTitle>Izbrišem zgodovino obvestila?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -42,14 +42,14 @@ export function DeleteEmailCampaignButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="rounded-2xl">Prekliči</AlertDialogCancel>
+          <AlertDialogCancel className="rounded-xl">Prekliči</AlertDialogCancel>
           <form action={deleteEmailCampaignAction}>
             <input type="hidden" name="subject" value={subject} />
             <input type="hidden" name="sent_at" value={sentAt} />
             <AlertDialogAction
               type="submit"
               variant="destructive"
-              className="rounded-2xl"
+              className="rounded-xl"
             >
               <Trash2 className="size-4" />
               Izbriši

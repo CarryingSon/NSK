@@ -42,7 +42,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
             href="/members/new"
             className={cn(
               buttonVariants({ variant: "default", size: "lg" }),
-              "h-12 rounded-2xl px-6 text-base font-semibold shadow-lg shadow-primary/20",
+              "h-12 rounded-full px-6 text-base font-semibold",
             )}
           >
             Dodaj člana
@@ -50,7 +50,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
         }
       />
 
-      <section className="surface-glass rounded-[2rem] border border-white/60 p-6">
+      <section className="surface-card rounded-[18px] border border-border p-6">
         <form method="GET" className="grid gap-4 lg:grid-cols-[1fr_220px_120px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -58,7 +58,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
               name="query"
               defaultValue={query}
               placeholder="Išči po imenu, priimku, fakulteti, emailu ali telefonu"
-              className="h-12 rounded-2xl bg-white/80 pl-11 pr-4 shadow-sm"
+              className="h-12 rounded-xl bg-card pl-11 pr-4"
             />
           </div>
           <NativeSelect name="status" defaultValue={status}>
@@ -73,7 +73,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
             type="submit"
             className={cn(
               buttonVariants({ variant: "default", size: "lg" }),
-              "h-12 rounded-2xl text-base font-semibold shadow-lg shadow-primary/20",
+              "h-12 rounded-full text-base font-semibold",
             )}
           >
             Filtriraj
@@ -88,22 +88,22 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
           description="Ko bo baza napolnjena, se bodo tukaj prikazali vsi člani. Poskusi spremeniti filter ali dodaj novega člana."
         />
       ) : (
-        <section className="surface-glass overflow-hidden rounded-[2rem] border border-white/60">
+        <section className="surface-card overflow-hidden rounded-[18px] border border-border">
           <Table className="min-w-full">
             <TableHeader>
-              <TableRow className="border-white/60">
-                <TableHead className="px-6 py-4">Član</TableHead>
-                <TableHead className="px-6 py-4">Fakulteta</TableHead>
-                <TableHead className="px-6 py-4">Kontakt</TableHead>
-                <TableHead className="px-6 py-4">Status</TableHead>
-                <TableHead className="px-6 py-4">Članstvo</TableHead>
-                <TableHead className="px-6 py-4 text-right">Akcije</TableHead>
+              <TableRow className="border-border">
+                <TableHead className="px-4 py-4">Član</TableHead>
+                <TableHead className="px-4 py-4">Fakulteta</TableHead>
+                <TableHead className="px-4 py-4">Kontakt</TableHead>
+                <TableHead className="px-4 py-4">Status</TableHead>
+                <TableHead className="px-4 py-4">Članstvo</TableHead>
+                <TableHead className="px-4 py-4 text-right">Akcije</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {members.map((member) => (
-                <TableRow key={member.id} className="border-white/50">
-                  <TableCell className="px-6 py-4">
+                <TableRow key={member.id} className="border-border">
+                  <TableCell className="px-4 py-4">
                     <div>
                       <p className="font-semibold text-foreground">
                         {getMemberFullName(member)}
@@ -113,10 +113,10 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4 text-sm text-muted-foreground">
+                  <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                     {member.faculty || "Ni podatka"}
                   </TableCell>
-                  <TableCell className="px-6 py-4">
+                  <TableCell className="px-4 py-4">
                     <div>
                       <p>{member.email || "Ni e-pošte"}</p>
                       <p className="text-sm text-muted-foreground">
@@ -124,10 +124,10 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4">
+                  <TableCell className="px-4 py-4">
                     <StatusBadge status={member.membership_status} />
                   </TableCell>
-                  <TableCell className="px-6 py-4">
+                  <TableCell className="px-4 py-4">
                     <div>
                       <p>{member.membership_year || "Ni leta članstva"}</p>
                       <p className="text-sm text-muted-foreground">
@@ -135,13 +135,13 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4">
+                  <TableCell className="px-4 py-4">
                     <div className="flex justify-end gap-3">
                       <Link
                         href={`/members/${member.id}`}
                         className={cn(
                           buttonVariants({ variant: "outline", size: "sm" }),
-                          "rounded-2xl",
+                          "rounded-full",
                         )}
                       >
                         Preglej
@@ -150,7 +150,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                         href={`/members/${member.id}/edit`}
                         className={cn(
                           buttonVariants({ variant: "ghost", size: "sm" }),
-                          "rounded-2xl",
+                          "rounded-full",
                         )}
                       >
                         Uredi

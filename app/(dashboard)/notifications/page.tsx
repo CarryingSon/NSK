@@ -24,7 +24,7 @@ export default async function NotificationsPage() {
             href="/notifications/history"
             className={cn(
               buttonVariants({ variant: "outline", size: "lg" }),
-              "h-12 rounded-2xl px-6 text-base font-semibold",
+              "h-12 rounded-full px-6 text-base font-semibold",
             )}
           >
             <History className="size-4" />
@@ -34,7 +34,7 @@ export default async function NotificationsPage() {
       />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_360px]">
-        <div className="surface-glass rounded-[2rem] border border-white/60 p-6">
+        <div className="surface-card rounded-[18px] border border-border p-6">
           <NotificationForm audiences={audiences} emailConfigured={emailConfigured} />
         </div>
 
@@ -60,9 +60,9 @@ export default async function NotificationsPage() {
           ].map((item) => (
             <div
               key={item.title}
-              className="surface-glass rounded-[2rem] border border-white/60 p-6"
+              className="surface-card rounded-[18px] border border-border p-6"
             >
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <div className="flex size-12 items-center justify-center rounded-xl bg-primary/12 text-primary">
                 <item.icon className="size-5" />
               </div>
               <h2 className="mt-5 font-heading text-2xl font-semibold text-foreground">

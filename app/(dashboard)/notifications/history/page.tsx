@@ -33,7 +33,7 @@ export default async function NotificationHistoryPage() {
             href="/notifications"
             className={cn(
               buttonVariants({ variant: "outline", size: "lg" }),
-              "h-12 rounded-2xl px-6 text-base font-semibold",
+              "h-12 rounded-full px-6 text-base font-semibold",
             )}
           >
             Nazaj na obveščanje
@@ -68,7 +68,7 @@ export default async function NotificationHistoryPage() {
             return (
               <Card
                 key={`${campaign.subject}-${campaign.sentAt}-${index}`}
-                className="surface-glass rounded-[2rem] border border-white/60 bg-white/85"
+                className="surface-card rounded-[18px] border border-border bg-card"
               >
                 <CardHeader className="px-6 pt-6">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -116,14 +116,14 @@ export default async function NotificationHistoryPage() {
                 <CardContent className="space-y-4 px-6 pb-6">
                   <div className="flex flex-wrap gap-4">
                     <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="size-4 text-emerald-600" />
+                      <CheckCircle className="size-4 text-success" />
                       <span>
                         <strong>{campaign.successCount}</strong> uspešno poslanih
                       </span>
                     </div>
                     {campaign.failedCount > 0 ? (
                       <div className="flex items-center gap-2 text-sm">
-                        <XCircle className="size-4 text-rose-600" />
+                        <XCircle className="size-4 text-destructive" />
                         <span>
                           <strong>{campaign.failedCount}</strong> neuspešnih
                         </span>
@@ -132,15 +132,15 @@ export default async function NotificationHistoryPage() {
                   </div>
 
                   {campaign.failedRecipients.length > 0 ? (
-                    <details className="rounded-[1.5rem] border border-rose-200 bg-rose-50/70 px-4 py-3">
-                      <summary className="cursor-pointer text-sm font-medium text-rose-700">
+                    <details className="rounded-[14px] border border-destructive/25 bg-destructive/10/70 px-4 py-3">
+                      <summary className="cursor-pointer text-sm font-medium text-destructive">
                         Prikaži neuspešno poslane emaile ({campaign.failedCount})
                       </summary>
                       <div className="mt-3 space-y-3">
                         {campaign.failedRecipients.map((recipient) => (
                           <div
                             key={`${campaign.subject}-${recipient.email}`}
-                            className="rounded-xl border border-rose-200 bg-white/80 px-3 py-2 text-sm"
+                            className="rounded-xl border border-destructive/25 bg-card px-3 py-2 text-sm"
                           >
                             <p className="font-medium text-foreground">{recipient.email}</p>
                             {recipient.error ? (
@@ -161,12 +161,14 @@ export default async function NotificationHistoryPage() {
                   ) : null}
 
                   {campaign.body ? (
-                    <details className="rounded-[1.5rem] border border-white/70 bg-white/70 px-4 py-3">
+                    <details className="rounded-[14px] border border-border bg-card px-4 py-3">
                       <summary className="cursor-pointer text-sm font-medium text-foreground">
                         Prikaži vsebino sporočila
                       </summary>
                       <div
-                        className="mt-4 overflow-hidden rounded-[1.25rem] border border-white/80 bg-white"
+                        // Predogled e-pošte je namenoma bel "papir": vsebina sporočila nosi lastne
+                        // barve in predpostavlja svetlo podlago, zato barve teme tu ne uporabimo.
+                        className="mt-4 overflow-hidden rounded-[12px] border border-border bg-white p-4 text-[#1d1d1f]"
                         dangerouslySetInnerHTML={{ __html: campaign.body }}
                       />
                     </details>

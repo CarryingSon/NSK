@@ -35,7 +35,7 @@ export function LoginForm({
           required
           disabled={disabled}
           placeholder="admin"
-          className="h-12 rounded-2xl bg-white/80 px-4 shadow-sm"
+          className="h-12 rounded-xl bg-card px-4"
         />
       </div>
 
@@ -51,12 +51,12 @@ export function LoginForm({
           required
           disabled={disabled}
           placeholder="Vnesi geslo"
-          className="h-12 rounded-2xl bg-white/80 px-4 shadow-sm"
+          className="h-12 rounded-xl bg-card px-4"
         />
       </div>
 
       {state.error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       ) : null}
@@ -65,7 +65,7 @@ export function LoginForm({
         type="submit"
         disabled={disabled}
         pendingLabel="Prijavljam ..."
-        className="h-12 w-full rounded-2xl text-base font-semibold shadow-lg shadow-primary/20"
+        className="h-12 w-full rounded-full text-base font-semibold"
       >
         Prijava
       </SubmitButton>

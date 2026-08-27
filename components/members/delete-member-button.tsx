@@ -39,13 +39,13 @@ export function DeleteMemberButton({
           <Button
             variant={variant}
             size={size}
-            className={className ?? (variant === "ghost" ? "text-rose-600" : undefined)}
+            className={className ?? (variant === "ghost" ? "text-destructive" : undefined)}
           />
         }
       >
         Izbriši
       </AlertDialogTrigger>
-      <AlertDialogContent className="rounded-[1.75rem] border border-white/60 bg-white/95 p-0">
+      <AlertDialogContent className="rounded-[18px] border border-border bg-card p-0">
         <AlertDialogHeader className="px-6 pt-6">
           <AlertDialogTitle>Izbrišem člana?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -53,14 +53,14 @@ export function DeleteMemberButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="rounded-2xl">Prekliči</AlertDialogCancel>
+          <AlertDialogCancel className="rounded-xl">Prekliči</AlertDialogCancel>
           <form action={deleteMemberAction}>
             <input type="hidden" name="id" value={id} />
             <input type="hidden" name="return_to" value={returnTo} />
             <AlertDialogAction
               type="submit"
               variant="destructive"
-              className="rounded-2xl"
+              className="rounded-xl"
             >
               <Trash2 className="size-4" />
               Izbriši

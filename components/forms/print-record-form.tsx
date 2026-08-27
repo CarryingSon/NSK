@@ -33,7 +33,7 @@ export function PrintRecordForm({ members }: { members: MemberOption[] }) {
             name="title"
             required
             placeholder="Npr. plakat za dogodek, letak, skripta ..."
-            className="h-11 rounded-2xl bg-white/75 px-4"
+            className="h-11 rounded-xl bg-card px-4"
           />
         </div>
 
@@ -58,7 +58,7 @@ export function PrintRecordForm({ members }: { members: MemberOption[] }) {
             min="1"
             step="1"
             defaultValue="1"
-            className="h-11 rounded-2xl bg-white/75 px-4"
+            className="h-11 rounded-xl bg-card px-4"
           />
         </div>
 
@@ -68,19 +68,19 @@ export function PrintRecordForm({ members }: { members: MemberOption[] }) {
             id="notes"
             name="notes"
             placeholder="Dodatne informacije o naročilu ali izdaji ..."
-            className="min-h-24 rounded-[1.5rem] bg-white/75 px-4 py-3"
+            className="min-h-24 rounded-[14px] bg-card px-4 py-3"
           />
         </div>
       </div>
 
       {state.error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
       ) : null}
 
       {state.success ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-xl border border-success/25 bg-success/10 px-4 py-3 text-sm text-success">
           {state.success}
         </div>
       ) : null}
@@ -88,7 +88,7 @@ export function PrintRecordForm({ members }: { members: MemberOption[] }) {
       <SubmitButton
         type="submit"
         pendingLabel="Shranjujem zapis ..."
-        className="h-12 rounded-2xl px-6 text-base font-semibold shadow-lg shadow-primary/20"
+        className="h-12 rounded-full px-6 text-base font-semibold"
       >
         Dodaj zapis tiska
       </SubmitButton>
