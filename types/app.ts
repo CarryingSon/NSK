@@ -1,6 +1,5 @@
 import type {
   Database,
-  EventStatus,
   EmailLogStatus,
   MembershipStatus,
   RegistrationStatus,
@@ -8,36 +7,27 @@ import type {
 
 export type Member = Database["public"]["Tables"]["members"]["Row"];
 export type Event = Database["public"]["Tables"]["events"]["Row"];
-export type Registration =
-  Database["public"]["Tables"]["event_registrations"]["Row"];
-export type Coupon = Database["public"]["Tables"]["coupons"]["Row"];
 export type PrintRecord = Database["public"]["Tables"]["print_records"]["Row"];
 export type EmailLog = Database["public"]["Tables"]["email_logs"]["Row"];
+
+// Ožji izsek člana za spustne sezname - dovolj za prikaz imena in izbiro vrednosti.
+export type MemberOption = Pick<Member, "id" | "first_name" | "last_name">;
+
+// Povzetek za nadzorno ploščo: stanje članstva in prirast v tekočem letu.
+export interface DashboardOverview {
+  year: number;
+  totalMembers: number;
+  activeMembers: number;
+  inactiveMembers: number;
+  pendingMembers: number;
+  newThisYear: number;
+  newMembersThisYear: Member[];
+  recentActiveMembers: Member[];
+}
 
 export interface ActionState {
   error?: string;
   success?: string;
-}
-
-export interface DashboardStats {
-  activeMembers: number;
-  inactiveMembers: number;
-  pendingApplications: number;
-  upcomingEvents: number;
-}
-
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  location: string | null;
-  starts_at: string;
-  ends_at: string | null;
-  status: EventStatus;
-}
-
-export interface RegistrationWithRelations extends Registration {
-  member: Pick<Member, "id" | "first_name" | "last_name" | "email"> | null;
-  event: Pick<Event, "id" | "title" | "starts_at" | "location"> | null;
 }
 
 export interface PrintRecordWithMember extends PrintRecord {

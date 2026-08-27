@@ -85,6 +85,22 @@ export function MemberForm({ member }: { member?: Member | null }) {
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="emso">EMŠO</Label>
+            <Input
+              id="emso"
+              name="emso"
+              inputMode="numeric"
+              maxLength={13}
+              pattern="[0-9]{13}"
+              defaultValue={member?.emso ?? ""}
+              placeholder="13 števk"
+              className={fieldClass}
+            />
+            <p className="text-xs text-muted-foreground">
+              Neobvezno. Če je vnesen, mora imeti 13 števk in veljavno kontrolno številko.
+            </p>
+          </div>
+          <div className="space-y-2 md:col-span-2">
             <Label htmlFor="faculty">Fakulteta / visokošolski zavod</Label>
             <NativeSelect
               id="faculty"

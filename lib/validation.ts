@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { EventStatus, MembershipStatus, RegistrationStatus } from "@/types/database";
+import type { MembershipStatus } from "@/types/database";
 import type { NotificationAudience } from "@/types/app";
 
 const optionalString = z
@@ -20,12 +20,6 @@ const optionalDate = z
   .string()
   .trim()
   .transform((value) => (value.length > 0 ? value : null))
-  .nullable();
-
-const optionalDateTime = z
-  .string()
-  .trim()
-  .transform((value) => (value.length > 0 ? new Date(value).toISOString() : null))
   .nullable();
 
 const optionalUuid = z.preprocess((value) => {
@@ -74,10 +68,39 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Geslo mora imeti vsaj 6 znakov."),
 });
 
+// EMŠO je 13 števk v obliki DDMMLLL RR BBB K, kjer je zadnja kontrolna.
+// Izračuna se iz utežene vsote prvih dvanajstih po zaporedju 7,6,5,4,3,2 (dvakrat).
+// Preverjanje same dolžine ne bi ujelo tipkarske napake, kontrolna števka pa jo.
+export function isValidEmso(value: string) {
+  if (!/^\d{13}$/.test(value)) {
+    return false;
+  }
+
+  const digits = [...value].map(Number);
+  const weights = [7, 6, 5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+  const sum = weights.reduce(
+    (total, weight, index) => total + weight * digits[index],
+    0,
+  );
+
+  const remainder = 11 - (sum % 11);
+  const checksum = remainder > 9 ? 0 : remainder;
+
+  return checksum === digits[12];
+}
+
 export const memberSchema = z.object({
   id: z.string().uuid().optional(),
   first_name: z.string().trim().min(2, "Ime je obvezno."),
   last_name: z.string().trim().min(2, "Priimek je obvezen."),
+  emso: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/\s/g, ""))
+    .transform((value) => (value.length > 0 ? value : null))
+    .refine((value) => value === null || isValidEmso(value), {
+      message: "EMŠO mora imeti 13 števk in veljavno kontrolno številko.",
+    }),
   email: z
     .string()
     .trim()
@@ -98,44 +121,6 @@ export const memberSchema = z.object({
   ] as [MembershipStatus, MembershipStatus, MembershipStatus]),
   membership_year: optionalInteger,
   joined_at: optionalDate,
-  notes: optionalString,
-});
-
-export const eventSchema = z.object({
-  id: z.string().uuid().optional(),
-  title: z.string().trim().min(3, "Naslov dogodka je obvezen."),
-  description: optionalString,
-  location: optionalString,
-  starts_at: z
-    .string()
-    .trim()
-    .min(1, "Datum začetka je obvezen.")
-    .transform((value) => new Date(value).toISOString()),
-  ends_at: optionalDateTime,
-  max_attendees: optionalInteger,
-  status: z.enum([
-    "upcoming",
-    "ongoing",
-    "completed",
-    "cancelled",
-  ] as [EventStatus, EventStatus, EventStatus, EventStatus]),
-});
-
-export const registrationSchema = z.object({
-  id: z.string().uuid().optional(),
-  member_id: z.string().uuid("Izberi člana."),
-  event_id: z.string().uuid("Izberi dogodek."),
-  status: z.enum([
-    "registered",
-    "confirmed",
-    "cancelled",
-    "attended",
-  ] as [
-    RegistrationStatus,
-    RegistrationStatus,
-    RegistrationStatus,
-    RegistrationStatus,
-  ]),
   notes: optionalString,
 });
 

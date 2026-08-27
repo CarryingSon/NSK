@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { getMemberFullName } from "@/lib/format";
-import type { ActionState, Member } from "@/types/app";
+import type { ActionState, MemberOption } from "@/types/app";
 
 const initialState: ActionState = {};
 
-export function PrintRecordForm({ members }: { members: Member[] }) {
+export function PrintRecordForm({ members }: { members: MemberOption[] }) {
   const [state, formAction] = useActionState(createPrintRecordAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 

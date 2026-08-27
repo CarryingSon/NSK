@@ -95,6 +95,12 @@ export default async function MemberDetailPage({
                   </dd>
                 </div>
                 <div>
+                  <dt className="text-muted-foreground">EMŠO</dt>
+                  <dd className="font-medium tabular-nums text-foreground">
+                    {member.emso || "—"}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-muted-foreground">Datum včlanitve</dt>
                   <dd className="font-medium text-foreground">
                     {formatDate(member.joined_at)}

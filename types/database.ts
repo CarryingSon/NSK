@@ -27,6 +27,7 @@ export interface Database {
           id: string;
           first_name: string;
           last_name: string;
+          emso: string | null;
           email: string | null;
           phone: string | null;
           birth_date: string | null;
@@ -47,6 +48,7 @@ export interface Database {
           id?: string;
           first_name: string;
           last_name: string;
+          emso?: string | null;
           email?: string | null;
           phone?: string | null;
           birth_date?: string | null;

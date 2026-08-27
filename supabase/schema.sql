@@ -34,6 +34,9 @@ create table if not exists public.members (
 alter table public.members
 add column if not exists faculty text;
 
+alter table public.members
+add column if not exists emso text;
+
 create table if not exists public.events (
   id uuid primary key default gen_random_uuid(),
   title text not null,
