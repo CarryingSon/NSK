@@ -69,6 +69,34 @@ Datoteka [supabase/schema.sql](/Users/jurekrizman/Documents/NŠK%20-%20po/supaba
 - omogočen RLS na vseh glavnih tabelah
 - politike za prijavljene (`authenticated`) uporabnike
 
+## Vloge in uporabniki
+
+- Dve vlogi: **administrator** vidi in ureja vse, **uradnik** vidi samo člane,
+  evidenco tiska in Info.
+- Vloga je zapisana v `auth.users.raw_app_meta_data.role`. Tega polja uporabnik ne
+  more spreminjati sam (za razliko od `user_metadata`), pride pa v žeton, zato jo
+  `getCurrentUser()` prebere brez dodatne poizvedbe.
+- Zaščita je na dveh nivojih: stranska vrstica skrije nedovoljene postavke,
+  vsaka omejena stran pa vlogo preveri še strežniško prek `requireAdmin()`.
+  Skrit gumb ni zaščita - do strani se pride tudi z neposrednim naslovom.
+- Kaj sme katera vloga, je na enem mestu v
+  [lib/roles.ts](/Users/jurekrizman/Documents/NŠK%20-%20po/lib/roles.ts). Nova stran je
+  privzeto zaprta za uradnika - pozabljen vnos dostop zapre, ne odpre.
+- Administrator povabi uporabnika pod Nastavitve. Povabljeni po e-pošti dobi
+  povezavo na `/auth/confirm`, ki žeton vnovči za sejo in ga pošlje na
+  `/nastavi-geslo`, kjer si geslo nastavi sam.
+- Povabila in spremembe vlog gredo prek `SUPABASE_SERVICE_ROLE_KEY`. Ključ obide
+  vsa RLS pravila, zato **nima** predpone `NEXT_PUBLIC` in se uporablja izključno
+  v strežniških akcijah.
+- Račun iz `ADMIN_EMAIL` velja za administratorja tudi brez zapisane vloge. To je
+  varovalo pred zaklepom: brez njega bi obstoječi račun po uvedbi vlog padel na
+  "uradnik" in izgubil dostop prav do nastavitev, kjer bi si vlogo vrnil.
+- Sprememba vloge se uveljavi ob naslednji osvežitvi žetona (do ene ure) oziroma
+  takoj ob ponovni prijavi.
+
+Za obstoječo bazo zaženi
+[supabase/migrate-roles.sql](/Users/jurekrizman/Documents/NŠK%20-%20po/supabase/migrate-roles.sql).
+
 ## Email obveščanje
 
 - Obvestilo se sestavi na `/notifications`: naslov, podnaslov na oranžni glavi, vsebina

@@ -10,7 +10,8 @@ const PUBLIC_PATHS = new Set(["/login"]);
 // Javni obrazec za včlanitev. Teče v iframeu na klubski spletni strani, zato
 // mora biti dosegljiv vsem - in za razliko od prijavne strani tudi prijavljenim,
 // da si ga admin lahko ogleda iz aplikacije.
-const OPEN_PATHS = ["/vclanitev"];
+// /auth/confirm vnovči žeton iz e-pošte; klicatelj takrat še nima seje.
+const OPEN_PATHS = ["/vclanitev", "/auth/confirm"];
 
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {

@@ -4,12 +4,14 @@ import { History } from "lucide-react";
 import { NotificationComposer } from "@/components/notifications/notification-composer";
 import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { getNotificationAudienceStats } from "@/lib/data";
 import { isEmailConfigured } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
 
 export default async function NotificationsPage() {
+  await requireAdmin();
+
   const [stats, user] = await Promise.all([
     getNotificationAudienceStats(),
     getCurrentUser(),

@@ -17,6 +17,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import type { NavigationItem } from "@/lib/constants";
+import { appRoleLabels, type AppRole } from "@/lib/roles";
 import {
   appName,
   logoutItem,
@@ -29,11 +30,17 @@ import { cn } from "@/lib/utils";
 function SidebarBody({
   email,
   demoMode,
+  role,
 }: {
   email: string | null;
   demoMode: boolean;
+  role: AppRole;
 }) {
   const pathname = usePathname();
+
+  function isVisible(item: NavigationItem) {
+    return item.roles.includes(role);
+  }
 
   function renderLink(item: NavigationItem) {
     const isActive =
@@ -85,11 +92,11 @@ function SidebarBody({
       </div>
 
       <nav className="mt-8 flex-1 space-y-0.5">
-        {primaryNavigation.map(renderLink)}
+        {primaryNavigation.filter(isVisible).map(renderLink)}
       </nav>
 
       <div className="mt-6 space-y-0.5 border-t border-sidebar-border pt-4">
-        {secondaryNavigation.map(renderLink)}
+        {secondaryNavigation.filter(isVisible).map(renderLink)}
       </div>
 
       <div className="mt-4 border-t border-sidebar-border pt-5">
@@ -99,7 +106,7 @@ function SidebarBody({
           </div>
           <div className="min-w-0">
             <p className="truncate text-[0.8125rem] text-muted-foreground">
-              {demoMode ? "Demo način" : "Prijavljen"}
+              {demoMode ? "Demo način" : appRoleLabels[role]}
             </p>
             <p className="truncate text-[0.875rem] font-medium">
               {email ?? "Brez aktivne prijave"}
@@ -126,10 +133,12 @@ function SidebarBody({
 export function AppSidebar({
   email,
   demoMode,
+  role,
   mobile = false,
 }: {
   email: string | null;
   demoMode: boolean;
+  role: AppRole;
   mobile?: boolean;
 }) {
   if (mobile) {
@@ -154,13 +163,13 @@ export function AppSidebar({
               Dostop do modulov aplikacije Poziralnik.
             </SheetDescription>
           </SheetHeader>
-          <SidebarBody email={email} demoMode={demoMode} />
+          <SidebarBody email={email} demoMode={demoMode} role={role} />
         </SheetContent>
       </Sheet>
     );
   }
 
-  return <SidebarBody email={email} demoMode={demoMode} />;
+  return <SidebarBody email={email} demoMode={demoMode} role={role} />;
 }
 
 export { buttonVariants };

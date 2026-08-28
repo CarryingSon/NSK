@@ -30,8 +30,11 @@ import { formatDateTime } from "@/lib/format";
 import { isEmailConfigured } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
 import type { CampaignFailure } from "@/types/app";
+import { requireAdmin } from "@/lib/auth";
 
 export default async function NotificationHistoryPage() {
+  await requireAdmin();
+
   const campaigns = await getEmailCampaigns();
   const emailConfigured = isEmailConfigured();
 

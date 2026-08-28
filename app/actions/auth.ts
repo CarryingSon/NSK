@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { getLandingPath } from "@/lib/roles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { loginSchema } from "@/lib/validation";
+import { loginSchema, setPasswordSchema } from "@/lib/validation";
 import type { ActionState } from "@/types/app";
 
 function getStringValue(formData: FormData, key: string) {
@@ -59,15 +60,28 @@ export async function loginAction(
     };
   }
 
+  let landingPath = "/dashboard";
+
   try {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithPassword(parsed.data);
+    const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
     if (error) {
       return {
         error: getLoginErrorMessage(error),
       };
     }
+
+    // Uradnika ne pošiljamo na nadzorno ploščo, ki je zanj zaprta. Račun iz
+    // ADMIN_EMAIL velja za administratorja tudi brez zapisane vloge - enako
+    // varovalo pred zaklepom kot v getCurrentUser().
+    const role = data.user?.app_metadata?.role;
+    const bootstrapAdmin =
+      process.env.ADMIN_EMAIL?.trim().toLowerCase() ===
+      data.user?.email?.toLowerCase();
+    landingPath = getLandingPath(
+      role === "admin" || (!role && bootstrapAdmin) ? "admin" : "officer",
+    );
   } catch (error) {
     console.error("Napaka pri prijavi", error);
     return {
@@ -79,7 +93,7 @@ export async function loginAction(
   revalidatePath("/", "layout");
 
   const redirectedFrom = getStringValue(formData, "redirectTo");
-  redirect(redirectedFrom || "/dashboard");
+  redirect(redirectedFrom || landingPath);
 }
 
 export async function logoutAction() {
@@ -92,4 +106,50 @@ export async function logoutAction() {
 
   revalidatePath("/", "layout");
   redirect("/login");
+}
+
+/**
+ * Uporabnik si po sprejemu povabila nastavi geslo. Sejo je vzpostavil
+ * /auth/confirm, zato tu zadostuje updateUser na trenutnem uporabniku.
+ */
+export async function setPasswordAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = setPasswordSchema.safeParse({
+    password: getStringValue(formData, "password"),
+    confirm: getStringValue(formData, "confirm"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Gesla ni bilo mogoče shraniti." };
+  }
+
+  let landingPath = "/dashboard";
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: claims } = await supabase.auth.getClaims();
+
+    if (!claims?.claims?.sub) {
+      return { error: "Povezava je potekla. Prosi administratorja za novo povabilo." };
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      password: parsed.data.password,
+    });
+
+    if (error) {
+      return { error: `Gesla ni bilo mogoče shraniti: ${error.message}` };
+    }
+
+    const role = data.user?.app_metadata?.role;
+    landingPath = getLandingPath(role === "admin" ? "admin" : "officer");
+  } catch (error) {
+    console.error("Napaka pri nastavljanju gesla", error);
+    return { error: "Gesla ni bilo mogoče shraniti. Poskusi znova." };
+  }
+
+  revalidatePath("/", "layout");
+  redirect(landingPath);
 }

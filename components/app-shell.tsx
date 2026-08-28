@@ -1,16 +1,19 @@
 import type { ReactNode } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import type { AppRole } from "@/lib/roles";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AppShell({
   children,
   email,
   demoMode,
+  role,
 }: {
   children: ReactNode;
   email: string | null;
   demoMode: boolean;
+  role: AppRole;
 }) {
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
@@ -18,13 +21,13 @@ export function AppShell({
           tanka črta, kot Apple loči odseke. */}
       <aside className="hidden lg:block">
         <div className="sticky top-0 h-screen overflow-y-auto">
-          <AppSidebar email={email} demoMode={demoMode} />
+          <AppSidebar email={email} demoMode={demoMode} role={role} />
         </div>
       </aside>
 
       <div className="min-w-0">
         <div className="nav-blur sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border px-4 py-3 lg:hidden">
-          <AppSidebar email={email} demoMode={demoMode} mobile />
+          <AppSidebar email={email} demoMode={demoMode} role={role} mobile />
           <div className="flex min-w-0 items-center gap-3">
             <span className="hidden truncate text-[0.875rem] text-muted-foreground sm:block">
               {demoMode ? "Demo pogled" : email ?? "Poziralnik"}

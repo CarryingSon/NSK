@@ -19,6 +19,7 @@ import type {
   MembershipStatus,
   NotificationAudience,
 } from "@/types/database";
+import type { AppRole } from "@/lib/roles";
 import type { StatusOption } from "@/types/app";
 
 export const appName = "Poziralnik";
@@ -66,23 +67,49 @@ export interface NavigationItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  // Katere vloge postavko vidijo. Vir resnice za dostop je canAccessPath() v
+  // lib/roles.ts; tukaj je le, kaj se izriše.
+  roles: AppRole[];
 }
+
+const vsi: AppRole[] = ["admin", "officer"];
+const samoAdmin: AppRole[] = ["admin"];
 
 // Delo s člani, tiskom in obveščanjem - to odpiraš vsak dan.
 export const primaryNavigation: NavigationItem[] = [
-  { href: "/dashboard", label: "Nadzorna plošča", icon: LayoutDashboard },
-  { href: "/members", label: "Člani", icon: Users },
-  { href: "/applications", label: "Prijave članov", icon: ClipboardList },
-  { href: "/print-records", label: "Evidenca tiska", icon: Newspaper },
-  { href: "/notifications", label: "Obveščanje", icon: Bell },
-  { href: "/notifications/history", label: "Zgodovina obvestil", icon: History },
+  {
+    href: "/dashboard",
+    label: "Nadzorna plošča",
+    icon: LayoutDashboard,
+    roles: samoAdmin,
+  },
+  { href: "/members", label: "Člani", icon: Users, roles: vsi },
+  {
+    href: "/applications",
+    label: "Prijave članov",
+    icon: ClipboardList,
+    roles: samoAdmin,
+  },
+  {
+    href: "/print-records",
+    label: "Evidenca tiska",
+    icon: Newspaper,
+    roles: vsi,
+  },
+  { href: "/notifications", label: "Obveščanje", icon: Bell, roles: samoAdmin },
+  {
+    href: "/notifications/history",
+    label: "Zgodovina obvestil",
+    icon: History,
+    roles: samoAdmin,
+  },
 ];
 
 // Nastavitve in podatki kluba stojijo ob profilu na dnu: odpreš ju redko,
 // zato ne zaslužita mesta med dnevnimi opravili.
 export const secondaryNavigation: NavigationItem[] = [
-  { href: "/settings", label: "Nastavitve", icon: Settings },
-  { href: "/info", label: "Info", icon: Info },
+  { href: "/settings", label: "Nastavitve", icon: Settings, roles: samoAdmin },
+  { href: "/info", label: "Info", icon: Info, roles: vsi },
 ];
 
 export const logoutItem = {

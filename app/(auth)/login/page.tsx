@@ -6,11 +6,22 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 interface LoginPageProps {
   searchParams: Promise<{
     redirectedFrom?: string;
+    napaka?: string;
   }>;
 }
 
+// Sem pristane, kdor klikne potekel ali pokvarjen povabilni gumb v e-pošti.
+// Brez pojasnila bi videl le prijavni obrazec in ne bi vedel, kaj je narobe.
+const linkErrors: Record<string, string> = {
+  potekla:
+    "Povezava iz e-pošte je potekla ali je bila že uporabljena. Prosi administratorja za novo povabilo.",
+  povezava:
+    "Povezava iz e-pošte ni veljavna. Odpri jo neposredno iz sporočila ali prosi za novo povabilo.",
+};
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { redirectedFrom } = await searchParams;
+  const { redirectedFrom, napaka } = await searchParams;
+  const linkError = napaka ? linkErrors[napaka] : undefined;
   const configured = isSupabaseConfigured();
 
   return (
@@ -35,6 +46,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <p className="mt-7 text-center text-[1.0625rem] leading-relaxed text-muted-foreground">
             Prijavite se v sistem za vodenje članstva
           </p>
+
+          {linkError ? (
+            <p className="mt-6 rounded-[12px] border border-warning/25 bg-warning/10 px-4 py-3 text-center text-[0.875rem] text-warning">
+              {linkError}
+            </p>
+          ) : null}
 
           <div className="mt-8">
             <LoginForm redirectTo={redirectedFrom} disabled={!configured} />

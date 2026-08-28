@@ -7,6 +7,9 @@ const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
 const smtpFrom = process.env.SMTP_FROM;
 const smtpReplyTo = process.env.SMTP_REPLY_TO;
+// Service role ključ obide vsa RLS pravila, zato namenoma ni NEXT_PUBLIC in se
+// uporablja izključno v strežniških akcijah za upravljanje uporabnikov.
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export function isSupabaseConfigured() {
   return Boolean(supabaseUrl && supabaseAnonKey);
@@ -23,6 +26,20 @@ export function getSupabaseCredentials() {
     supabaseUrl,
     supabaseAnonKey,
   };
+}
+
+export function isUserManagementConfigured() {
+  return Boolean(supabaseUrl && supabaseServiceRoleKey);
+}
+
+export function getServiceRoleCredentials() {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error(
+      "Upravljanje uporabnikov ni konfigurirano. Nastavi SUPABASE_SERVICE_ROLE_KEY.",
+    );
+  }
+
+  return { supabaseUrl, supabaseServiceRoleKey };
 }
 
 export function isEmailConfigured() {

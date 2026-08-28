@@ -11,8 +11,15 @@ export default async function DashboardLayout({
 }) {
   const user = await requireUser();
 
+  // Brez Supabase teče aplikacija v predstavitvenem načinu; takrat ni vloge in
+  // se pokaže vse, sicer bi bil demo prazen.
+
   return (
-    <AppShell email={user?.email ?? null} demoMode={!isSupabaseConfigured()}>
+    <AppShell
+      email={user?.email ?? null}
+      demoMode={!isSupabaseConfigured()}
+      role={user?.role ?? "admin"}
+    >
       {children}
     </AppShell>
   );

@@ -26,6 +26,7 @@ import { formatDateTime } from "@/lib/format";
 import { getSiteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import type { ApplicationStatus } from "@/types/database";
+import { requireAdmin } from "@/lib/auth";
 
 const tabs = [
   { value: "submissions", label: "Spletne prijave", icon: Globe },
@@ -45,6 +46,8 @@ export default async function ApplicationsPage({
 }: {
   searchParams: Promise<{ tab?: string; status?: string }>;
 }) {
+  await requireAdmin();
+
   const params = await searchParams;
   const activeTab = params.tab === "embed" ? "embed" : "submissions";
   const status = parseStatus(params.status);

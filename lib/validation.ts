@@ -242,3 +242,24 @@ export const applicationStatusSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(["pending", "approved", "rejected"]),
 });
+
+export const inviteUserSchema = z.object({
+  email: z.email("Vnesi veljaven e-poštni naslov."),
+  role: z.enum(["admin", "officer"]),
+});
+
+export const userRoleSchema = z.object({
+  id: z.string().uuid(),
+  role: z.enum(["admin", "officer"]),
+});
+
+// Geslo si uporabnik nastavi sam po sprejemu povabila.
+export const setPasswordSchema = z
+  .object({
+    password: z.string().min(8, "Geslo mora imeti vsaj 8 znakov."),
+    confirm: z.string(),
+  })
+  .refine((value) => value.password === value.confirm, {
+    message: "Gesli se ne ujemata.",
+    path: ["confirm"],
+  });

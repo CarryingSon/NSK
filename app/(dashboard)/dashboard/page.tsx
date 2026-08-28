@@ -16,8 +16,11 @@ import {
 import { getDashboardOverview } from "@/lib/data";
 import { formatDate, getMemberFullName } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { requireAdmin } from "@/lib/auth";
 
 export default async function DashboardPage() {
+  await requireAdmin();
+
   const overview = await getDashboardOverview();
 
   const stats = [
