@@ -5,7 +5,7 @@ import { Loader2, Mail, Trash2 } from "lucide-react";
 
 import {
   deleteUserAction,
-  resendInviteAction,
+  sendAccessLinkAction,
   setUserRoleAction,
 } from "@/app/actions/users";
 import {
@@ -31,12 +31,14 @@ export function UserRowActions({
   email,
   role,
   invitePending,
+  confirmed,
   isSelf,
 }: {
   id: string;
   email: string;
   role: AppRole;
   invitePending: boolean;
+  confirmed: boolean;
   isSelf: boolean;
 }) {
   const [state, setState] = useState<ActionState>(initialState);
@@ -51,12 +53,13 @@ export function UserRowActions({
     });
   }
 
-  function resend() {
+  function sendAccessLink() {
     startAction(async () => {
       const formData = new FormData();
       formData.set("email", email);
       formData.set("role", role);
-      setState(await resendInviteAction(initialState, formData));
+      formData.set("confirmed", String(confirmed));
+      setState(await sendAccessLinkAction(initialState, formData));
     });
   }
 
@@ -82,18 +85,18 @@ export function UserRowActions({
           ))}
         </NativeSelect>
 
-        {invitePending ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={pending}
-            onClick={resend}
-          >
-            <Mail className="size-4" />
-            Pošlji znova
-          </Button>
-        ) : null}
+        {/* Uporabno tudi za že prijavljene: administrator jim tako pomaga do
+            novega gesla, ne da bi ga kdaj videl. */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={pending}
+          onClick={sendAccessLink}
+        >
+          <Mail className="size-4" />
+          {invitePending ? "Pošlji povabilo znova" : "Pošlji povezavo za geslo"}
+        </Button>
 
         {isSelf ? null : (
           <AlertDialog>

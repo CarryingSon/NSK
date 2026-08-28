@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { appRoleLabels, isAppRole, type AppRole } from "@/lib/roles";
 import { getSiteUrl } from "@/lib/site-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isUserManagementConfigured } from "@/lib/supabase/env";
 import { inviteUserSchema, userRoleSchema } from "@/lib/validation";
 import type { ActionState } from "@/types/app";
@@ -136,30 +137,57 @@ export async function setUserRoleAction(
   }
 }
 
-export async function resendInviteAction(
+/**
+ * Pošlje uporabniku povezavo za nastavitev gesla.
+ *
+ * Nepotrjenemu računu gre povabilo, potrjenemu pa ponastavitev gesla -
+ * povabilo Supabase potrjenemu računu zavrne. Uporabnik, ki je povabilo že
+ * odprl, a gesla ni nastavil, je prav tak primer.
+ */
+export async function sendAccessLinkAction(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   const email = getStringValue(formData, "email").trim();
   const role = getStringValue(formData, "role");
+  const confirmed = getStringValue(formData, "confirmed") === "true";
 
   if (!email || !isAppRole(role)) {
-    return { error: "Povabila ni bilo mogoče poslati." };
+    return { error: "Povezave ni bilo mogoče poslati." };
   }
 
   if (!isUserManagementConfigured()) {
     return { error: notConfigured };
   }
 
+  const redirectTo = `${getSiteUrl()}/auth/confirm?next=/nastavi-geslo`;
+
   try {
     await requireAdmin();
-    const admin = createSupabaseAdminClient();
 
-    // Za še nepotrjen račun je ponovno povabilo pravi klic; generateLink bi
-    // ustvaril povezavo, ki je ne bi nihče poslal.
+    if (confirmed) {
+      // resetPasswordForEmail je navaden klic in sam pošlje sporočilo;
+      // admin.generateLink bi povezavo samo ustvaril, poslal je ne bi nihče.
+      const supabase = await createSupabaseServerClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+
+      if (error) {
+        return { error: `Povezave ni bilo mogoče poslati: ${error.message}` };
+      }
+
+      revalidatePath("/settings");
+
+      return {
+        success: `Povezava za nastavitev gesla je poslana na ${email}.`,
+      };
+    }
+
+    const admin = createSupabaseAdminClient();
     const { error } = await admin.auth.admin.inviteUserByEmail(email, {
       data: { role },
-      redirectTo: `${getSiteUrl()}/auth/confirm?next=/nastavi-geslo`,
+      redirectTo,
     });
 
     if (error) {
@@ -170,8 +198,8 @@ export async function resendInviteAction(
 
     return { success: `Povabilo je znova poslano na ${email}.` };
   } catch (error) {
-    console.error("Napaka pri ponovnem povabilu", error);
-    return { error: "Povabila ni bilo mogoče poslati." };
+    console.error("Napaka pri pošiljanju povezave za dostop", error);
+    return { error: "Povezave ni bilo mogoče poslati." };
   }
 }
 

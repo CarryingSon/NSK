@@ -125,6 +125,7 @@ export default async function SettingsPage() {
                     email={user.email}
                     role={user.role}
                     invitePending={user.invitePending}
+                    confirmed={user.confirmed}
                     isSelf={user.id === current?.id}
                   />
                 </li>

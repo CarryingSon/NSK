@@ -8,8 +8,11 @@ export interface AppUser {
   id: string;
   email: string;
   role: AppRole;
-  // Povabljen, a gesla še ni nastavil - povabilo je smiselno poslati znova.
+  // Povabljen, a se še ni prijavil - povabilo je smiselno poslati znova.
   invitePending: boolean;
+  // Potrjen račun potrebuje povezavo za ponastavitev gesla, ne novega povabila:
+  // povabilo Supabase potrjenemu računu zavrne.
+  confirmed: boolean;
   lastSignInAt: string | null;
   createdAt: string;
 }
@@ -45,6 +48,7 @@ export async function getAppUsers(): Promise<AppUser[]> {
           // podeliti administratorskih pravic.
           role: isAppRole(role) ? role : "officer",
           invitePending: Boolean(user.invited_at) && !user.last_sign_in_at,
+          confirmed: Boolean(user.email_confirmed_at),
           lastSignInAt: user.last_sign_in_at ?? null,
           createdAt: user.created_at,
         };
