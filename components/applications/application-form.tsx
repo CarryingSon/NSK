@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Loader2, Send } from "lucide-react";
+import { CheckCircle2, Loader2, Send, Upload } from "lucide-react";
 
 import { submitApplicationAction } from "@/app/actions/applications";
 import { SearchableSelect } from "@/components/forms/searchable-select";
@@ -9,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   club,
   clubPrivacyPolicyUrl,
   schoolOptionGroups,
 } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { ActionState } from "@/types/app";
 
 const initialState: ActionState = {};
@@ -69,6 +70,81 @@ function Consent({
       >
         {label}
       </Label>
+    </div>
+  );
+}
+
+const maxProofBytes = 5 * 1024 * 1024;
+
+function formatFileSize(bytes: number) {
+  const mb = bytes / (1024 * 1024);
+
+  if (mb >= 1) {
+    return `${mb.toFixed(1).replace(".", ",")} MB`;
+  }
+
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/**
+ * Polje za nalaganje potrdila o vpisu.
+ *
+ * Domači <input type="file"> izriše brskalnikov gumb ("Choose File"), ki je v
+ * jeziku brskalnika in ne v jeziku obrazca, sloga pa se mu ne da nastaviti.
+ * Zato je vnos skrit, klik pa sproži oznaka, oblikovana kot gumb - brez
+ * JavaScripta to deluje enako, ker oznaka odpre izbirnik sama od sebe.
+ *
+ * Velikost preverimo že tu, da obiskovalec ne izgubi izpolnjenega obrazca
+ * zaradi prevelike datoteke. Strežnik jo preveri še enkrat - ta je vir resnice.
+ */
+function ProofField() {
+  const [file, setFile] = useState<{ name: string; size: number } | null>(null);
+  const tooLarge = file !== null && file.size > maxProofBytes;
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          id="proof"
+          name="proof"
+          type="file"
+          accept="application/pdf,image/jpeg,image/png,image/heic"
+          className="peer sr-only"
+          onChange={(event) => {
+            const selected = event.target.files?.[0];
+            setFile(selected ? { name: selected.name, size: selected.size } : null);
+          }}
+        />
+        <Label
+          htmlFor="proof"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "h-12 cursor-pointer rounded-full px-5 font-medium",
+            "peer-focus-visible:ring-4 peer-focus-visible:ring-ring/40",
+          )}
+        >
+          <Upload className="size-4" />
+          {file ? "Zamenjaj datoteko" : "Izberi datoteko"}
+        </Label>
+
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-sm",
+            tooLarge ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {file
+            ? `${file.name} · ${formatFileSize(file.size)}`
+            : "Nobena datoteka ni izbrana"}
+        </span>
+      </div>
+
+      {tooLarge ? (
+        <p className="mt-2 text-xs text-destructive">
+          Datoteka presega 5 MB. Izberi manjšo ali potrdilo prinesi v času
+          uradnih ur.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -243,13 +319,7 @@ export function ApplicationForm() {
             htmlFor="proof"
             hint="PDF ali fotografija, do 5 MB. Če ga zdaj nimaš, ga lahko prineseš v času uradnih ur."
           >
-            <Input
-              id="proof"
-              name="proof"
-              type="file"
-              accept="application/pdf,image/jpeg,image/png,image/heic"
-              className="h-12 py-2.5"
-            />
+            <ProofField />
           </Field>
           <Field label="Sporočilo (neobvezno)" htmlFor="message">
             <Textarea
