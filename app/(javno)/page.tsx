@@ -24,7 +24,7 @@ export default async function Naslovnica() {
             drugi spelje spodnji rob v črno, da se uvod zlije s prelivom pod
             njim namesto da bi se odrezal. */}
         <div
-          className="absolute inset-0 -z-10 bg-black/72 sm:bg-gradient-to-r sm:from-black/88 sm:via-black/72 sm:to-black/45"
+          className="absolute inset-0 -z-10 bg-black/62 sm:bg-gradient-to-r sm:from-black/78 sm:via-black/62 sm:to-black/35"
           aria-hidden="true"
         />
         <div
