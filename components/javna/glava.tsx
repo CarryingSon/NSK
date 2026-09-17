@@ -46,7 +46,7 @@ export function Glava() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         {/* Logotip je napis "Notranjski študentski klub" v razmerju 5,3 : 1,
             zato se mu pusti naravno širino - ime kluba nosi že sam. */}
         <Link href="/" className="flex shrink-0 items-center">
@@ -55,7 +55,7 @@ export function Glava() {
             alt="Notranjski študentski klub"
             width={352}
             height={66}
-            className="h-7 w-auto sm:h-8"
+            className="h-9 w-auto sm:h-11"
             priority
           />
         </Link>

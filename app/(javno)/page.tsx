@@ -12,21 +12,38 @@ export default async function Naslovnica() {
 
   return (
     <>
-      <section className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 sm:pt-24">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
-          <div>
+      {/* Fotografija občinstva nosi celoten uvod. Zastor čeznjo je nujen in
+          ne okrasen: brez njega besedilo na svetlih delih slike ne doseže
+          kontrasta, ki ga zahteva WCAG. Zato je uvod vedno temen, ne glede
+          na svetlo ali temno shemo strani. */}
+      <section className="relative isolate overflow-hidden">
+        <Image
+          src={podrocja[0].slika}
+          alt=""
+          fill
+          sizes="100vw"
+          priority
+          className="-z-20 object-cover object-center"
+        />
+        <div
+          className="absolute inset-0 -z-10 bg-black/65 sm:bg-gradient-to-r sm:from-black/85 sm:via-black/70 sm:to-black/40"
+          aria-hidden="true"
+        />
+
+        <div className="mx-auto max-w-6xl px-4 py-28 sm:px-6 sm:py-36 lg:py-44">
+          <div className="max-w-2xl">
             <p className="text-sm font-semibold text-primary">
               Cerknica · Loška Dolina · Bloke
             </p>
-            <h1 className="display-lg mt-4 text-balance">
+            <h1 className="display-xl mt-4 text-balance text-white">
               Študentska leta so krajša, kot misliš.
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80">
               Notranjski študentski klub pripravlja dogodke, šport in
               izobraževanja za študente in dijake Notranjske - članom pa odpira
               vrata do ugodnosti pri domačih partnerjih.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-9 flex flex-wrap gap-3">
               <Button
                 render={<Link href="/vclanitev" />}
                 nativeButton={false}
@@ -39,40 +56,10 @@ export default async function Naslovnica() {
                 nativeButton={false}
                 size="lg"
                 variant="outline"
+                className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
               >
                 Poglej ugodnosti
               </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="relative col-span-2 aspect-[16/9] overflow-hidden rounded-2xl">
-              <Image
-                src={podrocja[0].slika}
-                alt="Dogodek Notranjskega študentskega kluba"
-                fill
-                sizes="(min-width: 1024px) 45vw, 100vw"
-                className="object-cover"
-                priority
-              />
-            </div>
-            <div className="relative aspect-square overflow-hidden rounded-2xl">
-              <Image
-                src={podrocja[1].slika}
-                alt="Športna aktivnost kluba"
-                fill
-                sizes="(min-width: 1024px) 22vw, 50vw"
-                className="object-cover"
-              />
-            </div>
-            <div className="relative aspect-square overflow-hidden rounded-2xl">
-              <Image
-                src={podrocja[2].slika}
-                alt="Izobraževalna dejavnost kluba"
-                fill
-                sizes="(min-width: 1024px) 22vw, 50vw"
-                className="object-cover"
-              />
             </div>
           </div>
         </div>
@@ -85,14 +72,25 @@ export default async function Naslovnica() {
             {podrocja.map((podrocje) => (
               <li
                 key={podrocje.naslov}
-                className="rounded-2xl border border-border bg-card p-6"
+                className="overflow-hidden rounded-2xl border border-border bg-card"
               >
-                <h3 className="font-heading text-lg font-semibold">
-                  {podrocje.naslov}
-                </h3>
-                <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
-                  {podrocje.opis}
-                </p>
+                <div className="relative aspect-[16/10] bg-muted">
+                  <Image
+                    src={podrocje.slika}
+                    alt=""
+                    fill
+                    sizes="(min-width: 640px) 30vw, 100vw"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="font-heading text-lg font-semibold">
+                    {podrocje.naslov}
+                  </h3>
+                  <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
+                    {podrocje.opis}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
