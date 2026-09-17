@@ -97,6 +97,8 @@ export default async function Naslovnica() {
         </div>
       </section>
 
+      <DruzbeneObjave />
+
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -154,7 +156,6 @@ export default async function Naslovnica() {
         )}
       </section>
 
-      <DruzbeneObjave />
 
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="grid gap-10 rounded-3xl border border-border bg-white/[0.04] p-8 sm:p-12 lg:grid-cols-2">
