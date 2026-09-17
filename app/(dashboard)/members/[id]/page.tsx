@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 
 import { DeleteMemberButton } from "@/components/members/delete-member-button";
+import { RenewMembershipButton } from "@/components/members/renew-membership-button";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -20,7 +21,14 @@ import {
   formatDate,
   formatDateTime,
   getMemberFullName,
+  pluralize,
 } from "@/lib/format";
+import {
+  formatMembershipYear,
+  getCurrentMembershipYear,
+  getMissingMemberFields,
+  needsRenewal,
+} from "@/lib/membership";
 import { cn } from "@/lib/utils";
 
 interface MemberDetailPageProps {
@@ -40,6 +48,9 @@ export default async function MemberDetailPage({
   }
 
   const history = await getMemberRegistrationHistory(id);
+  const targetYear = getCurrentMembershipYear();
+  const missingFields = getMissingMemberFields(member);
+  const renewalDue = needsRenewal(member);
 
   return (
     <div className="space-y-8">
@@ -47,7 +58,16 @@ export default async function MemberDetailPage({
         title={getMemberFullName(member)}
         description="Podroben pregled člana in zgodovine aktivnosti."
         action={
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            {renewalDue ? (
+              <RenewMembershipButton
+                id={member.id}
+                targetYear={targetYear}
+                returnTo={`/members/${member.id}`}
+                size="lg"
+                className="h-12 px-6"
+              />
+            ) : null}
             <Link
               href="/members"
               className={cn(
@@ -77,6 +97,54 @@ export default async function MemberDetailPage({
           </div>
         }
       />
+
+      {renewalDue || missingFields.length > 0 ? (
+        <section className="rounded-[18px] border border-warning/25 bg-warning/10 p-6">
+          <h2 className="font-heading text-lg font-semibold text-foreground">
+            {renewalDue
+              ? `Članstvo za ${formatMembershipYear(targetYear)} še ni podaljšano`
+              : "Evidenca tega člana ni popolna"}
+          </h2>
+          {missingFields.length > 0 ? (
+            <>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Manjka {missingFields.length}{" "}
+                {pluralize(missingFields.length, [
+                  "podatek",
+                  "podatka",
+                  "podatki",
+                  "podatkov",
+                ])}
+                . Ob podaljšanju jih lahko vpišeš v istem koraku.
+              </p>
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {missingFields.map((field) => (
+                  <li
+                    key={field.name}
+                    className="rounded-full border border-warning/30 bg-card px-3 py-1 text-xs font-medium text-foreground"
+                  >
+                    {field.label}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Vsi podatki so izpolnjeni - manjka samo podaljšanje za novo šolsko
+              leto.
+            </p>
+          )}
+          <Link
+            href={`/members/${member.id}/podaljsanje?return_to=${encodeURIComponent(`/members/${member.id}`)}`}
+            className={cn(
+              buttonVariants({ variant: "default", size: "default" }),
+              "mt-5 rounded-full",
+            )}
+          >
+            {renewalDue ? "Podaljšaj in dopolni" : "Dopolni podatke"}
+          </Link>
+        </section>
+      ) : null}
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="surface-card rounded-[18px] border border-border p-6">
@@ -108,8 +176,10 @@ export default async function MemberDetailPage({
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Leto članstva</dt>
-                  <dd className="font-medium text-foreground">
-                    {member.membership_year || "—"}
+                  <dd className="font-medium tabular-nums text-foreground">
+                    {member.membership_year
+                      ? formatMembershipYear(member.membership_year)
+                      : "—"}
                   </dd>
                 </div>
                 <div>

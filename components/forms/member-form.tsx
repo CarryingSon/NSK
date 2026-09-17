@@ -11,6 +11,10 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { membershipStatusOptions, schoolOptionGroups } from "@/lib/constants";
 import { toDateInputValue } from "@/lib/format";
+import {
+  emsoCollectionStartYear,
+  formatMembershipYear,
+} from "@/lib/membership";
 import type { ActionState, Member } from "@/types/app";
 
 const initialState: ActionState = {};
@@ -89,7 +93,10 @@ export function MemberForm({ member }: { member?: Member | null }) {
               className={fieldClass}
             />
             <p className="text-xs text-muted-foreground">
-              Neobvezno. Če je vnesen, mora imeti 13 števk in veljavno kontrolno številko.
+              Klub ga zbira od šolskega leta{" "}
+              {formatMembershipYear(emsoCollectionStartYear)} naprej, zato ga
+              starejši člani nimajo. Če je vnesen, mora imeti 13 števk in
+              veljavno kontrolno številko.
             </p>
           </div>
           <div className="space-y-2 md:col-span-2">

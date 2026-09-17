@@ -10,7 +10,11 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { club, schoolOptionGroups } from "@/lib/constants";
+import {
+  club,
+  clubPrivacyPolicyUrl,
+  schoolOptionGroups,
+} from "@/lib/constants";
 import type { ActionState } from "@/types/app";
 
 const initialState: ActionState = {};
@@ -33,6 +37,38 @@ function Field({
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * Kvadratek s soglasjem.
+ *
+ * Navaden <input type="checkbox">, ker obrazec deluje tudi brez JavaScripta.
+ * Privzeto NI obkljukan in nikoli ne sme biti - soglasje mora biti odločitev
+ * člana, ne prednastavitev, ki jo spregleda.
+ */
+function Consent({
+  name,
+  label,
+}: {
+  name: string;
+  label: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <input
+        id={name}
+        name={name}
+        type="checkbox"
+        className="mt-0.5 size-[18px] shrink-0 cursor-pointer accent-primary"
+      />
+      <Label
+        htmlFor={name}
+        className="text-sm font-normal leading-6 text-muted-foreground"
+      >
+        {label}
+      </Label>
     </div>
   );
 }
@@ -224,6 +260,47 @@ export function ApplicationForm() {
               className="min-h-28"
             />
           </Field>
+        </div>
+      </section>
+
+      <section className="surface-card rounded-[18px] border border-border p-6 sm:p-7">
+        <h2 className="font-heading text-xl font-semibold text-foreground">
+          Prijava v sistem študentskih klubov
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          {club.shortName} je član Zveze študentskih klubov Slovenije. Če
+          soglašaš z obojim, te ob oddaji prijavimo tudi v skupni sistem
+          študentskih klubov in na e-pošto prejmeš kodo za potrditev. Brez
+          soglasja ostaneš član {club.shortName}, naprej pa ne pošljemo ničesar.
+        </p>
+
+        <div className="mt-5 space-y-4">
+          <Consent
+            name="terms_accepted"
+            label={
+              <>
+                Soglašam s splošnimi pogoji in{" "}
+                <a
+                  href={clubPrivacyPolicyUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline underline-offset-2"
+                >
+                  politiko zasebnosti
+                </a>
+                .
+              </>
+            }
+          />
+          <Consent
+            name="notifications_accepted"
+            label={
+              <>
+                Soglašam, da se moji podatki uporabljajo za obveščanje o
+                študentskih klubih in Študentski organizaciji Slovenije (ŠOS).
+              </>
+            }
+          />
         </div>
       </section>
 

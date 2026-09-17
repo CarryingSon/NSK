@@ -3,6 +3,7 @@ import { ClipboardList, FileText, Globe, SquareArrowOutUpRight } from "lucide-re
 
 import { ApplicationActions } from "@/components/applications/application-actions";
 import { DeleteApplicationButton } from "@/components/applications/delete-application-button";
+import { SosStatus } from "@/components/applications/sos-status";
 import { EmbedPanel } from "@/components/applications/embed-panel";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -211,6 +212,7 @@ export default async function ApplicationsPage({
                               Med člani
                             </p>
                           ) : null}
+                          <SosStatus application={application} />
                         </TableCell>
                         <TableCell className="px-4 py-4">
                           <div className="flex items-start justify-end gap-2">

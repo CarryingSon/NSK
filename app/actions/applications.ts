@@ -3,10 +3,15 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth";
+import { registerMemberWithSos } from "@/lib/sos";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { applicationSchema, applicationStatusSchema } from "@/lib/validation";
 import type { ActionState } from "@/types/app";
+import type { Database } from "@/types/database";
+
+type ApplicationUpdate =
+  Database["public"]["Tables"]["membership_applications"]["Update"];
 
 const proofBucket = "potrdila";
 const maxProofBytes = 5 * 1024 * 1024;
@@ -58,6 +63,8 @@ export async function submitApplicationAction(
     study_year: getStringValue(formData, "study_year"),
     member_type: getStringValue(formData, "member_type"),
     message: getStringValue(formData, "message"),
+    terms_accepted: formData.get("terms_accepted"),
+    notifications_accepted: formData.get("notifications_accepted"),
   });
 
   if (!parsed.success) {
@@ -107,6 +114,8 @@ export async function submitApplicationAction(
       proofPath = path;
     }
 
+    // Soglasji se ob oddaji samo zapišeta. V ŠOS gre prijava šele, ko jo klub
+    // odobri - glej setApplicationStatusAction().
     const { error } = await supabase.from("membership_applications").insert({
       ...parsed.data,
       proof_path: proofPath,
@@ -146,21 +155,88 @@ export async function setApplicationStatusAction(formData: FormData) {
     const user = await requireUser();
     const supabase = await createSupabaseServerClient();
 
+    const update: ApplicationUpdate = {
+      status: parsed.data.status,
+      // "V obdelavi" pomeni, da prijava spet čaka, zato sled o obdelavi pobrišemo.
+      processed_at:
+        parsed.data.status === "pending" ? null : new Date().toISOString(),
+      processed_by: parsed.data.status === "pending" ? null : user?.email ?? null,
+    };
+
+    if (parsed.data.status === "approved") {
+      Object.assign(update, await registerApprovedApplication(supabase, parsed.data.id));
+    }
+
     await supabase
       .from("membership_applications")
-      .update({
-        status: parsed.data.status,
-        // "V obdelavi" pomeni, da prijava spet čaka, zato sled o obdelavi pobrišemo.
-        processed_at:
-          parsed.data.status === "pending" ? null : new Date().toISOString(),
-        processed_by: parsed.data.status === "pending" ? null : user?.email ?? null,
-      })
+      .update(update)
       .eq("id", parsed.data.id);
   } catch (error) {
     console.error("Napaka pri spremembi stanja prijave", error);
   }
 
   revalidatePath("/applications");
+}
+
+/**
+ * Ob odobritvi prijavo posreduje v sistem študentskih klubov.
+ *
+ * Odobritev je trenutek, ko klub za prijavo jamči - zato gre v skupni sistem
+ * šele tu in ne že ob oddaji obrazca. Član nato prejme e-pošto s kodo, ki jo
+ * sam vnese na studentski-klubi.si; tega koraka klub ne more opraviti zanj.
+ *
+ * Vrne samo polja, ki jih je treba dopisati k posodobitvi. Nikoli ne vrže:
+ * odobritev prijave ne sme pasti zato, ker je tuj sistem nedosegljiv.
+ *
+ * Ponovna odobritev že poslane prijave ne pošlje nič - sos_registered_at je
+ * zapora. Če je prejšnji poskus spodletel, jo "V obdelavo" in znova "Odobri"
+ * pošljeta še enkrat; podvojitev prepreči ŠOS sam, ker je e-pošta pri njih enolična.
+ */
+async function registerApprovedApplication(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  id: string,
+): Promise<ApplicationUpdate> {
+  const { data: application, error } = await supabase
+    .from("membership_applications")
+    .select(
+      "first_name, last_name, emso, email, postal_code, terms_accepted, notifications_accepted, sos_registered_at",
+    )
+    .eq("id", id)
+    .single();
+
+  if (error || !application) {
+    return {};
+  }
+
+  // Že poslano ali brez obeh soglasij - ne pošiljamo in ne pišemo napake.
+  if (
+    application.sos_registered_at ||
+    !application.terms_accepted ||
+    !application.notifications_accepted
+  ) {
+    return {};
+  }
+
+  // ŠOS zahteva EMŠO. Prijavnica ga terja, starejši zapisi pa ga lahko nimajo.
+  if (!application.emso) {
+    return {
+      sos_error: "Prijava nima vpisanega EMŠO, ki ga sistem ŠOS zahteva.",
+    };
+  }
+
+  const sos = await registerMemberWithSos({
+    firstName: application.first_name,
+    lastName: application.last_name,
+    emso: application.emso,
+    email: application.email,
+    postalCode: application.postal_code,
+  });
+
+  if (sos.ok) {
+    return { sos_registered_at: new Date().toISOString(), sos_error: null };
+  }
+
+  return { sos_error: sos.error };
 }
 
 /**

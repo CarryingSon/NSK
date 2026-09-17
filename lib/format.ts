@@ -36,6 +36,26 @@ export function toDateInputValue(value?: string | null) {
   }
 }
 
+/**
+ * Slovenska števnost: ednina, dvojina, množina za 3-4 in množina za 5 in več.
+ * Odloča zadnji dve števki, zato je 101 ednina, 111 pa ne.
+ *
+ * pluralize(2, ["polje", "polji", "polja", "polj"]) -> "polji"
+ */
+export function pluralize(
+  count: number,
+  [one, two, few, many]: [string, string, string, string],
+) {
+  const rest = Math.abs(count) % 100;
+
+  if (rest === 1 || (rest > 20 && rest % 10 === 1)) return one;
+  if (rest === 2 || (rest > 20 && rest % 10 === 2)) return two;
+  if (rest === 3 || rest === 4 || (rest > 20 && (rest % 10 === 3 || rest % 10 === 4)))
+    return few;
+
+  return many;
+}
+
 export function getMemberFullName(member?: Pick<Member, "first_name" | "last_name"> | null) {
   if (!member) return "Neznan član";
 

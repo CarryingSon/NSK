@@ -215,6 +215,10 @@ export interface Database {
           processed_by: string | null;
           member_id: string | null;
           created_at: string;
+          terms_accepted: boolean;
+          notifications_accepted: boolean;
+          sos_registered_at: string | null;
+          sos_error: string | null;
         };
         Insert: {
           id?: string;
@@ -238,6 +242,10 @@ export interface Database {
           processed_by?: string | null;
           member_id?: string | null;
           created_at?: string;
+          terms_accepted?: boolean;
+          notifications_accepted?: boolean;
+          sos_registered_at?: string | null;
+          sos_error?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["membership_applications"]["Insert"]

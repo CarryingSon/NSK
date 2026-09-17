@@ -23,6 +23,13 @@ const optionalDate = z
   .transform((value) => (value.length > 0 ? value : null))
   .nullable();
 
+// Neobkljukan kvadratek se v FormData sploh ne pošlje, obkljukan pride kot "on".
+// Odsotnost zato pomeni "ne", ne pa manjkajoč podatek.
+const checkboxBoolean = z.preprocess(
+  (value) => value === "on" || value === "true" || value === true,
+  z.boolean(),
+);
+
 // Interni admin se prijavi z uporabniškim imenom "admin", Supabase Auth pa pozna
 // samo e-poštne naslove. Preslikavo hranimo v ADMIN_EMAIL (ni NEXT_PUBLIC, ker
 // validation.ts uvažajo izključno strežniške akcije), da naslov ne konča v repozitoriju.
@@ -84,14 +91,18 @@ export const memberSchema = z.object({
   id: z.string().uuid().optional(),
   first_name: z.string().trim().min(2, "Ime je obvezno."),
   last_name: z.string().trim().min(2, "Priimek je obvezen."),
-  // Na prijavnici je EMŠO obvezen - klub ga potrebuje za evidenco članstva.
-  // Ločeni sporočili: prazno polje in tipkarska napaka nista ista težava.
+  // EMŠO klub zbira šele od šolskega leta 2026/2027 naprej. Starejši zapisi ga
+  // nimajo in ga dobijo šele ob ponovnem vpisu, zato tu ne sme biti obvezen -
+  // sicer se obstoječega člana sploh ne da urediti, dokler ga nekdo ne priskrbi.
+  // Prijavnica za nove člane (applicationSchema) ga zahteva, ker tam zbiranje
+  // teče od začetka.
   emso: z
     .string()
     .trim()
     .transform((value) => value.replace(/\s/g, ""))
-    .refine((value) => value.length > 0, { message: "Vnesi EMŠO." })
-    .refine((value) => value.length === 0 || isValidEmso(value), {
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .refine((value) => value === null || isValidEmso(value), {
       message: "EMŠO mora imeti 13 števk in veljavno kontrolno številko.",
     }),
   email: z
@@ -115,6 +126,45 @@ export const memberSchema = z.object({
   membership_year: optionalInteger,
   joined_at: optionalDate,
   notes: optionalString,
+});
+
+// Podaljšanje članstva za novo šolsko leto. Shema je namenoma ohlapnejša od
+// memberSchema: podaljšanje se zgodi za pultom, ko član stoji nasproti, in ga
+// manjkajoč podatek ne sme ustaviti. Kar je vneseno, pa mora biti pravilno -
+// napačen EMŠO je slabši od praznega, ker izpade kot preverjen.
+export const renewMembershipSchema = z.object({
+  id: z.string().uuid(),
+  membership_year: z.preprocess((value) => {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? value : parsed;
+  }, z.number().int().min(2000, "Leto članstva ni veljavno.").max(2100, "Leto članstva ni veljavno.")),
+  emso: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/\s/g, ""))
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .refine((value) => value === null || isValidEmso(value), {
+      message: "EMŠO mora imeti 13 števk in veljavno kontrolno številko.",
+    })
+    .optional(),
+  email: z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .nullable()
+    .refine(
+      (value) => value === null || z.email().safeParse(value).success,
+      { message: "Vnesi veljaven e-poštni naslov." },
+    )
+    .optional(),
+  birth_date: optionalDate.optional(),
+  joined_at: optionalDate.optional(),
+  phone: optionalString,
+  address: optionalString,
+  postal_code: optionalString,
+  city: optionalString,
+  faculty: optionalString,
 });
 
 // Poraba kopij: "Dodaj" prišteje, "Prilagodi" odšteje. Obe poti sprejmeta samo
@@ -236,6 +286,10 @@ export const applicationSchema = z.object({
   study_year: optionalString,
   member_type: z.enum(["student", "pupil"]),
   message: optionalString,
+  // Soglasji za prijavo v sistem ŠOS. Za včlanitev v klub nista pogoj - kdor ju
+  // ne da, postane član kluba, v skupni sistem pa ga ne pošljemo.
+  terms_accepted: checkboxBoolean,
+  notifications_accepted: checkboxBoolean,
 });
 
 export const applicationStatusSchema = z.object({

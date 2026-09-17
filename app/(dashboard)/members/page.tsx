@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, Users } from "lucide-react";
 
 import { DeleteMemberButton } from "@/components/members/delete-member-button";
+import { RenewMembershipButton } from "@/components/members/renew-membership-button";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -18,7 +19,13 @@ import {
 } from "@/components/ui/table";
 import { membershipStatusOptions } from "@/lib/constants";
 import { getMembers } from "@/lib/data";
-import { formatDate, getMemberFullName } from "@/lib/format";
+import { formatDate, getMemberFullName, pluralize } from "@/lib/format";
+import {
+  formatMembershipYear,
+  getCurrentMembershipYear,
+  getMissingMemberFields,
+  needsRenewal,
+} from "@/lib/membership";
 import { cn } from "@/lib/utils";
 
 interface MembersPageProps {
@@ -31,6 +38,8 @@ interface MembersPageProps {
 export default async function MembersPage({ searchParams }: MembersPageProps) {
   const { query = "", status = "all" } = await searchParams;
   const { members } = await getMembers({ query, status });
+  // Tekoče leto članstva je za cel seznam isto, zato ga izračunamo enkrat.
+  const targetYear = getCurrentMembershipYear();
 
   return (
     <div className="space-y-8">
@@ -101,7 +110,11 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.map((member) => (
+              {members.map((member) => {
+                const missingCount = getMissingMemberFields(member).length;
+                const renewalDue = needsRenewal(member);
+
+                return (
                 <TableRow key={member.id} className="border-border">
                   <TableCell className="px-4 py-4">
                     <div>
@@ -129,14 +142,36 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                   </TableCell>
                   <TableCell className="px-4 py-4">
                     <div>
-                      <p>{member.membership_year || "Ni leta članstva"}</p>
+                      <p className="tabular-nums">
+                        {member.membership_year
+                          ? formatMembershipYear(member.membership_year)
+                          : "Ni leta članstva"}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         Včlanjen: {formatDate(member.joined_at)}
                       </p>
+                      {missingCount > 0 ? (
+                        <p className="mt-1 text-sm text-warning">
+                          Nepopolno: {missingCount}{" "}
+                          {pluralize(missingCount, [
+                            "polje",
+                            "polji",
+                            "polja",
+                            "polj",
+                          ])}
+                        </p>
+                      ) : null}
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-4">
-                    <div className="flex justify-end gap-3">
+                    <div className="flex flex-wrap justify-end gap-3">
+                      {renewalDue ? (
+                        <RenewMembershipButton
+                          id={member.id}
+                          targetYear={targetYear}
+                          returnTo="/members"
+                        />
+                      ) : null}
                       <Link
                         href={`/members/${member.id}`}
                         className={cn(
@@ -163,7 +198,8 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </section>

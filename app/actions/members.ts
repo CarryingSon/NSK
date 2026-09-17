@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth";
+import { renewableFieldNames } from "@/lib/membership";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { memberSchema } from "@/lib/validation";
+import { memberSchema, renewMembershipSchema } from "@/lib/validation";
 import type { ActionState } from "@/types/app";
 
 function getStringValue(formData: FormData, key: string) {
@@ -112,6 +113,71 @@ export async function saveMemberAction(
   // redirect() vrže NEXT_REDIRECT, zato mora stati ZUNAJ try/catch - sicer ga
   // catch pogoltne in uspešno shranjen član izpade kot napaka.
   redirect(redirectTo);
+}
+
+/**
+ * Podaljša članstvo za novo šolsko leto in ob tem shrani dopolnjene podatke.
+ *
+ * Obrazec prikaže samo tista polja, ki so pri članu prazna, zato v FormData
+ * ostalih ni. Ključ, ki ga ni, mora ostati nedotaknjen - sicer bi podaljšanje
+ * pobrisalo podatke, ki jih obrazec sploh ni pokazal.
+ */
+export async function renewMembershipAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const candidate: Record<string, unknown> = {
+    id: getOptionalId(formData, "id"),
+    membership_year: getStringValue(formData, "membership_year"),
+  };
+
+  for (const name of renewableFieldNames) {
+    if (formData.has(name)) {
+      candidate[name] = getStringValue(formData, name);
+    }
+  }
+
+  const parsed = renewMembershipSchema.safeParse(candidate);
+
+  if (!parsed.success) {
+    return {
+      error:
+        parsed.error.issues[0]?.message ?? "Podaljšanje članstva ni uspelo.",
+    };
+  }
+
+  const { id, ...completedValues } = parsed.data;
+  const returnPath = getReturnPath(formData);
+
+  try {
+    await requireUser();
+    const supabase = await createSupabaseServerClient();
+
+    const { error } = await supabase
+      .from("members")
+      .update({
+        ...completedValues,
+        // Podaljšanje je hkrati potrditev, da je član spet aktiven - član s
+        // statusom "neaktiven" ali "v postopku" je s tem urejen.
+        membership_status: "active",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/members");
+    revalidatePath(`/members/${id}`);
+    revalidatePath("/dashboard");
+  } catch (error) {
+    console.error("Napaka pri podaljšanju članstva", error);
+    return { error: getSaveErrorMessage(error) };
+  }
+
+  // redirect() vrže NEXT_REDIRECT, zato mora stati ZUNAJ try/catch.
+  redirect(returnPath === "/members" ? "/members" : `/members/${id}`);
 }
 
 export async function deleteMemberAction(formData: FormData) {
