@@ -70,6 +70,9 @@ export function NotificationComposer({
   const [testing, startTest] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const [audience, setAudience] = useState<NotificationAudience>("all");
+  // Naslov prijavljenega je le izhodišče - test lahko gre komurkoli, npr.
+  // predsednici v pregled, preden obvestilo odide vsem članom.
+  const [testAddress, setTestAddress] = useState(testEmail);
   // Urejevalnik piše v DOM, zato ga form.reset() ne izprazni - po uspešni
   // uvrstitvi ga zato ponovno vgradimo s svežim ključem.
   const [editorKey, setEditorKey] = useState(0);
@@ -333,21 +336,43 @@ export function NotificationComposer({
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          <input type="hidden" name="test_email" value={testEmail} />
-          <Button
-            type="submit"
-            variant="secondary"
-            size="lg"
-            // Isti obrazec, druga akcija: test ne ustvari kampanje.
-            formAction={sendTest}
-            disabled={pending || !emailConfigured || !testEmail}
-            className="h-12 px-6 text-base font-semibold"
-          >
-            <FlaskConical className="size-4" />
-            {testing ? "Pošiljam test ..." : "Pošlji test meni"}
-          </Button>
+        <div className="rounded-[14px] border border-border bg-card p-5">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-56 flex-1 space-y-2">
+              <Label htmlFor="test_email">Testni naslov</Label>
+              <Input
+                id="test_email"
+                name="test_email"
+                type="email"
+                // Brez "required": isti obrazec pošlje tudi kampanjo, zato bi
+                // prazno polje blokiralo uvrstitev v čakalno vrsto.
+                value={testAddress}
+                onChange={(event) => setTestAddress(event.target.value)}
+                placeholder="ime.priimek@email.si"
+                className="h-12"
+              />
+            </div>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="lg"
+              // Isti obrazec, druga akcija: test ne ustvari kampanje.
+              formAction={sendTest}
+              disabled={pending || !emailConfigured || !testAddress.trim()}
+              className="h-12 px-6 text-base font-semibold"
+            >
+              <FlaskConical className="size-4" />
+              {testing ? "Pošiljam test ..." : "Pošlji test"}
+            </Button>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">
+            Sporočilo gre samo na ta naslov in se ne zapiše v zgodovino. Vpiši
+            lahko katerikoli naslov - svojega ali od koga drugega, ki naj
+            obvestilo pregleda pred pošiljanjem.
+          </p>
+        </div>
 
+        <div className="flex flex-wrap items-center gap-3 pt-1">
           <Button
             type="submit"
             size="lg"
@@ -359,12 +384,7 @@ export function NotificationComposer({
           </Button>
         </div>
 
-        <Hint>
-          {testEmail
-            ? `Test gre na ${testEmail} in se ne zapiše v zgodovino.`
-            : "Testno sporočilo ni na voljo, ker prijavljeni račun nima e-poštnega naslova."}{" "}
-          Pošiljanje članom se začne v zgodovini obvestil.
-        </Hint>
+        <Hint>Pošiljanje članom se začne v zgodovini obvestil.</Hint>
       </Section>
     </form>
   );
