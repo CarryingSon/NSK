@@ -27,10 +27,13 @@ const OPEN_PATHS = [
   "/ugodnosti",
   "/pridruzi-se",
   "/o-nas",
-  // Javni PDF-ji. Vzorec v proxy.ts izvzema le slikovne končnice, zato bi se
-  // dokumenti brez tega ujeli v preusmeritev na prijavo.
+  // Statično gradivo javne strani. Vzorec v proxy.ts izvzema le slikovne
+  // končnice, zato bi se PDF-ji in video brez tega ujeli v preusmeritev na
+  // prijavo. Našteta je mapa in ne končnice, da naslednja vrsta datoteke ne
+  // odpre iste zagate znova.
   "/dokumenti",
   "/heksnsus",
+  "/stran",
 ];
 
 // Naslovnica je javna, a je ni mogoče dati med OPEN_PATHS: "/" je predpona

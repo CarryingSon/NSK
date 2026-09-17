@@ -4,6 +4,7 @@ import { ArrowRight, CalendarDays, Gift, MapPin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { DruzbeneObjave } from "@/components/javna/druzbene-objave";
+import { UvodniVideo } from "@/components/javna/uvodni-video";
 import { klub, podrocja, ugodnosti } from "@/lib/klub";
 import { izvlecek, pridobiNovice } from "@/lib/novice";
 
@@ -17,16 +18,17 @@ export default async function Naslovnica() {
           kontrasta, ki ga zahteva WCAG. Zato je uvod vedno temen, ne glede
           na svetlo ali temno shemo strani. */}
       <section className="relative isolate overflow-hidden">
-        <Image
-          src={podrocja[0].slika}
-          alt=""
-          fill
-          sizes="100vw"
-          priority
-          className="-z-20 object-cover object-center"
+        <UvodniVideo />
+        {/* Dva zastora, ker video ni enakomeren: odrske luči ga vmes potisnejo
+            skoraj v belo. Prvi drži besedilno stran temno ne glede na okvir,
+            drugi spelje spodnji rob v črno, da se uvod zlije s prelivom pod
+            njim namesto da bi se odrezal. */}
+        <div
+          className="absolute inset-0 -z-10 bg-black/72 sm:bg-gradient-to-r sm:from-black/88 sm:via-black/72 sm:to-black/45"
+          aria-hidden="true"
         />
         <div
-          className="absolute inset-0 -z-10 bg-black/65 sm:bg-gradient-to-r sm:from-black/85 sm:via-black/70 sm:to-black/40"
+          className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-b from-transparent to-black"
           aria-hidden="true"
         />
 
