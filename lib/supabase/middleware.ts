@@ -13,12 +13,30 @@ const PUBLIC_PATHS = new Set(["/login"]);
 // /auth/confirm vnovči žeton iz e-pošte; klicatelj takrat še nima seje.
 // /odjava in /api/odjava nosita žeton v naslovu - član, ki klikne povezavo v
 // obvestilu, nima seje in je ne sme potrebovati, sicer odjava ni "enostavna".
+//
+// Od tu naprej so naštete še strani javne klubske spletne strani, ki stoji v
+// isti aplikaciji (skupina app/(javno)). Seznam je namenoma izčrpen in ne
+// obrnjen privzetek: kdor doda novo stran nadzorne plošče in nanjo pozabi,
+// jo s tem zapre, ne odpre - tako kot to velja že za vloge v lib/roles.ts.
 const OPEN_PATHS = [
   "/vclanitev",
   "/auth/confirm",
   "/odjava",
   "/api/odjava",
+  "/aktualno",
+  "/ugodnosti",
+  "/pridruzi-se",
+  "/o-nas",
+  // Javni PDF-ji. Vzorec v proxy.ts izvzema le slikovne končnice, zato bi se
+  // dokumenti brez tega ujeli v preusmeritev na prijavo.
+  "/dokumenti",
+  "/heksnsus",
 ];
+
+// Naslovnica je javna, a je ni mogoče dati med OPEN_PATHS: "/" je predpona
+// vsake poti in bi odprl celotno aplikacijo. Zato stoji posebej in se
+// primerja natančno.
+const HOME_PATH = "/";
 
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -60,7 +78,10 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (OPEN_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
+  if (
+    pathname === HOME_PATH ||
+    OPEN_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  ) {
     return response;
   }
 

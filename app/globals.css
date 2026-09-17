@@ -254,6 +254,52 @@
     line-height: 1.08;
   }
 
+  /* Naslovi razdelkov na javni strani - pod display-lg, nad navadnim h2. */
+  .display-md {
+    @apply font-heading text-3xl font-semibold sm:text-4xl;
+    letter-spacing: -0.024em;
+    line-height: 1.12;
+  }
+
+  /* Besedilo objave iz CMS-a. Oznake pridejo brez razredov, zato jih je
+     treba opremiti tukaj. */
+  .objava {
+    @apply text-[1.0625rem] leading-relaxed;
+  }
+
+  .objava p {
+    @apply my-4;
+  }
+
+  .objava h2 {
+    @apply font-heading mt-10 mb-3 text-2xl font-semibold;
+  }
+
+  .objava h3,
+  .objava h4 {
+    @apply font-heading mt-8 mb-2 text-xl font-semibold;
+  }
+
+  .objava ul {
+    @apply my-4 list-disc space-y-1.5 pl-5;
+  }
+
+  .objava ol {
+    @apply my-4 list-decimal space-y-1.5 pl-5;
+  }
+
+  .objava a {
+    @apply text-primary underline underline-offset-4;
+  }
+
+  .objava img {
+    @apply my-6 h-auto max-w-full rounded-xl;
+  }
+
+  .objava blockquote {
+    @apply my-6 border-l-2 border-primary pl-5 text-muted-foreground italic;
+  }
+
   /* --- Prijavna stran --- */
   /* Topla podlaga namesto čiste bele: vhodna stran sme biti prijaznejša od
      delovnih zaslonov, a ostaja v klubski oranžni. */
