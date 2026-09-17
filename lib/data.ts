@@ -7,7 +7,7 @@ import {
   toMonthParam,
 } from "@/lib/format";
 import {
-  emailDailyLimit,
+  emailHourlyLimit,
   notificationAudienceDescriptions,
   notificationAudienceLabels,
   notificationAudienceOrder,
@@ -200,9 +200,9 @@ function emptyAudienceStats(): NotificationAudienceStats {
     unknown: 0,
     active: 0,
     inactive: 0,
-    sentToday: 0,
-    remainingToday: emailDailyLimit,
-    dailyLimit: emailDailyLimit,
+    sentLastHour: 0,
+    remainingThisHour: emailHourlyLimit,
+    hourlyLimit: emailHourlyLimit,
   };
 }
 

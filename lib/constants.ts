@@ -470,13 +470,18 @@ export const memberSegmentLabels: Record<MemberSegment, string> = {
   unknown: "Neopredeljeni",
 };
 
-// Gmail SMTP dovoli 500 sporočil na dan za brezplačen račun. 450 pusti rezervo
-// za prijave, opomnike in ostalo pošto kluba.
-export const emailDailyLimit = 450;
+// Klubski poštni strežnik (mail.nsk-klub.si) dovoli 100 sporočil na uro.
+// Omejitev je urna, ne dnevna, zato se kvota obrne v drsečem oknu zadnjih
+// šestdesetih minut in ne ob polnoči.
+//
+// 80 pusti dvajset sporočil rezerve za ostalo pošto kluba - potrditve prijav,
+// povabila uporabnikom in odgovore iz uradnih ur. Če bi kvoto izčrpalo
+// obveščanje, bi tiho odpovedala prav tista pošta, ki je nujna.
+export const emailHourlyLimit = 80;
 
-// Privzeta omejitev ene kampanje. Manjša od dnevne, ker klub redko pošilja vsem
-// naenkrat in je bolje, da eno obvestilo ne požre celotne kvote.
-export const defaultCampaignDailyLimit = 250;
+// Privzeta omejitev ene kampanje. Enaka skupni, ker je klub majhen in ena
+// kampanja tako ali tako ne preseže urne kvote v eni seriji.
+export const defaultCampaignHourlyLimit = 80;
 
 // Koliko sporočil pošljemo v eni seriji. Serverless funkcija ne sme teči predolgo,
 // Gmail pa zavrne prehitre sunke - 20 sporočil je približno 20 sekund.

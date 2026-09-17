@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function DeleteMemberButton({
   id,
@@ -24,6 +25,7 @@ export function DeleteMemberButton({
   variant = "ghost",
   size = "sm",
   className,
+  iconOnly = false,
 }: {
   id: string;
   fullName: string;
@@ -31,6 +33,8 @@ export function DeleteMemberButton({
   variant?: ComponentProps<typeof Button>["variant"];
   size?: ComponentProps<typeof Button>["size"];
   className?: string;
+  /** Kvadratna ikona brez besedila - za gosto vrstico v seznamu. */
+  iconOnly?: boolean;
 }) {
   return (
     <AlertDialog>
@@ -38,12 +42,20 @@ export function DeleteMemberButton({
         render={
           <Button
             variant={variant}
-            size={size}
-            className={className ?? (variant === "ghost" ? "text-destructive" : undefined)}
+            size={iconOnly ? "icon" : size}
+            // Ime gumba mora obstajati tudi brez besedila, sicer ga bralnik
+            // zaslona prebere kot prazen gumb.
+            aria-label={iconOnly ? `Izbriši člana ${fullName}` : undefined}
+            title={iconOnly ? "Izbriši" : undefined}
+            className={cn(
+              iconOnly && "rounded-md",
+              className ??
+                (variant === "ghost" ? "text-destructive" : undefined),
+            )}
           />
         }
       >
-        Izbriši
+        {iconOnly ? <Trash2 className="size-4" /> : "Izbriši"}
       </AlertDialogTrigger>
       <AlertDialogContent className="rounded-[18px] border border-border bg-card p-0">
         <AlertDialogHeader className="px-6 pt-6">

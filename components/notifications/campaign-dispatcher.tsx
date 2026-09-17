@@ -70,7 +70,7 @@ export function CampaignDispatcher({
         // v vseh treh primerih bi nadaljevanje samo vrtelo prazne zahteve.
         if (
           result.done ||
-          result.dailyLimitReached ||
+          result.hourlyLimitReached ||
           (result.sent === 0 && result.failed === 0)
         ) {
           break;

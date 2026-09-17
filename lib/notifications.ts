@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   campaignBatchSize,
   classifySchool,
-  emailDailyLimit,
+  emailHourlyLimit,
   notificationAudienceDescriptions,
   notificationAudienceLabels,
   notificationAudienceOrder,
@@ -42,38 +42,15 @@ interface AudienceMember {
 }
 
 /**
- * Polnoč v Ljubljani, izražena kot trenutek v UTC. Strežniška funkcija teče v
- * UTC, dnevna kvota pošiljanja pa se mora obrniti ob domači polnoči, ne ob dveh
- * zjutraj.
+ * Začetek drsečega okna zadnjih šestdesetih minut.
+ *
+ * Omejitev poštnega strežnika je urna, zato se kvota ne obrne ob polnoči,
+ * ampak sproti: sporočilo, poslano pred uro in eno minuto, kvote ne bremeni
+ * več. Drseče okno je strožje od koledarske ure - kvota ne more biti presežena
+ * v nobenem šestdesetminutnem obdobju, tudi tik pred polno uro ne.
  */
-function startOfLocalDay(now = new Date()) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Ljubljana",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(now);
-
-  const value = (type: string) =>
-    Number(parts.find((part) => part.type === type)?.value ?? "0");
-
-  const wallClock = Date.UTC(
-    value("year"),
-    value("month") - 1,
-    value("day"),
-    value("hour") === 24 ? 0 : value("hour"),
-    value("minute"),
-    value("second"),
-  );
-
-  const offset = wallClock - now.getTime();
-  const midnight = Date.UTC(value("year"), value("month") - 1, value("day"));
-
-  return new Date(midnight - offset).toISOString();
+function oneHourAgo(now = new Date()) {
+  return new Date(now.getTime() - 60 * 60 * 1000).toISOString();
 }
 
 // Vse člane z e-pošto potrebujemo tako za štetje kot za polnjenje čakalne vrste,
@@ -143,9 +120,9 @@ function matchesAudience(member: AudienceMember, audience: NotificationAudience)
   }
 }
 
-// Koliko sporočil je danes že odšlo - šteje se po vseh kampanjah skupaj, ker je
-// omejitev vezana na poštni račun kluba, ne na posamezno obvestilo.
-async function countSentToday(
+// Koliko sporočil je odšlo v zadnji uri - šteje se po vseh kampanjah skupaj,
+// ker je omejitev vezana na poštni račun kluba, ne na posamezno obvestilo.
+async function countSentLastHour(
   supabase: AppSupabaseClient,
   campaignId?: string,
 ) {
@@ -153,7 +130,7 @@ async function countSentToday(
     .from("email_queue")
     .select("*", { count: "exact", head: true })
     .eq("status", "sent")
-    .gte("sent_at", startOfLocalDay());
+    .gte("sent_at", oneHourAgo());
 
   if (campaignId) {
     query = query.eq("campaign_id", campaignId);
@@ -171,9 +148,9 @@ async function countSentToday(
 export async function getAudienceStats(
   supabase: AppSupabaseClient,
 ): Promise<NotificationAudienceStats> {
-  const [members, sentToday] = await Promise.all([
+  const [members, sentLastHour] = await Promise.all([
     loadMembersWithEmail(supabase),
-    countSentToday(supabase),
+    countSentLastHour(supabase),
   ]);
 
   const options = notificationAudienceOrder.map((value) => ({
@@ -194,9 +171,9 @@ export async function getAudienceStats(
     inactive: members.filter(
       (member) => member.membership_status === "inactive",
     ).length,
-    sentToday,
-    remainingToday: Math.max(emailDailyLimit - sentToday, 0),
-    dailyLimit: emailDailyLimit,
+    sentLastHour,
+    remainingThisHour: Math.max(emailHourlyLimit - sentLastHour, 0),
+    hourlyLimit: emailHourlyLimit,
   };
 }
 
@@ -208,7 +185,7 @@ export interface CreateCampaignInput {
   ctaUrl: string | null;
   campaignType: CampaignType;
   audience: NotificationAudience;
-  dailyLimit: number;
+  hourlyLimit: number;
   createdBy: string | null;
 }
 
@@ -239,7 +216,7 @@ export async function createCampaign(
       cta_url: input.ctaUrl,
       campaign_type: input.campaignType,
       audience: input.audience,
-      daily_limit: input.dailyLimit,
+      hourly_limit: input.hourlyLimit,
       status: "queued",
       total_recipients: members.length,
       created_by: input.createdBy,
@@ -276,7 +253,7 @@ export async function createCampaign(
 
 /**
  * Pošlje eno serijo iz čakalne vrste. Klicatelj jo ponavlja, dokler ni
- * `done` ali dokler ni dosežena dnevna omejitev - tako ena zahteva nikoli ne
+ * `done` ali dokler ni dosežena urna omejitev - tako ena zahteva nikoli ne
  * traja predolgo in napredek je viden sproti.
  */
 export async function dispatchCampaignBatch(
@@ -301,19 +278,19 @@ export async function dispatchCampaignBatch(
       failed: 0,
       pending,
       done: false,
-      dailyLimitReached: false,
+      hourlyLimitReached: false,
       message: "Pošiljanje je na pavzi.",
     };
   }
 
-  const [sentTodayTotal, sentTodayCampaign] = await Promise.all([
-    countSentToday(supabase),
-    countSentToday(supabase, campaignId),
+  const [sentLastHourTotal, sentLastHourCampaign] = await Promise.all([
+    countSentLastHour(supabase),
+    countSentLastHour(supabase, campaignId),
   ]);
 
   const allowance = Math.min(
-    emailDailyLimit - sentTodayTotal,
-    campaign.daily_limit - sentTodayCampaign,
+    emailHourlyLimit - sentLastHourTotal,
+    campaign.hourly_limit - sentLastHourCampaign,
   );
 
   if (allowance <= 0) {
@@ -324,9 +301,9 @@ export async function dispatchCampaignBatch(
       failed: 0,
       pending,
       done: pending === 0,
-      dailyLimitReached: true,
+      hourlyLimitReached: true,
       message:
-        "Dnevna omejitev je dosežena. Pošiljanje se nadaljuje jutri - kampanja ostane v čakalni vrsti.",
+        "Urna omejitev je dosežena. Kampanja ostane v čakalni vrsti; nadaljuj jo čez uro pod Zgodovina obvestil.",
     };
   }
 
@@ -352,7 +329,7 @@ export async function dispatchCampaignBatch(
       failed: 0,
       pending: 0,
       done: true,
-      dailyLimitReached: false,
+      hourlyLimitReached: false,
       message: "Vsa sporočila iz te kampanje so že poslana.",
     };
   }
@@ -466,7 +443,7 @@ export async function dispatchCampaignBatch(
     failed,
     pending,
     done: pending === 0,
-    dailyLimitReached: false,
+    hourlyLimitReached: false,
     message:
       pending === 0
         ? "Kampanja je poslana."

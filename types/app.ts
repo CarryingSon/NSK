@@ -120,10 +120,10 @@ export interface NotificationAudienceStats {
   unknown: number;
   active: number;
   inactive: number;
-  // Koliko e-pošte je danes že odšlo in koliko je še ostane do dnevne omejitve.
-  sentToday: number;
-  remainingToday: number;
-  dailyLimit: number;
+  // Koliko e-pošte je odšlo v zadnji uri in koliko je še ostane do urne omejitve.
+  sentLastHour: number;
+  remainingThisHour: number;
+  hourlyLimit: number;
 }
 
 // Kampanja skupaj s štetjem iz čakalne vrste - osnova za zgodovino in napredek.
@@ -146,8 +146,8 @@ export interface DispatchBatchResult {
   failed: number;
   pending: number;
   done: boolean;
-  // Serija se ustavi, ko je dosežena dnevna omejitev - takrat ni napaka, le čakanje.
-  dailyLimitReached: boolean;
+  // Serija se ustavi, ko je dosežena urna omejitev - takrat ni napaka, le čakanje.
+  hourlyLimitReached: boolean;
   message: string;
 }
 

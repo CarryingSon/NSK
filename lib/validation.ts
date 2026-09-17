@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { emailDailyLimit } from "@/lib/constants";
+import { emailHourlyLimit } from "@/lib/constants";
 import { hasRichTextContent, sanitizeRichText } from "@/lib/email-content";
 import type { MembershipStatus } from "@/types/database";
 
@@ -230,16 +230,16 @@ export const campaignSchema = z
       "inactive",
       "pending",
     ]),
-    dailyLimit: z.preprocess((value) => {
+    hourlyLimit: z.preprocess((value) => {
       const parsed = Number(value);
       return Number.isNaN(parsed) ? value : parsed;
     }, z
       .number()
       .int()
-      .min(1, "Dnevna omejitev mora biti vsaj 1.")
+      .min(1, "Omejitev na uro mora biti vsaj 1.")
       .max(
-        emailDailyLimit,
-        `Dnevna omejitev ne sme presegati ${emailDailyLimit} sporočil.`,
+        emailHourlyLimit,
+        `Omejitev na uro ne sme presegati ${emailHourlyLimit} sporočil.`,
       )),
   })
   // Gumb brez naslova ali naslov brez besedila v e-pošti nista uporabna, zato

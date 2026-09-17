@@ -268,7 +268,7 @@ export interface Database {
           cta_url: string | null;
           campaign_type: CampaignType;
           audience: NotificationAudience;
-          daily_limit: number;
+          hourly_limit: number;
           status: CampaignStatus;
           total_recipients: number;
           created_by: string | null;
@@ -285,7 +285,7 @@ export interface Database {
           cta_url?: string | null;
           campaign_type?: CampaignType;
           audience?: NotificationAudience;
-          daily_limit?: number;
+          hourly_limit?: number;
           status?: CampaignStatus;
           total_recipients?: number;
           created_by?: string | null;

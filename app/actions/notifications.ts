@@ -28,7 +28,7 @@ function readCampaignFields(formData: FormData) {
     ctaUrl: getStringValue(formData, "cta_url"),
     campaignType: getStringValue(formData, "campaign_type"),
     audience: getStringValue(formData, "audience"),
-    dailyLimit: getStringValue(formData, "daily_limit"),
+    hourlyLimit: getStringValue(formData, "hourly_limit"),
   };
 }
 
@@ -59,7 +59,7 @@ export async function createCampaignAction(
       ctaUrl: parsed.data.ctaUrl,
       campaignType: parsed.data.campaignType,
       audience: parsed.data.audience,
-      dailyLimit: parsed.data.dailyLimit,
+      hourlyLimit: parsed.data.hourlyLimit,
       createdBy: user?.email ?? null,
     });
 
@@ -159,7 +159,7 @@ export async function dispatchCampaignBatchAction(
       failed: 0,
       pending: 0,
       done: false,
-      dailyLimitReached: false,
+      hourlyLimitReached: false,
       message: "Serije ni bilo mogoče poslati.",
       error: "Serije ni bilo mogoče poslati. Preveri SMTP in Supabase nastavitve.",
     };

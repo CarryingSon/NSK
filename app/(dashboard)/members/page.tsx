@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Users } from "lucide-react";
+import { Pencil, Search, Users } from "lucide-react";
 
 import { DeleteMemberButton } from "@/components/members/delete-member-button";
 import { RenewMembershipButton } from "@/components/members/renew-membership-button";
@@ -97,7 +97,10 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
           description="Ko bo baza napolnjena, se bodo tukaj prikazali vsi člani. Poskusi spremeniti filter ali dodaj novega člana."
         />
       ) : (
-        <section className="surface-card overflow-hidden rounded-[18px] border border-border">
+        // Tabela je širša od zaslona na ožjih napravah. Drsenje znotraj okvira
+        // je edina možnost, ki ne odreže stolpca Akcije - "overflow-hidden" bi
+        // gumba za urejanje in brisanje preprosto skril.
+        <section className="surface-card overflow-x-auto rounded-[18px] border border-border">
           <Table className="min-w-full">
             <TableHeader>
               <TableRow className="border-border">
@@ -118,9 +121,14 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                 <TableRow key={member.id} className="border-border">
                   <TableCell className="px-4 py-4">
                     <div>
-                      <p className="font-semibold text-foreground">
+                      {/* Odkar v vrstici ni več gumba "Preglej", je ime edina
+                          pot do strani o članu. */}
+                      <Link
+                        href={`/members/${member.id}`}
+                        className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+                      >
                         {getMemberFullName(member)}
-                      </p>
+                      </Link>
                       <p className="text-sm text-muted-foreground">
                         {member.city || "Brez mesta"}
                       </p>
@@ -164,7 +172,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-4">
-                    <div className="flex flex-wrap justify-end gap-3">
+                    <div className="flex items-center justify-end gap-2">
                       {renewalDue ? (
                         <RenewMembershipButton
                           id={member.id}
@@ -173,27 +181,21 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                         />
                       ) : null}
                       <Link
-                        href={`/members/${member.id}`}
-                        className={cn(
-                          buttonVariants({ variant: "outline", size: "sm" }),
-                          "rounded-full",
-                        )}
-                      >
-                        Preglej
-                      </Link>
-                      <Link
                         href={`/members/${member.id}/edit`}
+                        aria-label={`Uredi člana ${getMemberFullName(member)}`}
+                        title="Uredi"
                         className={cn(
-                          buttonVariants({ variant: "ghost", size: "sm" }),
-                          "rounded-full",
+                          buttonVariants({ variant: "outline", size: "icon" }),
+                          "rounded-md",
                         )}
                       >
-                        Uredi
+                        <Pencil className="size-4" />
                       </Link>
                       <DeleteMemberButton
                         id={member.id}
                         fullName={getMemberFullName(member)}
                         returnTo="/members"
+                        iconOnly
                       />
                     </div>
                   </TableCell>

@@ -19,7 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import { campaignTypeOptions, defaultCampaignDailyLimit } from "@/lib/constants";
+import {
+  campaignTypeOptions,
+  defaultCampaignHourlyLimit,
+} from "@/lib/constants";
 import type {
   ActionState,
   NotificationAudience,
@@ -238,16 +241,16 @@ export function NotificationComposer({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="daily_limit">
-              Dnevna omejitev (max {stats.dailyLimit})
+            <Label htmlFor="hourly_limit">
+              Omejitev na uro (max {stats.hourlyLimit})
             </Label>
             <Input
-              id="daily_limit"
-              name="daily_limit"
+              id="hourly_limit"
+              name="hourly_limit"
               type="number"
               min={1}
-              max={stats.dailyLimit}
-              defaultValue={defaultCampaignDailyLimit}
+              max={stats.hourlyLimit}
+              defaultValue={defaultCampaignHourlyLimit}
               className="h-12"
             />
           </div>
@@ -292,8 +295,12 @@ export function NotificationComposer({
           </div>
 
           <p className="mt-4 border-t border-border pt-3 text-xs leading-5 text-muted-foreground">
-            Gmail dovoli {stats.dailyLimit} sporočil na dan. Danes je poslanih{" "}
-            {stats.sentToday}, na voljo je še {stats.remainingToday}.
+            Klubski poštni strežnik dovoli 100 sporočil na uro; pošiljamo
+            največ {stats.hourlyLimit}, da ostane rezerva za ostalo pošto kluba.
+            V zadnji uri je poslanih {stats.sentLastHour}, na voljo je še{" "}
+            {stats.remainingThisHour}. Večja kampanja gre zato v več delih: ko je
+            kvota izčrpana, se pošiljanje ustavi, kampanja pa ostane v čakalni
+            vrsti - nadaljuješ jo čez uro pod Zgodovina obvestil.
           </p>
         </div>
 
