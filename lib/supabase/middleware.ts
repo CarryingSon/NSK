@@ -11,7 +11,14 @@ const PUBLIC_PATHS = new Set(["/login"]);
 // mora biti dosegljiv vsem - in za razliko od prijavne strani tudi prijavljenim,
 // da si ga admin lahko ogleda iz aplikacije.
 // /auth/confirm vnovči žeton iz e-pošte; klicatelj takrat še nima seje.
-const OPEN_PATHS = ["/vclanitev", "/auth/confirm"];
+// /odjava in /api/odjava nosita žeton v naslovu - član, ki klikne povezavo v
+// obvestilu, nima seje in je ne sme potrebovati, sicer odjava ni "enostavna".
+const OPEN_PATHS = [
+  "/vclanitev",
+  "/auth/confirm",
+  "/odjava",
+  "/api/odjava",
+];
 
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {

@@ -43,6 +43,8 @@ export interface CampaignEmailContent {
   ctaUrl?: string | null;
   campaignType?: CampaignType;
   recipientName?: string | null;
+  /** Naslov strani za odjavo. Brez njega se noga izriše brez povezave. */
+  unsubscribeUrl?: string | null;
 }
 
 /**
@@ -58,6 +60,7 @@ export function buildCampaignEmailHtml({
   ctaUrl,
   campaignType = "obvestilo",
   recipientName,
+  unsubscribeUrl,
 }: CampaignEmailContent) {
   // Slike v e-pošti potrebujejo absolutne naslove - relativne poti nimajo
   // gostitelja, na katerega bi se vezale.
@@ -241,7 +244,11 @@ export function buildCampaignEmailHtml({
                 )}</a>
               </p>
               <p style="margin:16px 0 0 0;font-size:12px;line-height:1.6;color:#a1a1a6;">
-                To sporočilo si prejel_a kot član_ica ${club.shortName}.
+                To sporočilo si prejel_a kot član_ica ${club.shortName}.${
+                  unsubscribeUrl
+                    ? `<br />Teh obvestil ne želiš več? <a href="${unsubscribeUrl}" style="color:#6e6e73;text-decoration:underline;">Odjavi se</a>. Članstvo v klubu ostane nespremenjeno.`
+                    : ""
+                }
               </p>
             </td>
           </tr>
@@ -259,15 +266,39 @@ export async function sendEmail({
   subject,
   html,
   text,
+  unsubscribeUrl,
+  unsubscribePostUrl,
 }: {
   to: string;
   subject: string;
   html: string;
   text: string;
+  /** Stran za odjavo; konča v glavi List-Unsubscribe kot druga možnost. */
+  unsubscribeUrl?: string | null;
+  /** Naslov za odjavo z enim klikom po RFC 8058. */
+  unsubscribePostUrl?: string | null;
 }) {
   try {
     const mailer = getTransporter();
     const credentials = getEmailCredentials();
+
+    // Glavi po RFC 8058. Odjemalec tako ponudi gumb "Odjava" ob glavi
+    // sporočila in odjavo opravi s POST zahtevo, brez odpiranja strani.
+    // List-Unsubscribe-Post pošljemo samo skupaj z naslovom, ki POST sprejme -
+    // sicer bi odjemalec obljubil odjavo, ki je ne bi imel kam poslati.
+    const headers: Record<string, string> = {};
+    const unsubscribeTargets = [
+      unsubscribePostUrl ? `<${unsubscribePostUrl}>` : null,
+      unsubscribeUrl ? `<${unsubscribeUrl}>` : null,
+    ].filter(Boolean);
+
+    if (unsubscribeTargets.length > 0) {
+      headers["List-Unsubscribe"] = unsubscribeTargets.join(", ");
+    }
+
+    if (unsubscribePostUrl) {
+      headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+    }
 
     await mailer.sendMail({
       from: credentials.smtpFrom,
@@ -276,6 +307,7 @@ export async function sendEmail({
       subject,
       html,
       text,
+      ...(Object.keys(headers).length > 0 ? { headers } : {}),
     });
 
     return {

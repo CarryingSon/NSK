@@ -65,6 +65,9 @@ export interface Database {
           postal_code: string | null;
           city: string | null;
           faculty: string | null;
+          notifications_opt_out: boolean;
+          notifications_opt_out_at: string | null;
+          notifications_token: string;
           membership_status: MembershipStatus;
           membership_year: number | null;
           membership_paid: boolean;
@@ -86,6 +89,9 @@ export interface Database {
           postal_code?: string | null;
           city?: string | null;
           faculty?: string | null;
+          notifications_opt_out?: boolean;
+          notifications_opt_out_at?: string | null;
+          notifications_token?: string;
           membership_status?: MembershipStatus;
           membership_year?: number | null;
           membership_paid?: boolean;

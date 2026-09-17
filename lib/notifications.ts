@@ -12,6 +12,10 @@ import {
 } from "@/lib/constants";
 import { buildCampaignEmailHtml, sendEmail } from "@/lib/email";
 import { richTextToPlainText } from "@/lib/email-content";
+import {
+  buildUnsubscribePostUrl,
+  buildUnsubscribeUrl,
+} from "@/lib/unsubscribe";
 import type {
   CampaignFailure,
   CampaignWithProgress,
@@ -80,6 +84,10 @@ async function loadMembersWithEmail(supabase: AppSupabaseClient) {
     .from("members")
     .select("id, first_name, last_name, email, faculty, membership_status")
     .not("email", "is", null)
+    // Odjavljeni izpadejo iz vseh skupin, tudi iz "vsi člani z e-pošto".
+    // Filter stoji tu, ker je to edino mesto, kjer se prejemniki naložijo -
+    // tako ne more nobena nova skupina pomotoma zaobiti odjave.
+    .eq("notifications_opt_out", false)
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
 
@@ -326,7 +334,7 @@ export async function dispatchCampaignBatch(
 
   const { data: batch, error: batchError } = await supabase
     .from("email_queue")
-    .select("id, to_email, first_name, attempts")
+    .select("id, member_id, to_email, first_name, attempts")
     .eq("campaign_id", campaignId)
     .eq("status", "pending")
     .order("created_at", { ascending: true })
@@ -357,6 +365,26 @@ export async function dispatchCampaignBatch(
   }
 
   const plainText = richTextToPlainText(campaign.content_html);
+
+  // Žetone za odjavo poberemo za celo serijo naenkrat. Poizvedba na vsako
+  // sporočilo bi bila dvajset dodatnih obhodov na serijo.
+  const memberIds = batch
+    .map((item) => item.member_id)
+    .filter((id): id is string => Boolean(id));
+
+  const unsubscribeTokens = new Map<string, string>();
+
+  if (memberIds.length > 0) {
+    const { data: tokenRows } = await supabase
+      .from("members")
+      .select("id, notifications_token")
+      .in("id", memberIds);
+
+    for (const row of tokenRows ?? []) {
+      unsubscribeTokens.set(row.id, row.notifications_token);
+    }
+  }
+
   let sent = 0;
   let failed = 0;
 
@@ -382,6 +410,14 @@ export async function dispatchCampaignBatch(
       continue;
     }
 
+    // Član, ki ga medtem ni več v evidenci, ostane brez žetona. Takrat gre
+    // sporočilo brez povezave za odjavo - odjaviti ni več koga.
+    const token = item.member_id
+      ? unsubscribeTokens.get(item.member_id)
+      : undefined;
+    const unsubscribeUrl = token ? buildUnsubscribeUrl(token) : null;
+    const unsubscribePostUrl = token ? buildUnsubscribePostUrl(token) : null;
+
     const html = buildCampaignEmailHtml({
       title: campaign.title,
       subtitle: campaign.subtitle,
@@ -390,6 +426,7 @@ export async function dispatchCampaignBatch(
       ctaUrl: campaign.cta_url,
       campaignType: campaign.campaign_type,
       recipientName: item.first_name,
+      unsubscribeUrl,
     });
 
     const delivery = await sendEmail({
@@ -397,6 +434,8 @@ export async function dispatchCampaignBatch(
       subject: campaign.title,
       html,
       text: plainText,
+      unsubscribeUrl,
+      unsubscribePostUrl,
     });
 
     if (delivery.success) {
