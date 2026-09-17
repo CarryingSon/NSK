@@ -17,7 +17,11 @@ export default function JavnaPostavitev({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="flex min-h-svh flex-col">
+    // Javna stran teče v temni shemi ne glede na nastavitev naprave: preliv
+    // oranžne v črno je njen dizajn, ne izbira uporabnika. Razred dark tu
+    // prestavi barvne spremenljivke za celotno poddrevo, nadzorna plošča pa
+    // se še naprej ravna po napravi.
+    <div className="javna-canvas dark flex min-h-svh flex-col text-foreground">
       {/* Preskok na vsebino je prva stvar, ki jo tipkovnica sreča; stara stran
           tega ni imela in je to v izjavi o dostopnosti tudi priznavala. */}
       <a

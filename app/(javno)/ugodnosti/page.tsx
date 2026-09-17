@@ -62,7 +62,7 @@ export default function UgodnostiStran() {
           </figcaption>
         </figure>
 
-        <div className="mt-16 rounded-3xl border border-border bg-secondary/50 p-8 text-center sm:p-12">
+        <div className="mt-16 rounded-3xl border border-border bg-white/[0.04] p-8 text-center sm:p-12">
           <h2 className="display-md">Ugodnosti veljajo za člane</h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
             Članarina je brezplačna. Potrebuješ le potrdilo o vpisu in stalno

@@ -8,7 +8,7 @@ export async function DruzbeneObjave() {
   const objave = await pridobiDruzbeneObjave();
 
   return (
-    <section className="border-y border-border bg-secondary/50 py-20">
+    <section className="border-y border-border bg-white/[0.04] py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

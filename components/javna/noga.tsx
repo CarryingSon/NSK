@@ -11,7 +11,7 @@ export function Noga() {
   const leto = new Date().getFullYear();
 
   return (
-    <footer className="mt-24 border-t border-border bg-secondary/60">
+    <footer className="mt-24 border-t border-border bg-white/[0.03]">
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">

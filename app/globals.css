@@ -495,3 +495,33 @@
 .dark .login-canvas {
   background: #0a0a0b;
 }
+
+/* --- Javna stran --- */
+/* Oranžna se preliva v črno. Klubska barva nastopa kot svetloba nad temno
+   podlago in ne kot ploskev - ista misel kot krogle na prijavni strani, le
+   razlita čez celo stran.
+   Stoji na vrhnji ravni in ne v @layer utilities: Tailwind v4 pravila v tej
+   plasti obravnava kot pripomočke in jih izpusti, če jih ne prepozna kot
+   uporabljene - prva različica tega bloka zato sploh ni prišla v prevedeni
+   CSS.
+   Preliv je background-image samega elementa, ne psevdoelement z negativnim
+   z-index: tako zanesljivo stoji za vsebino, brez ugibanja o skladih.
+   background-attachment: fixed poskrbi, da stran drsi čez preliv, namesto da
+   bi se ta ponavljal. */
+.javna-canvas {
+  background-color: #000000;
+  background-image:
+    radial-gradient(60rem 42rem at 8% -8%, rgba(243, 103, 23, 0.45), transparent 62%),
+    radial-gradient(44rem 34rem at 97% 12%, rgba(243, 103, 23, 0.28), transparent 64%),
+    radial-gradient(52rem 38rem at 45% 108%, rgba(243, 103, 23, 0.26), transparent 62%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Na dotičnih napravah je fixed ozadje drago pri drsenju, zato se tam pripne
+   na vsebino. Preliv je dovolj mehak, da razlike skoraj ni videti. */
+@media (hover: none) {
+  .javna-canvas {
+    background-attachment: scroll;
+  }
+}

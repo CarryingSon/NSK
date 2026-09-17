@@ -65,7 +65,7 @@ export default async function Naslovnica() {
         </div>
       </section>
 
-      <section className="border-y border-border bg-secondary/50 py-16">
+      <section className="border-y border-border bg-white/[0.04] py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="display-md">Kaj klub počne</h2>
           <ul className="mt-8 grid gap-5 sm:grid-cols-3">
@@ -157,7 +157,7 @@ export default async function Naslovnica() {
       <DruzbeneObjave />
 
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="grid gap-10 rounded-3xl border border-border bg-secondary/50 p-8 sm:p-12 lg:grid-cols-2">
+        <div className="grid gap-10 rounded-3xl border border-border bg-white/[0.04] p-8 sm:p-12 lg:grid-cols-2">
           <div>
             <Gift className="size-7 text-primary" aria-hidden="true" />
             <h2 className="display-md mt-4">Kaj ti prinese članstvo</h2>
