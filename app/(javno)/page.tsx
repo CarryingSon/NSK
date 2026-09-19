@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Gift, MapPin } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronDown, Gift, MapPin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { DruzbeneObjave } from "@/components/javna/druzbene-objave";
@@ -17,7 +17,13 @@ export default async function Naslovnica() {
           ne okrasen: brez njega besedilo na svetlih delih slike ne doseže
           kontrasta, ki ga zahteva WCAG. Zato je uvod vedno temen, ne glede
           na svetlo ali temno shemo strani. */}
-      <section className="relative isolate overflow-hidden">
+      {/* Uvod zasede celoten zaslon: pristanek je video, vse ostalo se razkrije
+          ob drsenju. Odšteta je višina glave (h-20 = 5rem), ki je lepljiva in
+          stoji nad uvodom - brez odštevanja bi uvod za toliko presegal zaslon
+          in bi se spodnji rob odrezal.
+          Enota svh in ne vh: na telefonu vh šteje tudi vrstico brskalnika, ki
+          se ob drsenju skrije, zato bi uvod poskakoval. */}
+      <section className="relative isolate flex min-h-[calc(100svh-5rem)] flex-col overflow-hidden">
         <UvodniVideo />
         {/* Dva zastora, ker video ni enakomeren: odrske luči ga vmes potisnejo
             skoraj v belo. Prvi drži besedilno stran temno ne glede na okvir,
@@ -32,7 +38,7 @@ export default async function Naslovnica() {
           aria-hidden="true"
         />
 
-        <div className="mx-auto max-w-6xl px-4 py-28 sm:px-6 sm:py-36 lg:py-44">
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-4 py-24 sm:px-6">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold text-primary">
               Cerknica · Loška Dolina · Bloke
@@ -65,9 +71,23 @@ export default async function Naslovnica() {
             </div>
           </div>
         </div>
+
+        {/* Ko uvod zapolni zaslon, ni več videti, da je pod njim še kaj.
+            Namig to pove. Skrit je pomožni tehnologiji, ker ne nosi vsebine,
+            in miruje, kadar je gibanje animacij izklopljeno. */}
+        <a
+          href="#vsebina-naprej"
+          aria-label="Poglej naprej"
+          className="mx-auto mb-10 flex size-11 items-center justify-center rounded-full border border-white/25 text-white/70 transition-colors hover:border-white/50 hover:text-white"
+        >
+          <ChevronDown className="namig-drsenja size-5" aria-hidden="true" />
+        </a>
       </section>
 
-      <section className="border-y border-border bg-white/[0.04] py-16">
+      <section
+        id="vsebina-naprej"
+        className="border-y border-border bg-white/[0.04] py-16"
+      >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="display-md">Kaj klub počne</h2>
           <ul className="mt-8 grid gap-5 sm:grid-cols-3">

@@ -525,3 +525,20 @@
     background-attachment: scroll;
   }
 }
+
+/* Namig, da se pod uvodom nadaljuje stran. Nihanje je rahlo in počasno;
+   pri izklopljenem gibanju animacij puščica mirno obstane. */
+@keyframes namig-niha {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(0.3rem); }
+}
+
+.namig-drsenja {
+  animation: namig-niha 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .namig-drsenja {
+    animation: none;
+  }
+}
