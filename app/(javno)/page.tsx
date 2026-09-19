@@ -28,9 +28,13 @@ export default async function Naslovnica() {
         {/* Dva zastora, ker video ni enakomeren: odrske luči ga vmes potisnejo
             skoraj v belo. Prvi drži besedilno stran temno ne glede na okvir,
             drugi spelje spodnji rob v črno, da se uvod zlije s prelivom pod
-            njim namesto da bi se odrezal. */}
+            njim namesto da bi se odrezal.
+            Enakomerni zastor (mobilno) je pri 0.55 in ne nižje: nad povsem
+            belim okvirjem drži 4.8:1, meja za berljivo besedilo pa je 4.5:1,
+            kar nastopi pri 0.535. Desni rob sme biti svetlejši, ker tam
+            besedila ni. */}
         <div
-          className="absolute inset-0 -z-10 bg-black/62 sm:bg-gradient-to-r sm:from-black/78 sm:via-black/62 sm:to-black/35"
+          className="absolute inset-0 -z-10 bg-black/55 sm:bg-gradient-to-r sm:from-black/70 sm:via-black/55 sm:to-black/28"
           aria-hidden="true"
         />
         <div
