@@ -1,31 +1,15 @@
 import Link from "next/link";
-import { Pencil, Search, Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 
-import { DeleteMemberButton } from "@/components/members/delete-member-button";
-import { RenewMembershipButton } from "@/components/members/renew-membership-button";
+import { MemberList } from "@/components/members/member-list";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
-import { StatusBadge } from "@/components/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { membershipStatusOptions } from "@/lib/constants";
 import { getMembers } from "@/lib/data";
-import { formatDate, getMemberFullName, pluralize } from "@/lib/format";
-import {
-  formatMembershipYear,
-  getCurrentMembershipYear,
-  getMissingMemberFields,
-  needsRenewal,
-} from "@/lib/membership";
+import { getCurrentMembershipYear } from "@/lib/membership";
 import { cn } from "@/lib/utils";
 
 interface MembersPageProps {
@@ -97,114 +81,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
           description="Ko bo baza napolnjena, se bodo tukaj prikazali vsi člani. Poskusi spremeniti filter ali dodaj novega člana."
         />
       ) : (
-        // Tabela je širša od zaslona na ožjih napravah. Drsenje znotraj okvira
-        // je edina možnost, ki ne odreže stolpca Akcije - "overflow-hidden" bi
-        // gumba za urejanje in brisanje preprosto skril.
-        <section className="surface-card overflow-x-auto rounded-[18px] border border-border">
-          <Table className="min-w-full">
-            <TableHeader>
-              <TableRow className="border-border">
-                <TableHead className="px-4 py-4">Član</TableHead>
-                <TableHead className="px-4 py-4">Fakulteta</TableHead>
-                <TableHead className="px-4 py-4">Kontakt</TableHead>
-                <TableHead className="px-4 py-4">Status</TableHead>
-                <TableHead className="px-4 py-4">Članstvo</TableHead>
-                <TableHead className="px-4 py-4 text-right">Akcije</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.map((member) => {
-                const missingCount = getMissingMemberFields(member).length;
-                const renewalDue = needsRenewal(member);
-
-                return (
-                <TableRow key={member.id} className="border-border">
-                  <TableCell className="px-4 py-4">
-                    <div>
-                      {/* Odkar v vrstici ni več gumba "Preglej", je ime edina
-                          pot do strani o članu. */}
-                      <Link
-                        href={`/members/${member.id}`}
-                        className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
-                      >
-                        {getMemberFullName(member)}
-                      </Link>
-                      <p className="text-sm text-muted-foreground">
-                        {member.city || "Brez mesta"}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-4 text-sm text-muted-foreground">
-                    {member.faculty || "Ni podatka"}
-                  </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <div>
-                      <p>{member.email || "Ni e-pošte"}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {member.phone || "Ni telefona"}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <StatusBadge status={member.membership_status} />
-                  </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <div>
-                      <p className="tabular-nums">
-                        {member.membership_year
-                          ? formatMembershipYear(member.membership_year)
-                          : "Ni leta članstva"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Včlanjen: {formatDate(member.joined_at)}
-                      </p>
-                      {missingCount > 0 ? (
-                        <p className="mt-1 text-sm text-warning">
-                          Nepopolno: {missingCount}{" "}
-                          {pluralize(missingCount, [
-                            "polje",
-                            "polji",
-                            "polja",
-                            "polj",
-                          ])}
-                        </p>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      {renewalDue ? (
-                        <RenewMembershipButton
-                          id={member.id}
-                          targetYear={targetYear}
-                          returnTo="/members"
-                        />
-                      ) : null}
-                      <Link
-                        href={`/members/${member.id}/edit`}
-                        aria-label={`Uredi člana ${getMemberFullName(member)}`}
-                        title="Uredi"
-                        className={cn(
-                          buttonVariants({ variant: "outline", size: "icon" }),
-                          "rounded-md",
-                        )}
-                      >
-                        <Pencil className="size-4" />
-                      </Link>
-                      <DeleteMemberButton
-                        id={member.id}
-                        fullName={getMemberFullName(member)}
-                        returnTo="/members"
-                        iconOnly
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </section>
+        <MemberList members={members} targetYear={targetYear} />
       )}
     </div>
   );
