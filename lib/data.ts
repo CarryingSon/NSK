@@ -362,8 +362,6 @@ export async function getPrintOverview(monthParam?: string): Promise<PrintOvervi
     previousLabel: formatMonthLabel(previous),
     quota: DEFAULT_PRINT_QUOTA,
     totalUsed: 0,
-    totalQuota: 0,
-    totalRemaining: 0,
     membersCopied: 0,
     totalMembers: 0,
     readOnly: toMonthParam(month) !== toMonthParam(startOfCurrentMonth()),
@@ -446,17 +444,15 @@ export async function getPrintOverview(monthParam?: string): Promise<PrintOvervi
       .sort((a, b) => b.used - a.used);
 
     const totalUsed = rows.reduce((sum, r) => sum + r.used, 0);
-    // Kvoto dobi vsak član kluba, ne le tisti, ki so ta mesec kopirali.
+    // Vsi člani kluba, ne le tisti, ki so ta mesec kopirali - kartica pove,
+    // kolikšen del članstva je kopirnico sploh uporabil.
     const totalMembers = memberCount.count ?? 0;
-    const totalQuota = totalMembers * quota;
 
     return {
       ...base,
       quota,
       rows,
       totalUsed,
-      totalQuota,
-      totalRemaining: totalQuota - totalUsed,
       membersCopied: rows.filter((r) => r.used > 0).length,
       totalMembers,
     };

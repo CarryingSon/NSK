@@ -75,8 +75,6 @@ export interface PrintOverview {
   previousLabel: string;
   quota: number;
   totalUsed: number;
-  totalQuota: number;
-  totalRemaining: number;
   membersCopied: number;
   totalMembers: number;
   // Pretekli meseci so poročilo: prikažejo se enako, a se jih ne da spreminjati.

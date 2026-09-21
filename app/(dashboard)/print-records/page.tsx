@@ -20,24 +20,32 @@ export default async function PrintRecordsPage({
     getPrintMonths(),
   ]);
 
+  // Povprečje računamo na člane, ki so res kopirali, ne na vse člane kluba -
+  // sicer bi ga razredčili tisti, ki kopirnice ta mesec niso niti odprli, in
+  // številka ne bi povedala ničesar o dejanski porabi.
+  const averagePerMember =
+    overview.membersCopied > 0 ? overview.totalUsed / overview.membersCopied : 0;
+
   const cards = [
     {
       label: "Skupaj kopij",
-      value: overview.totalUsed,
+      value: overview.totalUsed.toLocaleString("sl-SI"),
       hint: overview.monthLabel,
-      tone: "text-foreground",
-    },
-    {
-      label: "Preostale kopije",
-      value: overview.totalRemaining,
-      hint: `Od ${overview.totalQuota} skupaj (${overview.totalMembers} × ${overview.quota})`,
-      tone: overview.totalRemaining < 0 ? "text-destructive" : "text-success",
     },
     {
       label: "Članov kopiralo",
-      value: overview.membersCopied,
-      hint: `Kvota: ${overview.quota} kopij/član`,
-      tone: "text-foreground",
+      value: overview.membersCopied.toLocaleString("sl-SI"),
+      // Za predlogom "od" gre rodilnik: od 1 člana, od 148 članov.
+      hint: `Od ${overview.totalMembers} ${
+        overview.totalMembers === 1 ? "člana" : "članov"
+      } kluba`,
+    },
+    {
+      label: "Povprečje",
+      value: averagePerMember.toLocaleString("sl-SI", {
+        maximumFractionDigits: 1,
+      }),
+      hint: "Kopij na člana, ki je kopiral",
     },
   ];
 
@@ -93,12 +101,7 @@ export default async function PrintRecordsPage({
         {cards.map((card) => (
           <div key={card.label} className="surface-card rounded-[18px] p-6">
             <p className="text-[0.9375rem] text-muted-foreground">{card.label}</p>
-            <p
-              className={cn(
-                "mt-3 font-heading text-5xl font-semibold tabular-nums",
-                card.tone,
-              )}
-            >
+            <p className="mt-3 font-heading text-5xl font-semibold tabular-nums text-foreground">
               {card.value}
             </p>
             <p className="mt-2 text-[0.875rem] text-muted-foreground">
