@@ -52,9 +52,11 @@ function Field({
 function Consent({
   name,
   label,
+  required,
 }: {
   name: string;
   label: React.ReactNode;
+  required?: boolean;
 }) {
   return (
     <div className="flex items-start gap-3">
@@ -62,6 +64,7 @@ function Consent({
         id={name}
         name={name}
         type="checkbox"
+        required={required}
         className="mt-0.5 size-[18px] shrink-0 cursor-pointer accent-primary"
       />
       <Label
@@ -254,6 +257,24 @@ export function ApplicationForm() {
           <Field label="Kraj" htmlFor="city">
             <Input id="city" name="city" className="h-12" />
           </Field>
+          <Field
+            label="Občina prebivanja"
+            htmlFor="municipality"
+            className="sm:col-span-2"
+          >
+            <Input
+              id="municipality"
+              name="municipality"
+              list="municipality-options"
+              required
+              className="h-12"
+            />
+            <datalist id="municipality-options">
+              <option value="Cerknica" />
+              <option value="Loška dolina" />
+              <option value="Bloke" />
+            </datalist>
+          </Field>
         </div>
         <p className="mt-4 text-xs leading-5 text-muted-foreground">
           V klub se lahko včlanijo študenti in dijaki s stalnim prebivališčem v
@@ -335,43 +356,110 @@ export function ApplicationForm() {
 
       <section className="surface-card rounded-[18px] border border-border p-6 sm:p-7">
         <h2 className="font-heading text-xl font-semibold text-foreground">
-          Prijava v sistem študentskih klubov
+          Pristopna izjava
         </h2>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          {club.shortName} je član Zveze študentskih klubov Slovenije. Če
-          soglašaš z obojim, te ob oddaji prijavimo tudi v skupni sistem
-          študentskih klubov in na e-pošto prejmeš kodo za potrditev. Brez
-          soglasja ostaneš član {club.shortName}, naprej pa ne pošljemo ničesar.
+          Izjavljam, da sem seznanjen_a s{" "}
+          <a
+            href="/dokumenti/statut-kluba.pdf"
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline underline-offset-2"
+          >
+            Statutom Notranjskega študentskega kluba
+          </a>
+          ,{" "}
+          <a
+            href="/dokumenti/pravilnik-o-varovanju-osebnih-podatkov.pdf"
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline underline-offset-2"
+          >
+            Pravilnikom o varstvu osebnih podatkov
+          </a>{" "}
+          in drugimi akti društva ter se z oddajo te izjave prostovoljno
+          včlanjujem v {club.name}. Potrjujem resničnost navedenih podatkov.
         </p>
 
         <div className="mt-5 space-y-4">
           <Consent
-            name="terms_accepted"
+            name="privacy_acknowledged"
+            required
             label={
               <>
-                Soglašam s splošnimi pogoji in{" "}
-                <a
-                  href={clubPrivacyPolicyUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary underline underline-offset-2"
-                >
-                  politiko zasebnosti
-                </a>
-                .
+                <strong className="font-semibold text-foreground">
+                  Seznanjen_a sem
+                </strong>
+                , da {club.name} moje osebne podatke obdeluje za namen
+                izvajanja članstva, vodenja evidence članov, organizacije
+                dejavnosti in izpolnjevanja zakonskih obveznosti skladno z
+                veljavno zakonodajo s področja varstva osebnih podatkov.{" "}
+                <span className="text-destructive">*</span>
+              </>
+            }
+          />
+          <div>
+            <Consent
+              name="sos_consent"
+              label={
+                <>
+                  <strong className="font-semibold text-foreground">
+                    Soglašam
+                  </strong>
+                  , da {club.name} moje podatke (ime, priimek, EMŠO in
+                  elektronski naslov) vnese v sistem digitalnega članstva
+                  Študentske organizacije Slovenije (ŠOS) za namen preverjanja
+                  statusa in avtomatskega podaljšanja članstva.
+                </>
+              }
+            />
+            <p className="mt-2 pl-[30px] text-xs leading-5 text-muted-foreground">
+              Če ne soglašaš, status študenta ali dijaka izkazuješ skladno s
+              pravili kluba. S soglasjem po odobritvi prijave na e-pošto
+              prejmeš kodo, s katero članstvo potrdiš na studentski-klubi.si.
+            </p>
+          </div>
+          <Consent
+            name="media_consent"
+            label={
+              <>
+                <strong className="font-semibold text-foreground">
+                  Soglašam
+                </strong>
+                , da {club.name} uporablja fotografije, video- in zvočne
+                posnetke, na katerih sem upodobljen_a, za namene obveščanja in
+                promocije dejavnosti društva.
               </>
             }
           />
           <Consent
-            name="notifications_accepted"
+            name="newsletter_consent"
             label={
               <>
-                Soglašam, da se moji podatki uporabljajo za obveščanje o
-                študentskih klubih in Študentski organizaciji Slovenije (ŠOS).
+                <strong className="font-semibold text-foreground">
+                  Soglašam
+                </strong>
+                , da {club.name} moj elektronski naslov uporablja za pošiljanje
+                e-novic. Soglasje lahko kadarkoli prekličem.
               </>
             }
           />
         </div>
+
+        <p className="mt-5 text-xs leading-5 text-muted-foreground">
+          Upravljavec osebnih podatkov je {club.name}. Osebni podatki se
+          obdelujejo skladno z Uredbo (EU) 2016/679 (GDPR), ZVOP-2 in internimi
+          akti društva. Več v{" "}
+          <a
+            href={clubPrivacyPolicyUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline underline-offset-2"
+          >
+            politiki zasebnosti
+          </a>
+          .
+        </p>
       </section>
 
       {state.error ? (
@@ -403,8 +491,7 @@ export function ApplicationForm() {
           )}
         </Button>
         <p className="text-xs leading-5 text-muted-foreground">
-          Z oddajo dovoliš {club.shortName}, da tvoje podatke obdeluje za namen
-          vodenja članstva.
+          Iz oddanih podatkov se izpolni pristopna izjava, ki jo prejme klub.
         </p>
       </div>
     </form>

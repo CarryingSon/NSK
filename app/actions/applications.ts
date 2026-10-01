@@ -1,8 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { requireUser } from "@/lib/auth";
+import { club } from "@/lib/constants";
+import { escapeHtml } from "@/lib/email-content";
+import { sendEmail } from "@/lib/email";
+import { hasSosConsent } from "@/lib/membership";
+import {
+  buildDeclarationPdf,
+  declarationFileName,
+} from "@/lib/pristopna-izjava";
 import { registerMemberWithSos } from "@/lib/sos";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -63,8 +72,11 @@ export async function submitApplicationAction(
     study_year: getStringValue(formData, "study_year"),
     member_type: getStringValue(formData, "member_type"),
     message: getStringValue(formData, "message"),
-    terms_accepted: formData.get("terms_accepted"),
-    notifications_accepted: formData.get("notifications_accepted"),
+    municipality: getStringValue(formData, "municipality"),
+    privacy_acknowledged: formData.get("privacy_acknowledged"),
+    sos_consent: formData.get("sos_consent"),
+    media_consent: formData.get("media_consent"),
+    newsletter_consent: formData.get("newsletter_consent"),
   });
 
   if (!parsed.success) {
@@ -114,8 +126,9 @@ export async function submitApplicationAction(
       proofPath = path;
     }
 
-    // Soglasji se ob oddaji samo zapišeta. V ŠOS gre prijava šele, ko jo klub
+    // Soglasja se ob oddaji samo zapišejo. V ŠOS gre prijava šele, ko jo klub
     // odobri - glej setApplicationStatusAction().
+    const submittedAt = new Date();
     const { error } = await supabase.from("membership_applications").insert({
       ...parsed.data,
       proof_path: proofPath,
@@ -125,6 +138,11 @@ export async function submitApplicationAction(
     if (error) {
       throw error;
     }
+
+    // Izjava gre klubu šele po odgovoru, da prijavitelj ne čaka na SMTP.
+    // Prijava je takrat že shranjena, zato je neuspelo pošiljanje ne podre.
+    const application = parsed.data;
+    after(() => sendDeclarationToClub(application, submittedAt, Boolean(proofPath)));
 
     revalidatePath("/applications");
 
@@ -138,6 +156,78 @@ export async function submitApplicationAction(
     return {
       error: "Prijave ni bilo mogoče oddati. Poskusi znova čez nekaj trenutkov.",
     };
+  }
+}
+
+type ParsedApplication = Extract<
+  ReturnType<typeof applicationSchema.safeParse>,
+  { success: true }
+>["data"];
+
+/**
+ * Pošlje izpolnjeno pristopno izjavo na klubski naslov.
+ *
+ * Klub mora izjavo hraniti tudi za člane, ki se včlanijo na spletu - to je
+ * njihova različica papirja, ki ga drugi podpišejo za pultom. Prijavitelju je
+ * ne pošiljamo: vsebuje EMŠO, e-pošta pa ni prostor zanj, kadar ni nujno.
+ *
+ * Nikoli ne vrže; napako samo zapiše v dnevnik.
+ */
+async function sendDeclarationToClub(
+  application: ParsedApplication,
+  submittedAt: Date,
+  hasProof: boolean,
+) {
+  try {
+    const pdf = await buildDeclarationPdf({
+      firstName: application.first_name,
+      lastName: application.last_name,
+      emso: application.emso,
+      address: application.address,
+      postalCode: application.postal_code,
+      city: application.city,
+      municipality: application.municipality,
+      phone: application.phone,
+      email: application.email,
+      memberType: application.member_type,
+      sosConsent: application.sos_consent,
+      mediaConsent: application.media_consent,
+      newsletterConsent: application.newsletter_consent,
+      submittedAt,
+    });
+
+    const name = `${application.first_name} ${application.last_name}`;
+    const memberType = application.member_type === "pupil" ? "dijak/-inja" : "študent/-ka";
+    const proofLine = hasProof
+      ? "Potrdilo o vpisu je naloženo v Požiralniku."
+      : "Potrdila o vpisu ni naložil_a - prinesti ga mora v času uradnih ur.";
+
+    const result = await sendEmail({
+      to: club.email,
+      subject: `Pristopna izjava: ${name}`,
+      replyTo: application.email,
+      text: [
+        `Nova spletna prijava v ${club.shortName}: ${name} (${memberType}, ${application.school}).`,
+        proofLine,
+        "Pristopna izjava je v priponki. Prijavo odobriš v Požiralniku pod Prijave.",
+      ].join("\n\n"),
+      html: `<p>Nova spletna prijava v ${club.shortName}: <strong>${escapeHtml(name)}</strong> (${memberType}, ${escapeHtml(application.school)}).</p>
+<p>${proofLine}</p>
+<p>Pristopna izjava je v priponki. Prijavo odobriš v Požiralniku pod Prijave.</p>`,
+      attachments: [
+        {
+          filename: declarationFileName(application.first_name, application.last_name),
+          content: pdf,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+
+    if (!result.success) {
+      console.error("Pristopne izjave ni bilo mogoče poslati", result.error);
+    }
+  } catch (error) {
+    console.error("Napaka pri sestavljanju pristopne izjave", error);
   }
 }
 
@@ -199,7 +289,7 @@ async function registerApprovedApplication(
   const { data: application, error } = await supabase
     .from("membership_applications")
     .select(
-      "first_name, last_name, emso, email, postal_code, terms_accepted, notifications_accepted, sos_registered_at",
+      "first_name, last_name, emso, email, postal_code, sos_consent, terms_accepted, notifications_accepted, sos_registered_at",
     )
     .eq("id", id)
     .single();
@@ -208,12 +298,8 @@ async function registerApprovedApplication(
     return {};
   }
 
-  // Že poslano ali brez obeh soglasij - ne pošiljamo in ne pišemo napake.
-  if (
-    application.sos_registered_at ||
-    !application.terms_accepted ||
-    !application.notifications_accepted
-  ) {
+  // Že poslano ali brez soglasja - ne pošiljamo in ne pišemo napake.
+  if (application.sos_registered_at || !hasSosConsent(application)) {
     return {};
   }
 
@@ -230,6 +316,7 @@ async function registerApprovedApplication(
     emso: application.emso,
     email: application.email,
     postalCode: application.postal_code,
+    notificationsAccepted: application.notifications_accepted,
   });
 
   if (sos.ok) {
@@ -287,6 +374,14 @@ export async function createMemberFromApplicationAction(
         membership_status: "active",
         membership_year: new Date().getFullYear(),
         joined_at: new Date().toISOString().slice(0, 10),
+        // Pristopna izjava vpraša po e-novicah. Kdor ni soglašal, jih ne dobi;
+        // starejše prijave tega vprašanja niso imele, zato zanje ne odločamo.
+        ...(application.privacy_acknowledged && !application.newsletter_consent
+          ? {
+              notifications_opt_out: true,
+              notifications_opt_out_at: application.created_at,
+            }
+          : {}),
       })
       .select("id")
       .single();

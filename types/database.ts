@@ -223,6 +223,11 @@ export interface Database {
           created_at: string;
           terms_accepted: boolean;
           notifications_accepted: boolean;
+          municipality: string | null;
+          privacy_acknowledged: boolean;
+          sos_consent: boolean;
+          media_consent: boolean;
+          newsletter_consent: boolean;
           sos_registered_at: string | null;
           sos_error: string | null;
         };
@@ -250,6 +255,11 @@ export interface Database {
           created_at?: string;
           terms_accepted?: boolean;
           notifications_accepted?: boolean;
+          municipality?: string | null;
+          privacy_acknowledged?: boolean;
+          sos_consent?: boolean;
+          media_consent?: boolean;
+          newsletter_consent?: boolean;
           sos_registered_at?: string | null;
           sos_error?: string | null;
         };

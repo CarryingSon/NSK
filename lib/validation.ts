@@ -286,10 +286,15 @@ export const applicationSchema = z.object({
   study_year: optionalString,
   member_type: z.enum(["student", "pupil"]),
   message: optionalString,
-  // Soglasji za prijavo v sistem ŠOS. Za včlanitev v klub nista pogoj - kdor ju
-  // ne da, postane član kluba, v skupni sistem pa ga ne pošljemo.
-  terms_accepted: checkboxBoolean,
-  notifications_accepted: checkboxBoolean,
+  municipality: z.string().trim().min(2, "Vnesi občino prebivanja."),
+  // Polja in soglasja sledijo pristopni izjavi. Seznanitev z obdelavo podatkov
+  // je obvezna, ostala tri soglasja niso pogoj za včlanitev.
+  privacy_acknowledged: checkboxBoolean.refine((value) => value, {
+    message: "Za včlanitev potrdi, da si seznanjen_a z obdelavo osebnih podatkov.",
+  }),
+  sos_consent: checkboxBoolean,
+  media_consent: checkboxBoolean,
+  newsletter_consent: checkboxBoolean,
 });
 
 export const applicationStatusSchema = z.object({

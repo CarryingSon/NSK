@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Predlogo pristopne izjave in pisavo bere strežnik z diska. Sledenje datotek
+  // poti, sestavljene iz process.cwd(), ne zazna, zato ju dodamo ročno.
+  outputFileTracingIncludes: {
+    "/*": ["./lib/pristopna-izjava/*.{pdf,ttf}"],
+  },
   images: {
     // Slike starih novic še vedno stojijo na Cloudinaryju prejšnjega izvajalca.
     // Ko se preselijo v Supabase Storage, ta vnos odpade.

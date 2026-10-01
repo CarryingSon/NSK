@@ -166,6 +166,17 @@ export default async function ApplicationsPage({
                           <p className="text-xs text-muted-foreground">
                             {application.school}
                           </p>
+                          {application.privacy_acknowledged ? (
+                            <a
+                              href={`/applications/${application.id}/izjava`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <FileText className="size-3.5" />
+                              Pristopna izjava
+                            </a>
+                          ) : null}
                         </TableCell>
                         <TableCell className="px-4 py-4 text-sm text-muted-foreground">
                           <a
