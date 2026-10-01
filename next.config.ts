@@ -12,6 +12,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // "O NŠK" je v meniju le spust in ne stran zase, zato /o-nas nima vsebine.
+      // Kdor naslov vtipka ali ga najde v iskalniku, naj pride do prve podstrani
+      // namesto do 404. Preusmeritev je začasna (307), ker se lahko sem kdaj
+      // postavi pregledna stran o klubu.
+      { source: "/o-nas", destination: "/o-nas/vodstvo", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;
