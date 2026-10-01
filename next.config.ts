@@ -12,6 +12,21 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    // Predogled za stranko stoji na svojem naslovu. Brez tega bi ga iskalniki
+    // lahko zajeli in bi po preklopu tekmoval z nsk-klub.si za isto vsebino.
+    // Produkcije se ne dotakne - tam mora stran ostati najdljiva.
+    if (process.env.VERCEL_ENV === "production") {
+      return [];
+    }
+
+    return [
+      {
+        source: "/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+    ];
+  },
   async redirects() {
     return [
       // "O NŠK" je v meniju le spust in ne stran zase, zato /o-nas nima vsebine.
