@@ -331,5 +331,14 @@ export const articleSchema = z.object({
   excerpt: optionalString,
   content_html: z.string(),
   cover_path: optionalString,
+  // Gumb na koncu članka: oba podatka ali nobeden. Povezava je lahko pot na
+  // klubski strani (/pridruzi-se) ali cel naslov.
+  cta_label: optionalString,
+  cta_url: optionalString.refine(
+    (value) => !value || /^(\/|https?:\/\/|mailto:)/i.test(value),
+    { message: "Povezava gumba mora biti pot (/pridruzi-se) ali naslov, ki se začne s https://." },
+  ),
   intent: z.enum(["draft", "publish"]),
+}).refine((value) => Boolean(value.cta_label) === Boolean(value.cta_url), {
+  message: "Gumb potrebuje oboje: besedilo in povezavo.",
 });

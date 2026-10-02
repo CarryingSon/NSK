@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 import {
   datumNovice,
@@ -73,6 +75,36 @@ export default async function NovicaStran({ params }: Lastnosti) {
         className="objava mt-10"
         dangerouslySetInnerHTML={{ __html: ocistiHtml(novica.vsebina) }}
       />
+
+      {novica.gumb ? (
+        <div className="mt-10">
+          {novica.gumb.povezava.startsWith("/") ? (
+            <Button
+              render={<Link href={novica.gumb.povezava} />}
+              nativeButton={false}
+              size="lg"
+            >
+              {novica.gumb.besedilo}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Button>
+          ) : (
+            <Button
+              render={
+                <a
+                  href={novica.gumb.povezava}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+              nativeButton={false}
+              size="lg"
+            >
+              {novica.gumb.besedilo}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+      ) : null}
     </article>
   );
 }

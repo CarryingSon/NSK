@@ -88,6 +88,8 @@ export async function saveArticleAction(
     excerpt: getStringValue(formData, "excerpt"),
     content_html: getStringValue(formData, "content_html"),
     cover_path: getStringValue(formData, "cover_path"),
+    cta_label: getStringValue(formData, "cta_label"),
+    cta_url: getStringValue(formData, "cta_url"),
     intent: getStringValue(formData, "intent"),
   });
 
@@ -95,7 +97,7 @@ export async function saveArticleAction(
     return { error: parsed.error.issues[0]?.message ?? "Članka ni bilo mogoče shraniti." };
   }
 
-  const { id, title, excerpt, cover_path, intent } = parsed.data;
+  const { id, title, excerpt, cover_path, cta_label, cta_url, intent } = parsed.data;
   const contentHtml = sanitizeRichText(parsed.data.content_html);
 
   if (intent === "publish" && !hasRichTextContent(contentHtml)) {
@@ -133,6 +135,8 @@ export async function saveArticleAction(
       excerpt: excerpt ?? null,
       content_html: contentHtml,
       cover_path: cover_path ?? null,
+      cta_label: cta_label ?? null,
+      cta_url: cta_url ?? null,
       status: publishing ? "published" : "draft",
       // Datum prve objave ostane; popravek ne potisne članka na vrh.
       published_at: publishing

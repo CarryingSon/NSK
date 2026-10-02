@@ -19,6 +19,7 @@ export type Novica = {
   povzetek: string | null;
   slika: string | null;
   datum: string | null;
+  gumb: { besedilo: string; povezava: string } | null;
 };
 
 function odjemalec() {
@@ -43,6 +44,10 @@ function vNovico(vrstica: Vrstica): Novica {
     povzetek: vrstica.excerpt,
     slika: vrstica.cover_path ? articleImageUrl(vrstica.cover_path) : null,
     datum: vrstica.published_at,
+    gumb:
+      vrstica.cta_label && vrstica.cta_url
+        ? { besedilo: vrstica.cta_label, povezava: vrstica.cta_url }
+        : null,
   };
 }
 

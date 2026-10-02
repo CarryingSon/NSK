@@ -155,6 +155,8 @@ export function ArticleForm({ article }: { article?: Article | null }) {
         />
       </div>
 
+      <CtaFields article={article} />
+
       {state.error ? (
         <div
           aria-live="polite"
@@ -197,5 +199,85 @@ export function ArticleForm({ article }: { article?: Article | null }) {
         </Button>
       </div>
     </form>
+  );
+}
+
+// Bližnjice za najpogostejše gumbe. Pot brez domene ostane veljavna tudi po
+// preklopu strani na nsk-klub.si.
+const ctaPresets = [
+  { label: "Včlani se", url: "/pridruzi-se", name: "Prijavnica za člane" },
+  { label: "Poglej ugodnosti", url: "/ugodnosti", name: "Ugodnosti" },
+];
+
+function CtaFields({ article }: { article?: Article | null }) {
+  const [label, setLabel] = useState(article?.cta_label ?? "");
+  const [url, setUrl] = useState(article?.cta_url ?? "");
+
+  return (
+    <div className="surface-muted rounded-[18px] p-6 sm:p-8">
+      <h2 className="font-heading text-xl font-semibold text-foreground">
+        Gumb na koncu članka (neobvezno)
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Npr. povezava na prijavnico ali na obrazec za prijavo na dogodek. Če
+        ostane prazno, gumba ni.
+      </p>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {ctaPresets.map((preset) => (
+          <Button
+            key={preset.url}
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setLabel(preset.label);
+              setUrl(preset.url);
+            }}
+          >
+            {preset.name}
+          </Button>
+        ))}
+        {label || url ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setLabel("");
+              setUrl("");
+            }}
+          >
+            Brez gumba
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="cta_label">Besedilo gumba</Label>
+          <Input
+            id="cta_label"
+            name="cta_label"
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+            maxLength={40}
+            placeholder="npr. Prijavi se"
+            className="h-12"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cta_url">Povezava</Label>
+          <Input
+            id="cta_url"
+            name="cta_url"
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            placeholder="/pridruzi-se ali https://forms.gle/..."
+            className="h-12"
+          />
+        </div>
+      </div>
+    </div>
   );
 }

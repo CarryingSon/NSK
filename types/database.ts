@@ -277,6 +277,8 @@ export interface Database {
           excerpt: string | null;
           content_html: string;
           cover_path: string | null;
+          cta_label: string | null;
+          cta_url: string | null;
           status: ArticleStatus;
           published_at: string | null;
           author_email: string | null;
@@ -290,6 +292,8 @@ export interface Database {
           excerpt?: string | null;
           content_html?: string;
           cover_path?: string | null;
+          cta_label?: string | null;
+          cta_url?: string | null;
           status?: ArticleStatus;
           published_at?: string | null;
           author_email?: string | null;
