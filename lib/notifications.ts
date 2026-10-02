@@ -10,6 +10,7 @@ import {
   notificationAudienceLabels,
   notificationAudienceOrder,
 } from "@/lib/constants";
+import { markEmailBounced } from "@/lib/bounces";
 import { buildCampaignEmailHtml, sendEmail } from "@/lib/email";
 import { richTextToPlainText } from "@/lib/email-content";
 import {
@@ -65,6 +66,9 @@ async function loadMembersWithEmail(supabase: AppSupabaseClient) {
     // Filter stoji tu, ker je to edino mesto, kjer se prejemniki naložijo -
     // tako ne more nobena nova skupina pomotoma zaobiti odjave.
     .eq("notifications_opt_out", false)
+    // Naslov, s katerega se je pošta vrnila, preskočimo - pošiljanje nanj le
+    // kvari ugled klubskega naslova pri Gmailu.
+    .eq("email_bounced", false)
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
 
@@ -419,6 +423,14 @@ export async function dispatchCampaignBatch(
       sent += 1;
     } else {
       failed += 1;
+
+      if (delivery.recipientRejected) {
+        await markEmailBounced(supabase, {
+          email: item.to_email.toLowerCase(),
+          reason: delivery.error,
+          at: new Date(),
+        });
+      }
     }
 
     await supabase

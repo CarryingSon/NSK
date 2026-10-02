@@ -23,6 +23,8 @@ const OPEN_PATHS = [
   "/auth/confirm",
   "/odjava",
   "/api/odjava",
+  // Pregled povratnic kliče Vercel Cron brez seje; ščiti ga CRON_SECRET.
+  "/api/cron",
   "/aktualno",
   "/ugodnosti",
   "/pridruzi-se",

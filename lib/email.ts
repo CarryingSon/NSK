@@ -324,11 +324,37 @@ export async function sendEmail({
 
     return {
       success: true,
+      recipientRejected: false,
     } as const;
   } catch (error) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Pošiljanje ni uspelo.",
+      recipientRejected: isRecipientRejected(error),
     } as const;
   }
+}
+
+/**
+ * Ali je strežnik naslov prejemnika trajno zavrnil (5xx pri RCPT TO).
+ *
+ * Začasne napake (4xx, izpad povezave, presežena kvota) naslova ne obsodijo -
+ * po njih bi označili dobre naslove samo zato, ker je Gmail za hip zatajil.
+ */
+function isRecipientRejected(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const { code, command, responseCode } = error as {
+    code?: string;
+    command?: string;
+    responseCode?: number;
+  };
+
+  return (
+    typeof responseCode === "number" &&
+    responseCode >= 500 &&
+    (code === "EENVELOPE" || /RCPT/i.test(command ?? ""))
+  );
 }

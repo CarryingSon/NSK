@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Search, Users } from "lucide-react";
 
+import { BounceCheck } from "@/components/members/bounce-check";
 import { MemberList } from "@/components/members/member-list";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -41,6 +42,10 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
             Dodaj člana
           </Link>
         }
+      />
+
+      <BounceCheck
+        bouncedCount={members.filter((member) => member.email && member.email_bounced).length}
       />
 
       <section className="surface-card rounded-[18px] border border-border p-6">

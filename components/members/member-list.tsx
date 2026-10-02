@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Pencil } from "lucide-react";
 
 import { DeleteMemberButton } from "@/components/members/delete-member-button";
+import { MemberEmail } from "@/components/members/email-status";
 import { RenewMembershipButton } from "@/components/members/renew-membership-button";
 import { StatusBadge } from "@/components/status-badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -157,7 +158,10 @@ function MemberCard({ row, targetYear }: { row: MemberRow; targetYear: number })
       </div>
 
       <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
-        <CardRow label="E-pošta" value={member.email || "Ni e-pošte"} />
+        <dt className="text-muted-foreground">E-pošta</dt>
+        <dd className="min-w-0">
+          <MemberEmail member={member} />
+        </dd>
         <CardRow label="Telefon" value={member.phone || "Ni telefona"} />
         <CardRow
           label="Članstvo"
@@ -260,8 +264,8 @@ export function MemberList({
                     </div>
                     <div className="min-w-0 text-sm text-muted-foreground @5xl:hidden">
                       <p className="truncate">{member.faculty || "Ni podatka"}</p>
-                      <p className="truncate" title={member.email ?? undefined}>
-                        {member.email || "Ni e-pošte"}
+                      <p className="truncate">
+                        <MemberEmail member={member} />
                       </p>
                       <p className="truncate">{member.phone || "Ni telefona"}</p>
                     </div>
@@ -271,8 +275,8 @@ export function MemberList({
                   {member.faculty || "Ni podatka"}
                 </TableCell>
                 <TableCell className="hidden px-4 py-4 align-top @5xl:table-cell">
-                  <p className="truncate" title={member.email ?? undefined}>
-                    {member.email || "Ni e-pošte"}
+                  <p className="truncate">
+                    <MemberEmail member={member} />
                   </p>
                   <p className="truncate text-sm text-muted-foreground">
                     {member.phone || "Ni telefona"}

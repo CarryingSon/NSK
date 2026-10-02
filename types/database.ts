@@ -68,6 +68,10 @@ export interface Database {
           faculty: string | null;
           notifications_opt_out: boolean;
           notifications_opt_out_at: string | null;
+          email_bounced: boolean;
+          email_bounced_at: string | null;
+          email_bounce_reason: string | null;
+          email_bounce_cleared_at: string | null;
           notifications_token: string;
           membership_status: MembershipStatus;
           membership_year: number | null;
@@ -92,6 +96,10 @@ export interface Database {
           faculty?: string | null;
           notifications_opt_out?: boolean;
           notifications_opt_out_at?: string | null;
+          email_bounced?: boolean;
+          email_bounced_at?: string | null;
+          email_bounce_reason?: string | null;
+          email_bounce_cleared_at?: string | null;
           notifications_token?: string;
           membership_status?: MembershipStatus;
           membership_year?: number | null;

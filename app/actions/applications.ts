@@ -8,6 +8,7 @@ import { club } from "@/lib/constants";
 import { escapeHtml } from "@/lib/email-content";
 import { sendEmail } from "@/lib/email";
 import { hasSosConsent } from "@/lib/membership";
+import { sendWelcomeEmail } from "@/lib/welcome";
 import {
   buildDeclarationPdf,
   declarationFileName,
@@ -406,6 +407,15 @@ export async function createMemberFromApplicationAction(
       .from("membership_applications")
       .update({ member_id: member.id, status: "approved" })
       .eq("id", id);
+
+    // Pozdrav gre po odgovoru, da aktivist ne čaka na SMTP.
+    after(() =>
+      sendWelcomeEmail({
+        email: application.email,
+        firstName: application.first_name,
+        sosPending: Boolean(application.sos_registered_at),
+      }),
+    );
 
     revalidatePath("/applications");
     revalidatePath("/members");

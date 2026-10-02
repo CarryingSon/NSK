@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 
+import { setEmailBouncedAction } from "@/app/actions/members";
 import { DeleteMemberButton } from "@/components/members/delete-member-button";
+import { MemberEmail } from "@/components/members/email-status";
 import { RenewMembershipButton } from "@/components/members/renew-membership-button";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -194,9 +196,50 @@ export default async function MemberDetailPage({
             <div className="rounded-[14px] border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">Kontakt</p>
               <dl className="mt-4 space-y-4 text-sm">
-                <div className="flex items-center gap-3">
-                  <Mail className="size-4 text-muted-foreground" />
-                  <span>{member.email || "Ni e-pošte"}</span>
+                <div className="flex items-start gap-3">
+                  <Mail className="mt-0.5 size-4 text-muted-foreground" />
+                  <div className="min-w-0 space-y-1.5">
+                    <MemberEmail member={member} />
+                    {member.email ? (
+                      member.email_bounced ? (
+                        <div className="space-y-1.5">
+                          <p className="text-xs leading-5 text-destructive">
+                            Pošta se vrača
+                            {member.email_bounced_at
+                              ? ` od ${formatDate(member.email_bounced_at)}`
+                              : ""}
+                            . Obvestila mu ne gredo - vprašaj za pravi naslov.
+                            {member.email_bounce_reason ? (
+                              <span className="block text-muted-foreground">
+                                {member.email_bounce_reason}
+                              </span>
+                            ) : null}
+                          </p>
+                          <form action={setEmailBouncedAction}>
+                            <input type="hidden" name="id" value={member.id} />
+                            <input type="hidden" name="bounced" value="false" />
+                            <button
+                              type="submit"
+                              className="text-xs text-primary hover:underline"
+                            >
+                              Naslov je v redu - odstrani oznako
+                            </button>
+                          </form>
+                        </div>
+                      ) : (
+                        <form action={setEmailBouncedAction}>
+                          <input type="hidden" name="id" value={member.id} />
+                          <input type="hidden" name="bounced" value="true" />
+                          <button
+                            type="submit"
+                            className="text-xs text-muted-foreground hover:text-destructive hover:underline"
+                          >
+                            Označi, da naslov ne deluje
+                          </button>
+                        </form>
+                      )
+                    ) : null}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="size-4 text-muted-foreground" />
