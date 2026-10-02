@@ -37,6 +37,25 @@ function getStringValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
+// Podpis s platna je PNG v data URL. Velikost omejimo, ker gre skozi strežniško
+// akcijo; običajen podpis ima nekaj deset kB.
+const maxSignatureBytes = 300 * 1024;
+
+function parseSignature(value: string) {
+  const match = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  const bytes = Buffer.from(match[1], "base64");
+  const isPng = bytes.subarray(0, 8).equals(
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  );
+
+  return isPng && bytes.length <= maxSignatureBytes ? new Uint8Array(bytes) : null;
+}
+
 // Ime datoteke gre v pot v shrambi, zato iz njega odstranimo vse, kar ni
 // varno v URL-ju. Šumniki bi sicer končali kot odstotkovna zaporedja.
 function toStoragePath(fileName: string) {
@@ -78,6 +97,7 @@ export async function submitApplicationAction(
     sos_consent: formData.get("sos_consent"),
     media_consent: formData.get("media_consent"),
     newsletter_consent: formData.get("newsletter_consent"),
+    notifications_accepted: formData.get("notifications_accepted"),
   });
 
   if (!parsed.success) {
@@ -91,6 +111,12 @@ export async function submitApplicationAction(
       error:
         "Prijave trenutno ni mogoče oddati. Piši nam na nsk.klub@gmail.com in uredimo ročno.",
     };
+  }
+
+  const signature = parseSignature(getStringValue(formData, "signature"));
+
+  if (!signature) {
+    return { error: "Pred oddajo se podpiši v polje za podpis." };
   }
 
   const proof = formData.get("proof");
@@ -127,12 +153,23 @@ export async function submitApplicationAction(
       proofPath = path;
     }
 
+    const signaturePath = `podpisi/${new Date().getFullYear()}/${crypto.randomUUID()}.png`;
+    const { error: signatureError } = await supabase.storage
+      .from(proofBucket)
+      .upload(signaturePath, signature, { contentType: "image/png", upsert: false });
+
+    if (signatureError) {
+      console.error("Napaka pri shranjevanju podpisa", signatureError);
+      return { error: "Podpisa ni bilo mogoče shraniti. Poskusi znova." };
+    }
+
     // Soglasja se ob oddaji samo zapišejo. V ŠOS gre prijava šele, ko jo klub
     // odobri - glej setApplicationStatusAction().
     const submittedAt = new Date();
     const { error } = await supabase.from("membership_applications").insert({
       ...parsed.data,
       proof_path: proofPath,
+      signature_path: signaturePath,
       status: "pending",
     });
 
@@ -143,7 +180,9 @@ export async function submitApplicationAction(
     // Izjava gre klubu šele po odgovoru, da prijavitelj ne čaka na SMTP.
     // Prijava je takrat že shranjena, zato je neuspelo pošiljanje ne podre.
     const application = parsed.data;
-    after(() => sendDeclarationToClub(application, submittedAt, Boolean(proofPath)));
+    after(() =>
+      sendDeclarationToClub(application, submittedAt, Boolean(proofPath), signature),
+    );
 
     revalidatePath("/applications");
 
@@ -178,6 +217,7 @@ async function sendDeclarationToClub(
   application: ParsedApplication,
   submittedAt: Date,
   hasProof: boolean,
+  signature: Uint8Array,
 ) {
   try {
     const pdf = await buildDeclarationPdf({
@@ -194,6 +234,7 @@ async function sendDeclarationToClub(
       sosConsent: application.sos_consent,
       mediaConsent: application.media_consent,
       newsletterConsent: application.newsletter_consent,
+      signaturePng: signature,
       submittedAt,
     });
 
@@ -444,12 +485,16 @@ export async function deleteApplicationAction(formData: FormData) {
     // Potrdilo je osebni dokument, zato gre iz shrambe skupaj s prijavo.
     const { data: application } = await supabase
       .from("membership_applications")
-      .select("proof_path")
+      .select("proof_path, signature_path")
       .eq("id", id)
       .single();
 
-    if (application?.proof_path) {
-      await supabase.storage.from(proofBucket).remove([application.proof_path]);
+    const files = [application?.proof_path, application?.signature_path].filter(
+      (path): path is string => Boolean(path),
+    );
+
+    if (files.length > 0) {
+      await supabase.storage.from(proofBucket).remove(files);
     }
 
     await supabase.from("membership_applications").delete().eq("id", id);

@@ -295,6 +295,9 @@ export const applicationSchema = z.object({
   sos_consent: checkboxBoolean,
   media_consent: checkboxBoolean,
   newsletter_consent: checkboxBoolean,
+  // Soglasje ŠOS za obveščanje. Ni na papirni izjavi, ŠOS pa ga ob prijavi v
+  // svoj sistem sprejme posebej - zato ga zbiramo na spletu.
+  notifications_accepted: checkboxBoolean,
 });
 
 export const applicationStatusSchema = z.object({

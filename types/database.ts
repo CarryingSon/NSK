@@ -237,6 +237,7 @@ export interface Database {
           sos_consent: boolean;
           media_consent: boolean;
           newsletter_consent: boolean;
+          signature_path: string | null;
           sos_registered_at: string | null;
           sos_error: string | null;
         };
@@ -269,6 +270,7 @@ export interface Database {
           sos_consent?: boolean;
           media_consent?: boolean;
           newsletter_consent?: boolean;
+          signature_path?: string | null;
           sos_registered_at?: string | null;
           sos_error?: string | null;
         };

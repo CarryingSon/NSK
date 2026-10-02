@@ -36,8 +36,8 @@ export interface SosRegistrationInput {
   email: string;
   postalCode?: string | null;
   /**
-   * Soglasje za obveščanje o študentskih klubih in ŠOS. Pristopna izjava ga ne
-   * vsebuje - zanj je vedel le starejši obrazec - zato ga ne smemo privzeti.
+   * Soglasje za obveščanje o študentskih klubih in ŠOS. Na papirni izjavi ga
+   * ni, spletna prijavnica pa ga zbira posebej - zato ga ne smemo privzeti.
    */
   notificationsAccepted: boolean;
 }

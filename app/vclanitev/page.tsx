@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 import { ApplicationForm } from "@/components/applications/application-form";
+import { BackLink } from "@/components/applications/back-link";
 import { club } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -22,7 +23,8 @@ export const metadata: Metadata = {
 export default function ApplicationPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8">
-      <header className="mb-8 text-center">
+      <BackLink />
+      <header className="mt-4 mb-8 text-center">
         <Image
           src="/nsk-logo.svg"
           alt={club.name}

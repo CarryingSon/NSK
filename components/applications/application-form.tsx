@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { CheckCircle2, Loader2, Send, Upload } from "lucide-react";
 
 import { submitApplicationAction } from "@/app/actions/applications";
+import { SignaturePad } from "@/components/applications/signature-pad";
 import { SearchableSelect } from "@/components/forms/searchable-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -157,6 +158,12 @@ export function ApplicationForm() {
   const [pending, startSubmit] = useTransition();
 
   function submit(formData: FormData) {
+    // Platno ni vnosno polje, zato ga "required" ne pokrije.
+    if (!formData.get("signature")) {
+      setState({ error: "Pred oddajo se podpiši v polje za podpis." });
+      return;
+    }
+
     startSubmit(async () => {
       setState(await submitApplicationAction(initialState, formData));
     });
@@ -444,6 +451,30 @@ export function ApplicationForm() {
               </>
             }
           />
+          <Consent
+            name="notifications_accepted"
+            label={
+              <>
+                <strong className="font-semibold text-foreground">
+                  Soglašam
+                </strong>
+                , da se podatki uporabljajo za namen obveščanja o študentskih
+                organizacijah lokalnih skupnosti (študentskih klubih) in
+                Študentski organizaciji Slovenije (ŠOS). ŠOS in njene
+                organizacijske oblike mi lahko pošiljajo brezplačna obvestila po
+                e-pošti. Soglasje podajam do preklica, ki ga pošljem pisno na
+                Študentsko organizacijo Slovenije, Dunajska 51, 1000 Ljubljana,
+                ali na{" "}
+                <a
+                  href="mailto:clanstvo@studentska-org.si"
+                  className="text-primary underline underline-offset-2"
+                >
+                  clanstvo@studentska-org.si
+                </a>
+                .
+              </>
+            }
+          />
         </div>
 
         <p className="mt-5 text-xs leading-5 text-muted-foreground">
@@ -460,6 +491,17 @@ export function ApplicationForm() {
           </a>
           .
         </p>
+      </section>
+
+      <section className="surface-card rounded-[18px] border border-border p-6 sm:p-7">
+        <h2 className="font-heading text-xl font-semibold text-foreground">
+          Podpis <span className="text-destructive">*</span>
+        </h2>
+        <p className="mt-2 mb-5 text-sm leading-6 text-muted-foreground">
+          Podpiši se z miško ali prstom. Podpis se vpiše v tvojo pristopno
+          izjavo.
+        </p>
+        <SignaturePad name="signature" />
       </section>
 
       {state.error ? (

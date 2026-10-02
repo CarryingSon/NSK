@@ -32,6 +32,14 @@ export async function GET(
     });
   }
 
+  // Podpis je v zasebnem vedru; prijavljen uporabnik ga sme prebrati.
+  const signature = application.signature_path
+    ? await supabase.storage.from("potrdila").download(application.signature_path)
+    : null;
+  const signaturePng = signature?.data
+    ? new Uint8Array(await signature.data.arrayBuffer())
+    : null;
+
   const pdf = await buildDeclarationPdf({
     firstName: application.first_name,
     lastName: application.last_name,
@@ -46,6 +54,7 @@ export async function GET(
     sosConsent: application.sos_consent,
     mediaConsent: application.media_consent,
     newsletterConsent: application.newsletter_consent,
+    signaturePng,
     submittedAt: new Date(application.created_at),
   });
 

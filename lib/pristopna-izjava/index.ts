@@ -39,6 +39,8 @@ export interface DeclarationInput {
   sosConsent: boolean;
   mediaConsent: boolean;
   newsletterConsent: boolean;
+  /** Podpis s spletne prijavnice (PNG). Brez njega ostane le zapis o oddaji. */
+  signaturePng?: Uint8Array | null;
   submittedAt: Date;
 }
 
@@ -167,7 +169,26 @@ export async function buildDeclarationPdf(input: DeclarationInput) {
   const signatureNote = `Oddano elektronsko ${formatDate(input.submittedAt)} ob ${formatTime(input.submittedAt)}`;
   const noteSize = 8;
   const noteWidth = font.widthOfTextAtSize(signatureNote, noteSize);
-  drawValue(page, font, signatureNote, 447.5 - noteWidth / 2, 674, 159, noteSize);
+
+  if (input.signaturePng) {
+    // Podpis sede na črto nad "(podpis člana/-ice)", v okvir 159 × 40 pt.
+    const image = await pdf.embedPng(input.signaturePng);
+    const scale = Math.min(159 / image.width, 40 / image.height);
+    const width = image.width * scale;
+    const height = image.height * scale;
+
+    page.drawImage(image, {
+      x: 447.5 - width / 2,
+      y: page.getHeight() - 679,
+      width,
+      height,
+    });
+
+    // Zapis o oddaji gre pod oznako, kjer je prostor do žiga.
+    drawValue(page, font, signatureNote, 447.5 - noteWidth / 2, 701, 159, noteSize);
+  } else {
+    drawValue(page, font, signatureNote, 447.5 - noteWidth / 2, 674, 159, noteSize);
+  }
 
   return Buffer.from(await pdf.save());
 }
