@@ -6,7 +6,7 @@ import { after } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { club } from "@/lib/constants";
 import { escapeHtml } from "@/lib/email-content";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, type EmailAttachment } from "@/lib/email";
 import { hasSosConsent } from "@/lib/membership";
 import { sendWelcomeEmail } from "@/lib/welcome";
 import {
@@ -54,6 +54,17 @@ function parseSignature(value: string) {
   );
 
   return isPng && bytes.length <= maxSignatureBytes ? new Uint8Array(bytes) : null;
+}
+
+/** Potrdilo_o_vpisu_Ime_Priimek.pdf - končnica ostane, kot jo je imela datoteka. */
+function proofFileName(firstName: string, lastName: string, original: string) {
+  const extension = /\.([a-z0-9]{1,5})$/i.exec(original)?.[1]?.toLowerCase() ?? "pdf";
+  const name = `${firstName} ${lastName}`
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "")
+    .replace(/\s+/g, "_");
+
+  return `Potrdilo_o_vpisu_${name}.${extension}`;
 }
 
 // Ime datoteke gre v pot v shrambi, zato iz njega odstranimo vse, kar ni
@@ -180,8 +191,17 @@ export async function submitApplicationAction(
     // Izjava gre klubu šele po odgovoru, da prijavitelj ne čaka na SMTP.
     // Prijava je takrat že shranjena, zato je neuspelo pošiljanje ne podre.
     const application = parsed.data;
+    // Datoteko preberemo zdaj: po odgovoru telo zahteve ni več zagotovo na voljo.
+    const proofAttachment: EmailAttachment | null = hasProof
+      ? {
+          filename: proofFileName(application.first_name, application.last_name, proof.name),
+          content: Buffer.from(await proof.arrayBuffer()),
+          contentType: proof.type,
+        }
+      : null;
+
     after(() =>
-      sendDeclarationToClub(application, submittedAt, Boolean(proofPath), signature),
+      sendDeclarationToClub(application, submittedAt, proofAttachment, signature),
     );
 
     revalidatePath("/applications");
@@ -205,7 +225,7 @@ type ParsedApplication = Extract<
 >["data"];
 
 /**
- * Pošlje izpolnjeno pristopno izjavo na klubski naslov.
+ * Pošlje izpolnjeno pristopno izjavo in potrdilo o vpisu na klubski naslov.
  *
  * Klub mora izjavo hraniti tudi za člane, ki se včlanijo na spletu - to je
  * njihova različica papirja, ki ga drugi podpišejo za pultom. Prijavitelju je
@@ -216,7 +236,7 @@ type ParsedApplication = Extract<
 async function sendDeclarationToClub(
   application: ParsedApplication,
   submittedAt: Date,
-  hasProof: boolean,
+  proof: EmailAttachment | null,
   signature: Uint8Array,
 ) {
   try {
@@ -240,9 +260,9 @@ async function sendDeclarationToClub(
 
     const name = `${application.first_name} ${application.last_name}`;
     const memberType = application.member_type === "pupil" ? "dijak/-inja" : "študent/-ka";
-    const proofLine = hasProof
-      ? "Potrdilo o vpisu je naloženo v Požiralniku."
-      : "Potrdila o vpisu ni naložil_a - prinesti ga mora v času uradnih ur.";
+    const proofLine = proof
+      ? "V priponki sta pristopna izjava in potrdilo o vpisu."
+      : "V priponki je pristopna izjava. Potrdila o vpisu ni naložil_a - prinesti ga mora v času uradnih ur.";
 
     const result = await sendEmail({
       to: club.email,
@@ -251,17 +271,18 @@ async function sendDeclarationToClub(
       text: [
         `Nova spletna prijava v ${club.shortName}: ${name} (${memberType}, ${application.school}).`,
         proofLine,
-        "Pristopna izjava je v priponki. Prijavo odobriš v Požiralniku pod Prijave.",
+        "Prijavo odobriš v Požiralniku pod Prijave.",
       ].join("\n\n"),
       html: `<p>Nova spletna prijava v ${club.shortName}: <strong>${escapeHtml(name)}</strong> (${memberType}, ${escapeHtml(application.school)}).</p>
 <p>${proofLine}</p>
-<p>Pristopna izjava je v priponki. Prijavo odobriš v Požiralniku pod Prijave.</p>`,
+<p>Prijavo odobriš v Požiralniku pod Prijave.</p>`,
       attachments: [
         {
           filename: declarationFileName(application.first_name, application.last_name),
           content: pdf,
           contentType: "application/pdf",
         },
+        ...(proof ? [proof] : []),
       ],
     });
 
