@@ -6,10 +6,12 @@ import {
   Heading2,
   Heading3,
   ImagePlus,
+  ImageUp,
   Italic,
   Link2,
   List,
   ListOrdered,
+  Loader2,
   Underline,
 } from "lucide-react";
 
@@ -56,10 +58,20 @@ export function RichTextEditor({
   name,
   defaultValue = "",
   onChange,
+  onUploadImage,
+  label = "Vsebina obvestila",
+  placeholder = "Napiši obvestilo. Uporabi orodno vrstico za naslove, sezname, povezave in slike.",
 }: {
   name: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
+  /**
+   * Naloži sliko in vrne njen javni naslov. Brez njega gumba za nalaganje ni
+   * in slike se vstavljajo samo po povezavi - kot v obvestilih.
+   */
+  onUploadImage?: (file: File) => Promise<string>;
+  label?: string;
+  placeholder?: string;
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRange = useRef<Range | null>(null);
@@ -67,6 +79,9 @@ export function RichTextEditor({
   const [activeCommands, setActiveCommands] = useState<Set<string>>(new Set());
   const [prompt, setPrompt] = useState<"link" | "image" | null>(null);
   const [promptValue, setPromptValue] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const sync = useCallback(() => {
     const html = editorRef.current?.innerHTML ?? "";
@@ -211,6 +226,27 @@ export function RichTextEditor({
     setPromptValue("");
   }
 
+  async function uploadImage(file: File) {
+    if (!onUploadImage) {
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const url = await onUploadImage(file);
+      restoreSelection();
+      run("insertImage", url);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Slike ni bilo mogoče naložiti.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="overflow-hidden rounded-[14px] border border-border bg-input">
       <div className="flex flex-wrap items-center gap-1 border-b border-border px-2 py-2">
@@ -266,7 +302,51 @@ export function RichTextEditor({
         >
           <ImagePlus className="size-4" />
         </button>
+
+        {onUploadImage ? (
+          <>
+            <button
+              type="button"
+              title="Naloži sliko"
+              aria-label="Naloži sliko"
+              disabled={uploading}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                const selection = document.getSelection();
+                savedRange.current =
+                  selection && selection.rangeCount > 0
+                    ? selection.getRangeAt(0).cloneRange()
+                    : null;
+                fileInputRef.current?.click();
+              }}
+              className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+            >
+              {uploading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ImageUp className="size-4" />
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void uploadImage(file);
+              }}
+            />
+          </>
+        ) : null}
       </div>
+
+      {uploadError ? (
+        <p className="border-b border-border bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {uploadError}
+        </p>
+      ) : null}
 
       {prompt ? (
         <div className="flex flex-col gap-2 border-b border-border bg-muted/50 px-3 py-3 sm:flex-row sm:items-center">
@@ -314,8 +394,8 @@ export function RichTextEditor({
         suppressContentEditableWarning
         role="textbox"
         aria-multiline="true"
-        aria-label="Vsebina obvestila"
-        data-placeholder="Napiši obvestilo. Uporabi orodno vrstico za naslove, sezname, povezave in slike."
+        aria-label={label}
+        data-placeholder={placeholder}
         onInput={sync}
         onBlur={sync}
         className="rich-text-editor min-h-96 w-full px-5 py-4 text-[0.9375rem] leading-relaxed text-foreground outline-none focus-visible:outline-none"

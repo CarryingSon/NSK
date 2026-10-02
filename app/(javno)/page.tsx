@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DruzbeneObjave } from "@/components/javna/druzbene-objave";
 import { UvodniVideo } from "@/components/javna/uvodni-video";
 import { klub, podrocja, ugodnosti } from "@/lib/klub";
-import { izvlecek, pridobiNovice } from "@/lib/novice";
+import { datumNovice, povzetekNovice, pridobiNovice } from "@/lib/novice";
 
 export default async function Naslovnica() {
   const novice = (await pridobiNovice(3)).slice(0, 3);
@@ -125,31 +125,33 @@ export default async function Naslovnica() {
 
       <DruzbeneObjave />
 
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="display-md">Aktualno</h2>
-            <p className="mt-2 text-muted-foreground">
-              Kaj se pri klubu dogaja zdaj.
-            </p>
+      {/* Dokler klub ne objavi prvega članka, razdelka ni - prazen okvir bi
+          deloval, kot da stran ne dela. */}
+      {novice.length > 0 ? (
+        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="display-md">Aktualno</h2>
+              <p className="mt-2 text-muted-foreground">
+                Kaj se pri klubu dogaja zdaj.
+              </p>
+            </div>
+            <Button
+              render={<Link href="/aktualno" />}
+              nativeButton={false}
+              variant="outline"
+              size="sm"
+            >
+              Vse novice
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Button>
           </div>
-          <Button
-            render={<Link href="/aktualno" />}
-            nativeButton={false}
-            variant="outline"
-            size="sm"
-          >
-            Vse novice
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </Button>
-        </div>
 
-        {novice.length > 0 ? (
           <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {novice.map((novica) => (
               <li key={novica.id}>
                 <Link
-                  href={`/aktualno/${novica.id}`}
+                  href={`/aktualno/${novica.slug}`}
                   className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-primary/40"
                 >
                   {novica.slika ? (
@@ -164,23 +166,27 @@ export default async function Naslovnica() {
                     </div>
                   ) : null}
                   <div className="p-5">
+                    {novica.datum ? (
+                      <time
+                        dateTime={novica.datum}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {datumNovice(novica)}
+                      </time>
+                    ) : null}
                     <h3 className="font-heading leading-snug font-semibold text-balance">
                       {novica.naslov}
                     </h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {izvlecek(novica.vsebina, 120)}
+                      {povzetekNovice(novica, 120)}
                     </p>
                   </div>
                 </Link>
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="mt-8 rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-            Novic trenutno ni mogoče naložiti.
-          </p>
-        )}
-      </section>
+        </section>
+      ) : null}
 
 
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">

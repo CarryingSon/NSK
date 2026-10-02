@@ -22,6 +22,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   ApplicationCounts,
   ApplicationRow,
+  Article,
   CampaignFailure,
   CampaignWithProgress,
   DashboardOverview,
@@ -585,4 +586,41 @@ export async function getApplications(status: ApplicationStatus | "all" = "all")
     console.error("Napaka pri nalaganju prijav za članstvo", error);
     return { rows: [] as ApplicationRow[], counts: emptyApplicationCounts };
   }
+}
+
+/** Vsi članki za Požiralnik, osnutki in objavljeni, zadnji spremenjeni na vrhu. */
+export async function getArticles(): Promise<Article[]> {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("Napaka pri branju člankov", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function getArticle(id: string): Promise<Article | null> {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  return data ?? null;
 }

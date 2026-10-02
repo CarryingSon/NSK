@@ -15,6 +15,7 @@ export type Event = Database["public"]["Tables"]["events"]["Row"];
 export type PrintRecord = Database["public"]["Tables"]["print_records"]["Row"];
 export type MembershipApplication =
   Database["public"]["Tables"]["membership_applications"]["Row"];
+export type Article = Database["public"]["Tables"]["articles"]["Row"];
 export type EmailCampaign = Database["public"]["Tables"]["email_campaigns"]["Row"];
 export type EmailQueueItem = Database["public"]["Tables"]["email_queue"]["Row"];
 

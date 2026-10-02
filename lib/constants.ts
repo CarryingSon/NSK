@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Bell,
   Bug,
+  FilePenLine,
   ClipboardList,
   History,
   LayoutDashboard,
@@ -97,6 +98,7 @@ export const primaryNavigation: NavigationItem[] = [
     icon: Newspaper,
     roles: vsi,
   },
+  { href: "/clanki", label: "Članki", icon: FilePenLine, roles: vsi },
   { href: "/notifications", label: "Obveščanje", icon: Bell, roles: samoAdmin },
   {
     href: "/notifications/history",

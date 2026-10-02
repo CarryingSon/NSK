@@ -27,6 +27,7 @@ export type CampaignType = "obvestilo" | "dogodek" | "ugodnost" | "novice";
 // Iz šole člana izpeljana skupina. "unknown" pomeni, da šole ni bilo mogoče
 // uvrstiti - član ostane dosegljiv prek skupine "vsi člani".
 export type MemberSegment = "student" | "pupil" | "unknown";
+export type ArticleStatus = "draft" | "published";
 export type NotificationAudience =
   | "all"
   | "students"
@@ -266,6 +267,36 @@ export interface Database {
         Update: Partial<
           Database["public"]["Tables"]["membership_applications"]["Insert"]
         >;
+        Relationships: [];
+      };
+      articles: {
+        Row: {
+          id: string;
+          title: string;
+          slug: string;
+          excerpt: string | null;
+          content_html: string;
+          cover_path: string | null;
+          status: ArticleStatus;
+          published_at: string | null;
+          author_email: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          slug: string;
+          excerpt?: string | null;
+          content_html?: string;
+          cover_path?: string | null;
+          status?: ArticleStatus;
+          published_at?: string | null;
+          author_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["articles"]["Insert"]>;
         Relationships: [];
       };
       email_campaigns: {

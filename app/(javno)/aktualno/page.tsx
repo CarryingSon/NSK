@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { NaslovStrani } from "@/components/javna/naslov-strani";
-import { izvlecek, pridobiNovice } from "@/lib/novice";
+import { datumNovice, povzetekNovice, pridobiNovice } from "@/lib/novice";
 
 export const metadata: Metadata = {
   title: "Aktualno",
@@ -26,7 +26,7 @@ export default async function AktualnoStran() {
             {novice.map((novica) => (
               <li key={novica.id}>
                 <Link
-                  href={`/aktualno/${novica.id}`}
+                  href={`/aktualno/${novica.slug}`}
                   className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-primary/40"
                 >
                   {novica.slika ? (
@@ -41,11 +41,19 @@ export default async function AktualnoStran() {
                     </div>
                   ) : null}
                   <div className="flex flex-1 flex-col p-5">
+                    {novica.datum ? (
+                      <time
+                        dateTime={novica.datum}
+                        className="mb-2 text-xs text-muted-foreground"
+                      >
+                        {datumNovice(novica)}
+                      </time>
+                    ) : null}
                     <h2 className="font-heading leading-snug font-semibold text-balance">
                       {novica.naslov}
                     </h2>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {izvlecek(novica.vsebina, 140)}
+                      {povzetekNovice(novica, 140)}
                     </p>
                   </div>
                 </Link>
@@ -54,7 +62,7 @@ export default async function AktualnoStran() {
           </ul>
         ) : (
           <p className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-            Novic trenutno ni mogoče naložiti. Poskusi znova čez nekaj trenutkov.
+            Novice prihajajo kmalu. Do takrat nas spremljaj na Instagramu in Facebooku.
           </p>
         )}
       </section>

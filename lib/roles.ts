@@ -9,14 +9,20 @@ export const appRoleLabels: Record<AppRole, string> = {
 
 export const appRoleDescriptions: Record<AppRole, string> = {
   admin: "Vidi in ureja vse: člane, prijave, evidenco tiska, obveščanje, nastavitve in uporabnike.",
-  officer: "Vidi člane in evidenco tiska. Do obveščanja, prijav in nastavitev nima dostopa.",
+  officer: "Vidi člane in evidenco tiska ter piše članke za spletno stran. Do obveščanja, prijav in nastavitev nima dostopa.",
 };
 
 // Kar ni našteto, je pridržano administratorju. Nove strani so tako privzeto
 // zaprte - pozabljen vnos ne odpre dostopa, ampak ga zapre.
 // Prijava napake je namenoma odprta obema vlogama: uradnik naleti na napake
 // prav tako kot administrator in jih mora imeti kam sporočiti.
-const officerPaths = ["/members", "/print-records", "/info", "/sporoci-napako"];
+const officerPaths = [
+  "/members",
+  "/print-records",
+  "/clanki",
+  "/info",
+  "/sporoci-napako",
+];
 
 /**
  * Ali sme vloga odpreti pot.

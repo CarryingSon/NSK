@@ -1,80 +1,102 @@
+import { createClient } from "@supabase/supabase-js";
+
+import { articleImageUrl } from "@/lib/clanki";
+import type { Database } from "@/types/database";
+
 /**
  * Novice za javno stran.
  *
- * Vir je zaenkrat stari GraphQL strežnik na backend.nsk-klub.si, ker tam
- * živi vseh 42 obstoječih objav. Ko se objave preselijo v Supabase, se
- * zamenja samo notranjost pridobiNovice() - klicatelji ostanejo isti.
+ * Članke piše klub v Požiralniku (zavihek Članki), tu pa beremo samo
+ * objavljene. Odjemalec je brez piškotkov, da strani ostanejo statične;
+ * osvežijo se, ko akcija v Požiralniku pokliče revalidatePath().
  */
 
-const VIR = "https://backend.nsk-klub.si/graphql";
-
-// Objave se menjajo redko, stara stran pa ni hitra. Uro predpomnilnika stran
-// razbremeni, urednik pa spremembo vidi še isti dan.
-const OSVEZI_PO = 3600;
-
 export type Novica = {
-  id: number;
+  id: string;
+  slug: string;
   naslov: string;
   vsebina: string;
+  povzetek: string | null;
   slika: string | null;
+  datum: string | null;
 };
 
-type GraphQLOdgovor = {
-  data?: { posts?: { id: number; title: string; content: string; image: string | null }[] };
-  errors?: { message: string }[];
-};
+function odjemalec() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const kljuc = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Cloudinary račun prejšnjega izvajalca. Del objav hrani celoten naslov slike,
-// 34 od 39 pa le Cloudinary ime (npr. "nsk_slike/volitve_nsk"), zato je treba
-// naslov sestaviti. Ob selitvi slik v Supabase Storage to odpade.
-const CLOUDINARY = "https://res.cloudinary.com/vrenko007/image/upload";
+  if (!url || !kljuc) return null;
 
-function naslovSlike(slika: string | null) {
-  if (!slika) return null;
+  return createClient<Database>(url, kljuc, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
-  // Stari zapisi kažejo na http; brskalnik bi jih na https strani zavrnil.
-  if (/^https?:\/\//.test(slika)) {
-    return slika.replace(/^http:\/\//, "https://");
-  }
+type Vrstica = Database["public"]["Tables"]["articles"]["Row"];
 
-  return `${CLOUDINARY}/${slika.replace(/^\/+/, "")}`;
+function vNovico(vrstica: Vrstica): Novica {
+  return {
+    id: vrstica.id,
+    slug: vrstica.slug,
+    naslov: vrstica.title,
+    vsebina: vrstica.content_html,
+    povzetek: vrstica.excerpt,
+    slika: vrstica.cover_path ? articleImageUrl(vrstica.cover_path) : null,
+    datum: vrstica.published_at,
+  };
 }
 
 export async function pridobiNovice(stevilo = 100): Promise<Novica[]> {
-  try {
-    const odgovor = await fetch(VIR, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: `query Novice($page: Int!, $count: Int!) {
-          posts(page: $page, count: $count) { id title content image }
-        }`,
-        variables: { page: 1, count: stevilo },
-      }),
-      next: { revalidate: OSVEZI_PO },
-    });
+  const supabase = odjemalec();
+  if (!supabase) return [];
 
-    if (!odgovor.ok) {
-      return [];
-    }
+  // RLS obiskovalcu tako ali tako vrne samo objavljene; filter je tu zato, da
+  // tudi prijavljen urednik na javni strani ne bi videl osnutkov.
+  const { data, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(stevilo);
 
-    const telo = (await odgovor.json()) as GraphQLOdgovor;
-
-    return (telo.data?.posts ?? []).map((objava) => ({
-      id: objava.id,
-      naslov: objava.title.trim(),
-      vsebina: objava.content,
-      slika: naslovSlike(objava.image),
-    }));
-  } catch {
-    // Izpad starega strežnika ne sme podreti naslovnice - raje brez novic.
+  if (error) {
+    // Izpad baze ne sme podreti naslovnice - raje brez novic.
+    console.error("Napaka pri branju novic", error);
     return [];
   }
+
+  return (data ?? []).map(vNovico);
 }
 
-export async function pridobiNovico(id: number): Promise<Novica | null> {
-  const novice = await pridobiNovice();
-  return novice.find((novica) => novica.id === id) ?? null;
+export async function pridobiNovico(slug: string): Promise<Novica | null> {
+  const supabase = odjemalec();
+  if (!supabase) return null;
+
+  const { data } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("status", "published")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  return data ? vNovico(data) : null;
+}
+
+/** Povzetek za seznam: ročno napisan ali začetek besedila. */
+export function povzetekNovice(novica: Novica, dolzina = 160) {
+  return novica.povzetek?.trim() || izvlecek(novica.vsebina, dolzina);
+}
+
+/** "2. oktober 2026" */
+export function datumNovice(novica: Novica) {
+  if (!novica.datum) return null;
+
+  return new Intl.DateTimeFormat("sl-SI", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Ljubljana",
+  }).format(new Date(novica.datum));
 }
 
 /** Besedilo objave je HTML; za izvleček ga je treba olupiti. */
@@ -92,8 +114,8 @@ export function izvlecek(vsebina: string, dolzina = 160) {
 /**
  * Očisti HTML objave pred izrisom.
  *
- * Vsebina prihaja iz starega GraphQL strežnika, ki ima odprte mutacije in ni
- * več vzdrževan (Node 16). Zato je ne izrišemo takšne, kot pride: obdržimo
+ * Besedilo je ob shranjevanju že očiščeno, a izris ne sme zaupati bazi -
+ * vrstico lahko kdo spremeni tudi mimo Požiralnika. Zato obdržimo
  * samo oznake, ki jih objava potrebuje, in vse atribute razen href, src in
  * alt zavržemo - s tem odpadejo tudi on* rokovalniki in javascript: naslovi.
  */

@@ -4,15 +4,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-import { izvlecek, ocistiHtml, pridobiNovico } from "@/lib/novice";
+import {
+  datumNovice,
+  ocistiHtml,
+  povzetekNovice,
+  pridobiNovico,
+} from "@/lib/novice";
 
 type Lastnosti = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Lastnosti): Promise<Metadata> {
-  const { id } = await params;
-  const novica = await pridobiNovico(Number(id));
+  const { slug } = await params;
+  const novica = await pridobiNovico(slug);
 
   if (!novica) {
     return { title: "Novica ni najdena" };
@@ -20,19 +25,13 @@ export async function generateMetadata({ params }: Lastnosti): Promise<Metadata>
 
   return {
     title: novica.naslov,
-    description: izvlecek(novica.vsebina, 155),
+    description: povzetekNovice(novica, 155),
   };
 }
 
 export default async function NovicaStran({ params }: Lastnosti) {
-  const { id } = await params;
-  const stevilka = Number(id);
-
-  if (!Number.isFinite(stevilka)) {
-    notFound();
-  }
-
-  const novica = await pridobiNovico(stevilka);
+  const { slug } = await params;
+  const novica = await pridobiNovico(slug);
 
   if (!novica) {
     notFound();
@@ -49,6 +48,11 @@ export default async function NovicaStran({ params }: Lastnosti) {
       </Link>
 
       <h1 className="display-lg mt-6 text-balance">{novica.naslov}</h1>
+      {novica.datum ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          <time dateTime={novica.datum}>{datumNovice(novica)}</time>
+        </p>
+      ) : null}
 
       {novica.slika ? (
         <div className="relative mt-8 aspect-[16/10] overflow-hidden rounded-2xl bg-muted">
@@ -63,8 +67,8 @@ export default async function NovicaStran({ params }: Lastnosti) {
         </div>
       ) : null}
 
-      {/* Vsebina prihaja iz starega CMS-a kot HTML; ocistiHtml() pred izrisom
-          pusti le oznake, ki jih objava potrebuje. */}
+      {/* Vsebina je HTML iz urejevalnika v Požiralniku; ocistiHtml() pred
+          izrisom pusti le oznake, ki jih objava potrebuje. */}
       <div
         className="objava mt-10"
         dangerouslySetInnerHTML={{ __html: ocistiHtml(novica.vsebina) }}

@@ -322,3 +322,14 @@ export const setPasswordSchema = z
     message: "Gesli se ne ujemata.",
     path: ["confirm"],
   });
+
+// Članek za razdelek Aktualno. Vsebina je HTML iz urejevalnika; očisti ga
+// akcija, shema preveri le, da ni prazna.
+export const articleSchema = z.object({
+  id: z.string().uuid().optional().or(z.literal("").transform(() => undefined)),
+  title: z.string().trim().min(3, "Vnesi naslov članka.").max(160, "Naslov je predolg."),
+  excerpt: optionalString,
+  content_html: z.string(),
+  cover_path: optionalString,
+  intent: z.enum(["draft", "publish"]),
+});

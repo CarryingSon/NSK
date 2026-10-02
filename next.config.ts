@@ -7,15 +7,16 @@ const nextConfig: NextConfig = {
     "/*": ["./lib/pristopna-izjava/*.{pdf,ttf}"],
   },
   images: {
-    // Slike starih novic še vedno stojijo na Cloudinaryju prejšnjega izvajalca.
-    // Ko se preselijo v Supabase Storage, ta vnos odpade.
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-        pathname: "/vrenko007/**",
-      },
-    ],
+    // Slike člankov stojijo v javnem vedru "clanki" v Supabase Storage.
+    remotePatterns: process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? [
+          {
+            protocol: "https",
+            hostname: new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname,
+            pathname: "/storage/v1/object/public/clanki/**",
+          },
+        ]
+      : [],
   },
   async headers() {
     // Predogled za stranko stoji na svojem naslovu. Brez tega bi ga iskalniki
