@@ -1,4 +1,4 @@
-import type { Member } from "@/types/app";
+import type { Member, MembershipApplication } from "@/types/app";
 
 /**
  * Članstvo teče po šolskem letu, ne po koledarskem.
@@ -128,4 +128,23 @@ export function needsRenewal(member: Member, now: Date = new Date()) {
   }
 
   return (member.membership_year ?? 0) < getCurrentMembershipYear(now);
+}
+
+/**
+ * Ali je prijavitelj dovolil vnos v sistem digitalnega članstva ŠOS.
+ *
+ * Starejša prijavnica je imela kljukici, kot ju ima obrazec ŠOS (pogoji in
+ * obveščanje), in prijava je šla naprej samo z obema. Zdajšnja sledi pristopni
+ * izjavi, ki ima eno samo soglasje.
+ */
+export function hasSosConsent(
+  application: Pick<
+    MembershipApplication,
+    "sos_consent" | "terms_accepted" | "notifications_accepted"
+  >,
+) {
+  return (
+    application.sos_consent ||
+    (application.terms_accepted && application.notifications_accepted)
+  );
 }

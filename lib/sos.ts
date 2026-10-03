@@ -35,6 +35,11 @@ export interface SosRegistrationInput {
   emso: string;
   email: string;
   postalCode?: string | null;
+  /**
+   * Soglasje za obveščanje o študentskih klubih in ŠOS. Na papirni izjavi ga
+   * ni, spletna prijavnica pa ga zbira posebej - zato ga ne smemo privzeti.
+   */
+  notificationsAccepted: boolean;
 }
 
 export type SosRegistrationResult =
@@ -113,7 +118,7 @@ async function findClubPostId(
 /**
  * Prijavi člana v ŠOS.
  *
- * Kliči samo, kadar je član dal obe soglasji - funkcija tega ne preverja, ker
+ * Kliči samo, kadar je član dal soglasje za vnos v ŠOS - funkcija tega ne preverja, ker
  * soglasje ni tehnično stanje, ampak odločitev, ki mora biti vidna na mestu
  * klica.
  *
@@ -132,9 +137,10 @@ export async function registerMemberWithSos(
       IdentityNumber: input.emso,
       email: input.email,
       clubId: sosClubId,
-      // Obe soglasji sta tu vedno true - do sem pridemo samo, če ju je član dal.
+      // Do sem pridemo samo s soglasjem za vnos v ŠOS, ki vključuje njihove
+      // pogoje. Obveščanje je pri njih neobvezno in gre naprej, kot ga je član izbral.
       termsAccepted: true,
-      notificationsAccepted: true,
+      notificationsAccepted: input.notificationsAccepted,
     };
 
     if (clubPostId !== null) {

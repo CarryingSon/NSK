@@ -1,3 +1,4 @@
+import { hasSosConsent } from "@/lib/membership";
 import type { MembershipApplication } from "@/types/app";
 
 /**
@@ -13,6 +14,7 @@ export function SosStatus({
   application: Pick<
     MembershipApplication,
     | "status"
+    | "sos_consent"
     | "terms_accepted"
     | "notifications_accepted"
     | "sos_registered_at"
@@ -38,13 +40,13 @@ export function SosStatus({
     );
   }
 
-  if (!application.terms_accepted || !application.notifications_accepted) {
+  if (!hasSosConsent(application)) {
     return (
       <p className="mt-1 text-xs text-muted-foreground">ŠOS: brez soglasja</p>
     );
   }
 
-  // Soglasji sta dani, prijava pa še čaka - povej, kaj bo odobritev sprožila.
+  // Soglasje je dano, prijava pa še čaka - povej, kaj bo odobritev sprožila.
   if (application.status === "pending") {
     return (
       <p className="mt-1 text-xs text-muted-foreground">ŠOS: ob odobritvi</p>

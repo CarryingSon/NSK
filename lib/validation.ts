@@ -286,9 +286,17 @@ export const applicationSchema = z.object({
   study_year: optionalString,
   member_type: z.enum(["student", "pupil"]),
   message: optionalString,
-  // Soglasji za prijavo v sistem ŠOS. Za včlanitev v klub nista pogoj - kdor ju
-  // ne da, postane član kluba, v skupni sistem pa ga ne pošljemo.
-  terms_accepted: checkboxBoolean,
+  municipality: z.string().trim().min(2, "Vnesi občino prebivanja."),
+  // Polja in soglasja sledijo pristopni izjavi. Seznanitev z obdelavo podatkov
+  // je obvezna, ostala tri soglasja niso pogoj za včlanitev.
+  privacy_acknowledged: checkboxBoolean.refine((value) => value, {
+    message: "Za včlanitev potrdi, da si seznanjen_a z obdelavo osebnih podatkov.",
+  }),
+  sos_consent: checkboxBoolean,
+  media_consent: checkboxBoolean,
+  newsletter_consent: checkboxBoolean,
+  // Soglasje ŠOS za obveščanje. Ni na papirni izjavi, ŠOS pa ga ob prijavi v
+  // svoj sistem sprejme posebej - zato ga zbiramo na spletu.
   notifications_accepted: checkboxBoolean,
 });
 
@@ -317,3 +325,23 @@ export const setPasswordSchema = z
     message: "Gesli se ne ujemata.",
     path: ["confirm"],
   });
+
+// Članek za razdelek Aktualno. Vsebina je HTML iz urejevalnika; očisti ga
+// akcija, shema preveri le, da ni prazna.
+export const articleSchema = z.object({
+  id: z.string().uuid().optional().or(z.literal("").transform(() => undefined)),
+  title: z.string().trim().min(3, "Vnesi naslov članka.").max(160, "Naslov je predolg."),
+  excerpt: optionalString,
+  content_html: z.string(),
+  cover_path: optionalString,
+  // Gumb na koncu članka: oba podatka ali nobeden. Povezava je lahko pot na
+  // klubski strani (/pridruzi-se) ali cel naslov.
+  cta_label: optionalString,
+  cta_url: optionalString.refine(
+    (value) => !value || /^(\/|https?:\/\/|mailto:)/i.test(value),
+    { message: "Povezava gumba mora biti pot (/pridruzi-se) ali naslov, ki se začne s https://." },
+  ),
+  intent: z.enum(["draft", "publish"]),
+}).refine((value) => Boolean(value.cta_label) === Boolean(value.cta_url), {
+  message: "Gumb potrebuje oboje: besedilo in povezavo.",
+});

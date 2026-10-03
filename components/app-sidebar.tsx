@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { ExternalLink, Menu } from "lucide-react";
 
 import { logoutAction } from "@/app/actions/auth";
 import { SubmitButton } from "@/components/forms/submit-button";
@@ -22,6 +22,7 @@ import {
   appName,
   logoutItem,
   primaryNavigation,
+  publicSiteLink,
   secondaryNavigation,
 } from "@/lib/constants";
 import { getInitials } from "@/lib/format";
@@ -97,6 +98,18 @@ function SidebarBody({
 
       <div className="mt-6 space-y-0.5 border-t border-sidebar-border pt-4">
         {secondaryNavigation.filter(isVisible).map(renderLink)}
+
+        {/* Zunanja povezava, zato navaden <a> in ne <Link>: gre na drugo
+            domeno, kjer prednalaganje Nexta nima kaj pridobiti. */}
+        <a
+          href={publicSiteLink.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 rounded-[10px] px-3 py-2 text-[0.9375rem] text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        >
+          <ExternalLink className="size-[1.125rem]" />
+          {publicSiteLink.label}
+        </a>
       </div>
 
       <div className="mt-4 border-t border-sidebar-border pt-5">

@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth";
+import { checkMailboxForBounces } from "@/lib/bounces";
 import { renewableFieldNames } from "@/lib/membership";
+import { sendWelcomeEmail } from "@/lib/welcome";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { memberSchema, renewMembershipSchema } from "@/lib/validation";
 import type { ActionState } from "@/types/app";
@@ -79,9 +82,29 @@ export async function saveMemberAction(
     const supabase = await createSupabaseServerClient();
 
     if (id) {
+      // Nov naslov je nova priložnost: oznaka nedelujočega velja za starega.
+      const { data: previous } = await supabase
+        .from("members")
+        .select("email")
+        .eq("id", id)
+        .maybeSingle();
+
+      const emailChanged =
+        (previous?.email ?? "").trim().toLowerCase() !==
+        (payload.email ?? "").trim().toLowerCase();
+
       const { error } = await supabase
         .from("members")
-        .update(payload)
+        .update(
+          emailChanged
+            ? {
+                ...payload,
+                email_bounced: false,
+                email_bounced_at: null,
+                email_bounce_reason: null,
+              }
+            : payload,
+        )
         .eq("id", id);
 
       if (error) {
@@ -104,6 +127,11 @@ export async function saveMemberAction(
 
       revalidatePath("/members");
       redirectTo = data?.id ? `/members/${data.id}` : "/members";
+
+      const { email, first_name } = payload;
+      if (email) {
+        after(() => sendWelcomeEmail({ email, firstName: first_name }));
+      }
     }
   } catch (error) {
     console.error("Napaka pri shranjevanju člana", error);
@@ -199,4 +227,70 @@ export async function deleteMemberAction(formData: FormData) {
   revalidatePath("/members");
   revalidatePath(`/members/${id}`);
   redirect(returnPath);
+}
+
+/**
+ * Ročno postavi ali odstrani oznako nedelujočega e-naslova.
+ *
+ * Odstranitev si zapomni čas, da je dnevni pregled nabiralnika ne postavi
+ * nazaj zaradi stare povratnice.
+ */
+export async function setEmailBouncedAction(formData: FormData) {
+  await requireUser();
+  const id = getStringValue(formData, "id");
+  const bounced = getStringValue(formData, "bounced") === "true";
+
+  if (!id) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("members")
+    .update(
+      bounced
+        ? {
+            email_bounced: true,
+            email_bounced_at: now,
+            email_bounce_reason: "Ročno označeno v Požiralniku.",
+          }
+        : {
+            email_bounced: false,
+            email_bounced_at: null,
+            email_bounce_reason: null,
+            email_bounce_cleared_at: now,
+          },
+    )
+    .eq("id", id);
+
+  if (error) {
+    console.error("Napaka pri označevanju e-naslova", error);
+  }
+
+  revalidatePath(`/members/${id}`);
+  revalidatePath("/members");
+}
+
+/** Takojšen pregled povratnic, isti kot dnevni po urniku. */
+export async function checkBouncesAction(): Promise<ActionState> {
+  await requireUser();
+
+  try {
+    const { marked } = await checkMailboxForBounces();
+    revalidatePath("/members");
+
+    return {
+      success:
+        marked === 0
+          ? "Pregledano. Ni novih nedelujočih naslovov."
+          : `Pregledano. Označenih nedelujočih naslovov: ${marked}.`,
+    };
+  } catch (error) {
+    console.error("Napaka pri pregledu povratnic", error);
+    return {
+      error:
+        "Nabiralnika ni bilo mogoče prebrati. Preveri, ali ima Gmail vklopljen IMAP.",
+    };
+  }
 }

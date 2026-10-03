@@ -1,6 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Bell,
+  Bug,
+  FilePenLine,
   ClipboardList,
   History,
   LayoutDashboard,
@@ -96,6 +98,7 @@ export const primaryNavigation: NavigationItem[] = [
     icon: Newspaper,
     roles: vsi,
   },
+  { href: "/clanki", label: "Članki", icon: FilePenLine, roles: vsi },
   { href: "/notifications", label: "Obveščanje", icon: Bell, roles: samoAdmin },
   {
     href: "/notifications/history",
@@ -108,8 +111,50 @@ export const primaryNavigation: NavigationItem[] = [
 // Nastavitve in podatki kluba stojijo ob profilu na dnu: odpreš ju redko,
 // zato ne zaslužita mesta med dnevnimi opravili.
 export const secondaryNavigation: NavigationItem[] = [
+  // Prijava napake stoji nad nastavitvami in je odprta obema vlogama - uradnik
+  // naleti na napake enako kot administrator.
+  {
+    href: "/sporoci-napako",
+    label: "Sporoči napako",
+    icon: Bug,
+    roles: vsi,
+  },
   { href: "/settings", label: "Nastavitve", icon: Settings, roles: samoAdmin },
   { href: "/info", label: "Info", icon: Info, roles: vsi },
+];
+
+// Javna klubska stran. Stoji v isti aplikaciji, a na svoji domeni, zato je
+// povezava zunanja in se odpre v novem zavihku - da se delo v plošči ne izgubi.
+export const publicSiteLink = {
+  label: "Klubska spletna stran",
+  href: club.website,
+};
+
+// --- Domeni ---
+//
+// Javna stran in nadzorna plošča stojita v isti aplikaciji, a vsaka na svoji
+// domeni. Brez usmerjanja bi bila vsaka pot dosegljiva na obeh - naslovnica
+// na poziralnik.nsk-klub.si in plošča na nsk-klub.si/dashboard. Deluje, a
+// zamegli, čemu je katera domena namenjena, iskalniki pa isto vsebino vidijo
+// na dveh naslovih.
+export const appHost = "poziralnik.nsk-klub.si";
+export const publicHosts = ["nsk-klub.si", "www.nsk-klub.si"];
+
+// Poti delovnega okolja. Na javni domeni se preusmerijo na poddomeno plošče.
+// Seznam je izrecen in ne izpeljan iz navigacije, ker mednje sodijo tudi
+// strani brez postavke v meniju (prijava, nastavitev gesla, zavrnjen dostop).
+export const appPaths = [
+  "/dashboard",
+  "/members",
+  "/applications",
+  "/notifications",
+  "/settings",
+  "/print-records",
+  "/info",
+  "/sporoci-napako",
+  "/nimas-dostopa",
+  "/login",
+  "/nastavi-geslo",
 ];
 
 export const logoutItem = {
@@ -183,8 +228,8 @@ export const clubPartners = [
 // Politika zasebnosti, kot jo ima klub zavedeno v šifrantu na studentski-klubi.si.
 // Stoji tu in ne v lib/sos.ts, ker jo potrebuje javni obrazec - ta teče v
 // brskalniku, sos.ts pa je server-only.
-export const clubPrivacyPolicyUrl =
-  "https://www.nsk-klub.si/e7106aee8b9316109e68c43fe43bb9b1.pdf";
+// Relativna pot: obrazec teče na isti domeni kot dokumenti, tudi na predogledu.
+export const clubPrivacyPolicyUrl = "/dokumenti/politika-zasebnosti.pdf";
 
 export const membershipStatusOptions: StatusOption<MembershipStatus>[] = [
   { value: "active", label: "Aktiven" },

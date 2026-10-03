@@ -261,11 +261,19 @@ export function buildCampaignEmailHtml({
 </html>`;
 }
 
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
 export async function sendEmail({
   to,
   subject,
   html,
   text,
+  replyTo,
+  attachments,
   unsubscribeUrl,
   unsubscribePostUrl,
 }: {
@@ -273,6 +281,9 @@ export async function sendEmail({
   subject: string;
   html: string;
   text: string;
+  /** Povozi privzeti naslov za odgovor - da odgovor pride k pošiljatelju prijave. */
+  replyTo?: string | null;
+  attachments?: EmailAttachment[];
   /** Stran za odjavo; konča v glavi List-Unsubscribe kot druga možnost. */
   unsubscribeUrl?: string | null;
   /** Naslov za odjavo z enim klikom po RFC 8058. */
@@ -302,21 +313,48 @@ export async function sendEmail({
 
     await mailer.sendMail({
       from: credentials.smtpFrom,
-      replyTo: credentials.smtpReplyTo,
+      replyTo: replyTo ?? credentials.smtpReplyTo,
       to,
       subject,
       html,
       text,
+      ...(attachments && attachments.length > 0 ? { attachments } : {}),
       ...(Object.keys(headers).length > 0 ? { headers } : {}),
     });
 
     return {
       success: true,
+      recipientRejected: false,
     } as const;
   } catch (error) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Pošiljanje ni uspelo.",
+      recipientRejected: isRecipientRejected(error),
     } as const;
   }
+}
+
+/**
+ * Ali je strežnik naslov prejemnika trajno zavrnil (5xx pri RCPT TO).
+ *
+ * Začasne napake (4xx, izpad povezave, presežena kvota) naslova ne obsodijo -
+ * po njih bi označili dobre naslove samo zato, ker je Gmail za hip zatajil.
+ */
+function isRecipientRejected(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const { code, command, responseCode } = error as {
+    code?: string;
+    command?: string;
+    responseCode?: number;
+  };
+
+  return (
+    typeof responseCode === "number" &&
+    responseCode >= 500 &&
+    (code === "EENVELOPE" || /RCPT/i.test(command ?? ""))
+  );
 }

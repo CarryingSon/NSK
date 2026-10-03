@@ -1,8 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { requireUser } from "@/lib/auth";
+import { club } from "@/lib/constants";
+import { escapeHtml } from "@/lib/email-content";
+import { sendEmail, type EmailAttachment } from "@/lib/email";
+import { hasSosConsent } from "@/lib/membership";
+import { sendWelcomeEmail } from "@/lib/welcome";
+import {
+  buildDeclarationPdf,
+  declarationFileName,
+} from "@/lib/pristopna-izjava";
 import { registerMemberWithSos } from "@/lib/sos";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -25,6 +35,36 @@ const allowedProofTypes = new Set([
 function getStringValue(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
+}
+
+// Podpis s platna je PNG v data URL. Velikost omejimo, ker gre skozi strežniško
+// akcijo; običajen podpis ima nekaj deset kB.
+const maxSignatureBytes = 300 * 1024;
+
+function parseSignature(value: string) {
+  const match = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  const bytes = Buffer.from(match[1], "base64");
+  const isPng = bytes.subarray(0, 8).equals(
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  );
+
+  return isPng && bytes.length <= maxSignatureBytes ? new Uint8Array(bytes) : null;
+}
+
+/** Potrdilo_o_vpisu_Ime_Priimek.pdf - končnica ostane, kot jo je imela datoteka. */
+function proofFileName(firstName: string, lastName: string, original: string) {
+  const extension = /\.([a-z0-9]{1,5})$/i.exec(original)?.[1]?.toLowerCase() ?? "pdf";
+  const name = `${firstName} ${lastName}`
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "")
+    .replace(/\s+/g, "_");
+
+  return `Potrdilo_o_vpisu_${name}.${extension}`;
 }
 
 // Ime datoteke gre v pot v shrambi, zato iz njega odstranimo vse, kar ni
@@ -63,7 +103,11 @@ export async function submitApplicationAction(
     study_year: getStringValue(formData, "study_year"),
     member_type: getStringValue(formData, "member_type"),
     message: getStringValue(formData, "message"),
-    terms_accepted: formData.get("terms_accepted"),
+    municipality: getStringValue(formData, "municipality"),
+    privacy_acknowledged: formData.get("privacy_acknowledged"),
+    sos_consent: formData.get("sos_consent"),
+    media_consent: formData.get("media_consent"),
+    newsletter_consent: formData.get("newsletter_consent"),
     notifications_accepted: formData.get("notifications_accepted"),
   });
 
@@ -78,6 +122,12 @@ export async function submitApplicationAction(
       error:
         "Prijave trenutno ni mogoče oddati. Piši nam na nsk.klub@gmail.com in uredimo ročno.",
     };
+  }
+
+  const signature = parseSignature(getStringValue(formData, "signature"));
+
+  if (!signature) {
+    return { error: "Pred oddajo se podpiši v polje za podpis." };
   }
 
   const proof = formData.get("proof");
@@ -114,17 +164,45 @@ export async function submitApplicationAction(
       proofPath = path;
     }
 
-    // Soglasji se ob oddaji samo zapišeta. V ŠOS gre prijava šele, ko jo klub
+    const signaturePath = `podpisi/${new Date().getFullYear()}/${crypto.randomUUID()}.png`;
+    const { error: signatureError } = await supabase.storage
+      .from(proofBucket)
+      .upload(signaturePath, signature, { contentType: "image/png", upsert: false });
+
+    if (signatureError) {
+      console.error("Napaka pri shranjevanju podpisa", signatureError);
+      return { error: "Podpisa ni bilo mogoče shraniti. Poskusi znova." };
+    }
+
+    // Soglasja se ob oddaji samo zapišejo. V ŠOS gre prijava šele, ko jo klub
     // odobri - glej setApplicationStatusAction().
+    const submittedAt = new Date();
     const { error } = await supabase.from("membership_applications").insert({
       ...parsed.data,
       proof_path: proofPath,
+      signature_path: signaturePath,
       status: "pending",
     });
 
     if (error) {
       throw error;
     }
+
+    // Izjava gre klubu šele po odgovoru, da prijavitelj ne čaka na SMTP.
+    // Prijava je takrat že shranjena, zato je neuspelo pošiljanje ne podre.
+    const application = parsed.data;
+    // Datoteko preberemo zdaj: po odgovoru telo zahteve ni več zagotovo na voljo.
+    const proofAttachment: EmailAttachment | null = hasProof
+      ? {
+          filename: proofFileName(application.first_name, application.last_name, proof.name),
+          content: Buffer.from(await proof.arrayBuffer()),
+          contentType: proof.type,
+        }
+      : null;
+
+    after(() =>
+      sendDeclarationToClub(application, submittedAt, proofAttachment, signature),
+    );
 
     revalidatePath("/applications");
 
@@ -138,6 +216,81 @@ export async function submitApplicationAction(
     return {
       error: "Prijave ni bilo mogoče oddati. Poskusi znova čez nekaj trenutkov.",
     };
+  }
+}
+
+type ParsedApplication = Extract<
+  ReturnType<typeof applicationSchema.safeParse>,
+  { success: true }
+>["data"];
+
+/**
+ * Pošlje izpolnjeno pristopno izjavo in potrdilo o vpisu na klubski naslov.
+ *
+ * Klub mora izjavo hraniti tudi za člane, ki se včlanijo na spletu - to je
+ * njihova različica papirja, ki ga drugi podpišejo za pultom. Prijavitelju je
+ * ne pošiljamo: vsebuje EMŠO, e-pošta pa ni prostor zanj, kadar ni nujno.
+ *
+ * Nikoli ne vrže; napako samo zapiše v dnevnik.
+ */
+async function sendDeclarationToClub(
+  application: ParsedApplication,
+  submittedAt: Date,
+  proof: EmailAttachment | null,
+  signature: Uint8Array,
+) {
+  try {
+    const pdf = await buildDeclarationPdf({
+      firstName: application.first_name,
+      lastName: application.last_name,
+      emso: application.emso,
+      address: application.address,
+      postalCode: application.postal_code,
+      city: application.city,
+      municipality: application.municipality,
+      phone: application.phone,
+      email: application.email,
+      memberType: application.member_type,
+      sosConsent: application.sos_consent,
+      mediaConsent: application.media_consent,
+      newsletterConsent: application.newsletter_consent,
+      signaturePng: signature,
+      submittedAt,
+    });
+
+    const name = `${application.first_name} ${application.last_name}`;
+    const memberType = application.member_type === "pupil" ? "dijak/-inja" : "študent/-ka";
+    const proofLine = proof
+      ? "V priponki sta pristopna izjava in potrdilo o vpisu."
+      : "V priponki je pristopna izjava. Potrdila o vpisu ni naložil_a - prinesti ga mora v času uradnih ur.";
+
+    const result = await sendEmail({
+      to: club.email,
+      subject: `Pristopna izjava: ${name}`,
+      replyTo: application.email,
+      text: [
+        `Nova spletna prijava v ${club.shortName}: ${name} (${memberType}, ${application.school}).`,
+        proofLine,
+        "Prijavo odobriš v Požiralniku pod Prijave.",
+      ].join("\n\n"),
+      html: `<p>Nova spletna prijava v ${club.shortName}: <strong>${escapeHtml(name)}</strong> (${memberType}, ${escapeHtml(application.school)}).</p>
+<p>${proofLine}</p>
+<p>Prijavo odobriš v Požiralniku pod Prijave.</p>`,
+      attachments: [
+        {
+          filename: declarationFileName(application.first_name, application.last_name),
+          content: pdf,
+          contentType: "application/pdf",
+        },
+        ...(proof ? [proof] : []),
+      ],
+    });
+
+    if (!result.success) {
+      console.error("Pristopne izjave ni bilo mogoče poslati", result.error);
+    }
+  } catch (error) {
+    console.error("Napaka pri sestavljanju pristopne izjave", error);
   }
 }
 
@@ -199,7 +352,7 @@ async function registerApprovedApplication(
   const { data: application, error } = await supabase
     .from("membership_applications")
     .select(
-      "first_name, last_name, emso, email, postal_code, terms_accepted, notifications_accepted, sos_registered_at",
+      "first_name, last_name, emso, email, postal_code, sos_consent, terms_accepted, notifications_accepted, sos_registered_at",
     )
     .eq("id", id)
     .single();
@@ -208,12 +361,8 @@ async function registerApprovedApplication(
     return {};
   }
 
-  // Že poslano ali brez obeh soglasij - ne pošiljamo in ne pišemo napake.
-  if (
-    application.sos_registered_at ||
-    !application.terms_accepted ||
-    !application.notifications_accepted
-  ) {
+  // Že poslano ali brez soglasja - ne pošiljamo in ne pišemo napake.
+  if (application.sos_registered_at || !hasSosConsent(application)) {
     return {};
   }
 
@@ -230,6 +379,7 @@ async function registerApprovedApplication(
     emso: application.emso,
     email: application.email,
     postalCode: application.postal_code,
+    notificationsAccepted: application.notifications_accepted,
   });
 
   if (sos.ok) {
@@ -287,6 +437,14 @@ export async function createMemberFromApplicationAction(
         membership_status: "active",
         membership_year: new Date().getFullYear(),
         joined_at: new Date().toISOString().slice(0, 10),
+        // Pristopna izjava vpraša po e-novicah. Kdor ni soglašal, jih ne dobi;
+        // starejše prijave tega vprašanja niso imele, zato zanje ne odločamo.
+        ...(application.privacy_acknowledged && !application.newsletter_consent
+          ? {
+              notifications_opt_out: true,
+              notifications_opt_out_at: application.created_at,
+            }
+          : {}),
       })
       .select("id")
       .single();
@@ -311,6 +469,15 @@ export async function createMemberFromApplicationAction(
       .from("membership_applications")
       .update({ member_id: member.id, status: "approved" })
       .eq("id", id);
+
+    // Pozdrav gre po odgovoru, da aktivist ne čaka na SMTP.
+    after(() =>
+      sendWelcomeEmail({
+        email: application.email,
+        firstName: application.first_name,
+        sosPending: Boolean(application.sos_registered_at),
+      }),
+    );
 
     revalidatePath("/applications");
     revalidatePath("/members");
@@ -339,12 +506,16 @@ export async function deleteApplicationAction(formData: FormData) {
     // Potrdilo je osebni dokument, zato gre iz shrambe skupaj s prijavo.
     const { data: application } = await supabase
       .from("membership_applications")
-      .select("proof_path")
+      .select("proof_path, signature_path")
       .eq("id", id)
       .single();
 
-    if (application?.proof_path) {
-      await supabase.storage.from(proofBucket).remove([application.proof_path]);
+    const files = [application?.proof_path, application?.signature_path].filter(
+      (path): path is string => Boolean(path),
+    );
+
+    if (files.length > 0) {
+      await supabase.storage.from(proofBucket).remove(files);
     }
 
     await supabase.from("membership_applications").delete().eq("id", id);

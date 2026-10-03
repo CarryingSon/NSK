@@ -27,6 +27,7 @@ export type CampaignType = "obvestilo" | "dogodek" | "ugodnost" | "novice";
 // Iz šole člana izpeljana skupina. "unknown" pomeni, da šole ni bilo mogoče
 // uvrstiti - član ostane dosegljiv prek skupine "vsi člani".
 export type MemberSegment = "student" | "pupil" | "unknown";
+export type ArticleStatus = "draft" | "published";
 export type NotificationAudience =
   | "all"
   | "students"
@@ -67,6 +68,10 @@ export interface Database {
           faculty: string | null;
           notifications_opt_out: boolean;
           notifications_opt_out_at: string | null;
+          email_bounced: boolean;
+          email_bounced_at: string | null;
+          email_bounce_reason: string | null;
+          email_bounce_cleared_at: string | null;
           notifications_token: string;
           membership_status: MembershipStatus;
           membership_year: number | null;
@@ -91,6 +96,10 @@ export interface Database {
           faculty?: string | null;
           notifications_opt_out?: boolean;
           notifications_opt_out_at?: string | null;
+          email_bounced?: boolean;
+          email_bounced_at?: string | null;
+          email_bounce_reason?: string | null;
+          email_bounce_cleared_at?: string | null;
           notifications_token?: string;
           membership_status?: MembershipStatus;
           membership_year?: number | null;
@@ -223,6 +232,12 @@ export interface Database {
           created_at: string;
           terms_accepted: boolean;
           notifications_accepted: boolean;
+          municipality: string | null;
+          privacy_acknowledged: boolean;
+          sos_consent: boolean;
+          media_consent: boolean;
+          newsletter_consent: boolean;
+          signature_path: string | null;
           sos_registered_at: string | null;
           sos_error: string | null;
         };
@@ -250,12 +265,52 @@ export interface Database {
           created_at?: string;
           terms_accepted?: boolean;
           notifications_accepted?: boolean;
+          municipality?: string | null;
+          privacy_acknowledged?: boolean;
+          sos_consent?: boolean;
+          media_consent?: boolean;
+          newsletter_consent?: boolean;
+          signature_path?: string | null;
           sos_registered_at?: string | null;
           sos_error?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["membership_applications"]["Insert"]
         >;
+        Relationships: [];
+      };
+      articles: {
+        Row: {
+          id: string;
+          title: string;
+          slug: string;
+          excerpt: string | null;
+          content_html: string;
+          cover_path: string | null;
+          cta_label: string | null;
+          cta_url: string | null;
+          status: ArticleStatus;
+          published_at: string | null;
+          author_email: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          slug: string;
+          excerpt?: string | null;
+          content_html?: string;
+          cover_path?: string | null;
+          cta_label?: string | null;
+          cta_url?: string | null;
+          status?: ArticleStatus;
+          published_at?: string | null;
+          author_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["articles"]["Insert"]>;
         Relationships: [];
       };
       email_campaigns: {
