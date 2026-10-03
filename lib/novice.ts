@@ -1,14 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
-
 import { articleImageUrl } from "@/lib/clanki";
+import { createSupabasePublicClient as odjemalec } from "@/lib/supabase/public";
 import type { Database } from "@/types/database";
 
 /**
  * Novice za javno stran.
  *
  * Članke piše klub v Požiralniku (zavihek Članki), tu pa beremo samo
- * objavljene. Odjemalec je brez piškotkov, da strani ostanejo statične;
- * osvežijo se, ko akcija v Požiralniku pokliče revalidatePath().
+ * objavljene.
  */
 
 export type Novica = {
@@ -21,17 +19,6 @@ export type Novica = {
   datum: string | null;
   gumb: { besedilo: string; povezava: string } | null;
 };
-
-function odjemalec() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const kljuc = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !kljuc) return null;
-
-  return createClient<Database>(url, kljuc, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
 
 type Vrstica = Database["public"]["Tables"]["articles"]["Row"];
 

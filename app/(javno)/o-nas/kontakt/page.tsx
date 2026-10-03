@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 
 import { NaslovStrani } from "@/components/javna/naslov-strani";
-import { klub, upravniOdbor } from "@/lib/klub";
+import { klub } from "@/lib/klub";
+import { pridobiVodstvo, predsednikVodstva } from "@/lib/vodstvo";
 
 export const metadata: Metadata = {
   title: "Kontakt",
   description: `${klub.ime}, ${klub.naslov.ulica}, ${klub.naslov.posta}. Uradne ure: ${klub.uradneUre}.`,
 };
 
-const predsednica = upravniOdbor[0];
+export default async function KontaktStran() {
+  const predsednica = predsednikVodstva(await pridobiVodstvo());
 
-export default function KontaktStran() {
   return (
     <>
       <NaslovStrani
@@ -53,26 +54,30 @@ export default function KontaktStran() {
             </address>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-7">
-            <h2 className="font-heading text-lg font-semibold">
-              Predsednica upravnega odbora
-            </h2>
-            <p className="mt-5 text-[0.9375rem]">{predsednica.ime}</p>
-            <div className="mt-4 space-y-3 text-[0.9375rem]">
-              <p className="flex items-center gap-3">
-                <Mail className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <a href={`mailto:${predsednica.email}`} className="hover:text-primary">
-                  {predsednica.email}
-                </a>
-              </p>
-              <p className="flex items-center gap-3">
-                <Phone className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <a href={`tel:${klub.telefonUrl}`} className="hover:text-primary">
-                  {klub.telefon}
-                </a>
-              </p>
+          {predsednica ? (
+            <div className="rounded-2xl border border-border bg-card p-7">
+              <h2 className="font-heading text-lg font-semibold">
+                {predsednica.funkcija ?? "Predsednica"} upravnega odbora
+              </h2>
+              <p className="mt-5 text-[0.9375rem]">{predsednica.ime}</p>
+              <div className="mt-4 space-y-3 text-[0.9375rem]">
+                {predsednica.email ? (
+                  <p className="flex items-center gap-3">
+                    <Mail className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <a href={`mailto:${predsednica.email}`} className="hover:text-primary">
+                      {predsednica.email}
+                    </a>
+                  </p>
+                ) : null}
+                <p className="flex items-center gap-3">
+                  <Phone className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  <a href={`tel:${klub.telefonUrl}`} className="hover:text-primary">
+                    {klub.telefon}
+                  </a>
+                </p>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
 
         <div className="mt-6 rounded-2xl border border-border bg-card p-7">

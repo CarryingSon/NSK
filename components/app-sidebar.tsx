@@ -24,6 +24,7 @@ import {
   primaryNavigation,
   publicSiteLink,
   secondaryNavigation,
+  websiteNavigation,
 } from "@/lib/constants";
 import { getInitials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -94,6 +95,15 @@ function SidebarBody({
 
       <nav className="mt-8 flex-1 space-y-0.5">
         {primaryNavigation.filter(isVisible).map(renderLink)}
+
+        {websiteNavigation.some(isVisible) ? (
+          <>
+            <p className="px-3 pt-6 pb-2 text-[0.75rem] font-medium tracking-[0.08em] text-muted-foreground uppercase">
+              Spletna stran
+            </p>
+            {websiteNavigation.filter(isVisible).map(renderLink)}
+          </>
+        ) : null}
       </nav>
 
       <div className="mt-6 space-y-0.5 border-t border-sidebar-border pt-4">

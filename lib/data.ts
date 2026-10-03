@@ -23,6 +23,7 @@ import type {
   ApplicationCounts,
   ApplicationRow,
   Article,
+  LeadershipMember,
   CampaignFailure,
   CampaignWithProgress,
   DashboardOverview,
@@ -623,4 +624,26 @@ export async function getArticle(id: string): Promise<Article | null> {
     .maybeSingle();
 
   return data ?? null;
+}
+
+/** Vodstvo za urejevalnik, po odborih in vrstnem redu na strani. */
+export async function getLeadership(): Promise<LeadershipMember[]> {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("leadership")
+    .select("*")
+    .order("body", { ascending: false })
+    .order("position", { ascending: true });
+
+  if (error) {
+    console.error("Napaka pri branju vodstva", error);
+    return [];
+  }
+
+  return data ?? [];
 }

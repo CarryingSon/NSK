@@ -28,6 +28,7 @@ export type CampaignType = "obvestilo" | "dogodek" | "ugodnost" | "novice";
 // uvrstiti - član ostane dosegljiv prek skupine "vsi člani".
 export type MemberSegment = "student" | "pupil" | "unknown";
 export type ArticleStatus = "draft" | "published";
+export type LeadershipBody = "upravni" | "nadzorni";
 export type NotificationAudience =
   | "all"
   | "students"
@@ -277,6 +278,30 @@ export interface Database {
         Update: Partial<
           Database["public"]["Tables"]["membership_applications"]["Insert"]
         >;
+        Relationships: [];
+      };
+      leadership: {
+        Row: {
+          id: string;
+          body: LeadershipBody;
+          name: string;
+          role: string | null;
+          email: string | null;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          body: LeadershipBody;
+          name: string;
+          role?: string | null;
+          email?: string | null;
+          position?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["leadership"]["Insert"]>;
         Relationships: [];
       };
       articles: {
