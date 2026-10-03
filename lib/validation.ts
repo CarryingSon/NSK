@@ -345,3 +345,18 @@ export const articleSchema = z.object({
 }).refine((value) => Boolean(value.cta_label) === Boolean(value.cta_url), {
   message: "Gumb potrebuje oboje: besedilo in povezavo.",
 });
+
+// Vodstvo s strani /o-nas/vodstvo. Urejevalnik pošlje cel seznam naenkrat.
+const leadershipPersonSchema = z.object({
+  id: z.string().uuid().optional(),
+  body: z.enum(["upravni", "nadzorni"]),
+  name: z.string().trim().min(2, "Vsaka oseba potrebuje ime in priimek.").max(120),
+  role: optionalString,
+  email: z
+    .string()
+    .trim()
+    .transform((value) => (value.length > 0 ? value : null))
+    .pipe(z.email("E-naslov v vodstvu ni veljaven.").nullable()),
+});
+
+export const leadershipSchema = z.array(leadershipPersonSchema).max(60);

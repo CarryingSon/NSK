@@ -9,7 +9,7 @@ export const appRoleLabels: Record<AppRole, string> = {
 
 export const appRoleDescriptions: Record<AppRole, string> = {
   admin: "Vidi in ureja vse: člane, prijave, evidenco tiska, obveščanje, nastavitve in uporabnike.",
-  officer: "Vidi člane in evidenco tiska ter piše članke za spletno stran. Do obveščanja, prijav in nastavitev nima dostopa.",
+  officer: "Vidi člane in evidenco tiska ter ureja članke in vodstvo na spletni strani. Do obveščanja, prijav in nastavitev nima dostopa.",
 };
 
 // Kar ni našteto, je pridržano administratorju. Nove strani so tako privzeto
@@ -20,6 +20,7 @@ const officerPaths = [
   "/members",
   "/print-records",
   "/clanki",
+  "/vodstvo",
   "/info",
   "/sporoci-napako",
 ];

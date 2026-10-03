@@ -3,6 +3,7 @@ import {
   Bell,
   Bug,
   FilePenLine,
+  UsersRound,
   ClipboardList,
   History,
   LayoutDashboard,
@@ -98,7 +99,6 @@ export const primaryNavigation: NavigationItem[] = [
     icon: Newspaper,
     roles: vsi,
   },
-  { href: "/clanki", label: "Članki", icon: FilePenLine, roles: vsi },
   { href: "/notifications", label: "Obveščanje", icon: Bell, roles: samoAdmin },
   {
     href: "/notifications/history",
@@ -106,6 +106,12 @@ export const primaryNavigation: NavigationItem[] = [
     icon: History,
     roles: samoAdmin,
   },
+];
+
+// Urejanje javne spletne strani, v meniju kot svoja skupina.
+export const websiteNavigation: NavigationItem[] = [
+  { href: "/clanki", label: "Članki", icon: FilePenLine, roles: vsi },
+  { href: "/vodstvo", label: "Vodstvo", icon: UsersRound, roles: vsi },
 ];
 
 // Nastavitve in podatki kluba stojijo ob profilu na dnu: odpreš ju redko,
@@ -152,6 +158,8 @@ export const appPaths = [
   "/print-records",
   "/info",
   "/sporoci-napako",
+  "/clanki",
+  "/vodstvo",
   "/nimas-dostopa",
   "/login",
   "/nastavi-geslo",
