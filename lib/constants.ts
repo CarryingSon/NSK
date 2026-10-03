@@ -228,8 +228,8 @@ export const clubPartners = [
 // Politika zasebnosti, kot jo ima klub zavedeno v šifrantu na studentski-klubi.si.
 // Stoji tu in ne v lib/sos.ts, ker jo potrebuje javni obrazec - ta teče v
 // brskalniku, sos.ts pa je server-only.
-export const clubPrivacyPolicyUrl =
-  "https://www.nsk-klub.si/e7106aee8b9316109e68c43fe43bb9b1.pdf";
+// Relativna pot: obrazec teče na isti domeni kot dokumenti, tudi na predogledu.
+export const clubPrivacyPolicyUrl = "/dokumenti/politika-zasebnosti.pdf";
 
 export const membershipStatusOptions: StatusOption<MembershipStatus>[] = [
   { value: "active", label: "Aktiven" },

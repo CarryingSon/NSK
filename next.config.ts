@@ -40,6 +40,13 @@ const nextConfig: NextConfig = {
       // namesto do 404. Preusmeritev je začasna (307), ker se lahko sem kdaj
       // postavi pregledna stran o klubu.
       { source: "/o-nas", destination: "/o-nas/vodstvo", permanent: false },
+      // Politika zasebnosti je na stari strani stala pod zgoščenim imenom in
+      // nanjo kažejo stare povezave. Datoteka je ista (preverjeno po vsebini).
+      {
+        source: "/e7106aee8b9316109e68c43fe43bb9b1.pdf",
+        destination: "/dokumenti/politika-zasebnosti.pdf",
+        permanent: true,
+      },
     ];
   },
 };
