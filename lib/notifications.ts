@@ -417,6 +417,13 @@ export async function dispatchCampaignBatch(
       text: plainText,
       unsubscribeUrl,
       unsubscribePostUrl,
+      log: {
+        kind: "obvestilo",
+        campaignId,
+        memberId: item.member_id,
+        recipientName: item.first_name,
+        storeBody: false,
+      },
     });
 
     if (delivery.success) {

@@ -16,6 +16,8 @@ import {
 } from "@/app/actions/notifications";
 import { CampaignDispatcher } from "@/components/notifications/campaign-dispatcher";
 import { DeleteCampaignButton } from "@/components/notifications/delete-campaign-button";
+import { EmailLog } from "@/components/notifications/email-log";
+import { HistoryTabs } from "@/components/notifications/history-tabs";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -23,17 +25,56 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import {
   campaignStatusLabels,
   campaignTypeLabels,
+  emailKindLabels,
   notificationAudienceLabels,
 } from "@/lib/constants";
-import { getCampaignFailureList, getEmailCampaigns } from "@/lib/data";
+import {
+  getCampaignFailureList,
+  getEmailCampaigns,
+  getEmailLog,
+  type EmailLogFilters,
+} from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
 import { isEmailConfigured } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
 import type { CampaignFailure } from "@/types/app";
+import type { EmailKind } from "@/types/database";
 import { requireAdmin } from "@/lib/auth";
 
-export default async function NotificationHistoryPage() {
+export default async function NotificationHistoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    tab?: string;
+    vrsta?: string;
+    stanje?: string;
+    q?: string;
+    page?: string;
+  }>;
+}) {
   await requireAdmin();
+  const params = await searchParams;
+
+  if (params.tab === "dnevnik") {
+    const filters: EmailLogFilters = {
+      kind: params.vrsta && params.vrsta in emailKindLabels ? (params.vrsta as EmailKind) : "all",
+      status: params.stanje === "sent" || params.stanje === "failed" ? params.stanje : "all",
+      query: params.q?.trim() || undefined,
+      page: Math.max(1, Number(params.page) || 1),
+    };
+    const { rows, total } = await getEmailLog(filters);
+
+    return (
+      <div className="space-y-8">
+        <HistoryTabs active="dnevnik" />
+        <PageHeader
+          title="Dnevnik e-pošte"
+          description="Vsa e-pošta, ki jo je poslala aplikacija: obvestila, testna sporočila, pozdravi novim članom, pristopne izjave in prijave napak. Klikni Poglej za vsebino."
+        />
+        <EmailLog rows={rows} total={total} filters={filters} />
+      </div>
+    );
+  }
 
   const campaigns = await getEmailCampaigns();
   const emailConfigured = isEmailConfigured();
@@ -55,6 +96,7 @@ export default async function NotificationHistoryPage() {
 
   return (
     <div className="space-y-8">
+      <HistoryTabs active="obvestila" />
       <PageHeader
         title="Zgodovina obvestil"
         description="Vsako obvestilo s svojo čakalno vrsto: koliko je poslanega, kaj še čaka in kje je pošiljanje spodletelo."

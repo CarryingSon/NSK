@@ -124,6 +124,7 @@ export async function sendTestEmailAction(
       to: parsedEmail.data.testEmail,
       subject: `[TEST] ${parsed.data.title}`,
       html,
+      log: { kind: "test" },
       text: richTextToPlainText(parsed.data.content),
     });
 

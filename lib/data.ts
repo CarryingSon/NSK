@@ -23,6 +23,7 @@ import type {
   ApplicationCounts,
   ApplicationRow,
   Article,
+  EmailLogEntry,
   LeadershipMember,
   CampaignFailure,
   CampaignWithProgress,
@@ -36,7 +37,7 @@ import type {
   PrintMonthSummary,
   NotificationAudienceStats,
 } from "@/types/app";
-import type { ApplicationStatus } from "@/types/database";
+import type { ApplicationStatus, EmailKind } from "@/types/database";
 
 async function getSupabaseOrNull() {
   if (!isSupabaseConfigured()) {
@@ -646,4 +647,92 @@ export async function getLeadership(): Promise<LeadershipMember[]> {
   }
 
   return data ?? [];
+}
+
+export const emailLogPageSize = 50;
+
+export interface EmailLogFilters {
+  kind?: EmailKind | "all";
+  status?: "sent" | "failed" | "all";
+  query?: string;
+  page?: number;
+}
+
+/** Stran dnevnika e-pošte, najnovejše na vrhu. Vsebine ne nalaga. */
+export async function getEmailLog(filters: EmailLogFilters = {}) {
+  const supabase = await getSupabaseOrNull();
+  const page = Math.max(1, filters.page ?? 1);
+
+  if (!supabase) {
+    return { rows: [] as EmailLogEntry[], total: 0, page };
+  }
+
+  let query = supabase
+    .from("email_log")
+    .select(
+      "id, kind, to_email, recipient_name, subject, campaign_id, member_id, status, error, attachments, created_at",
+      { count: "exact" },
+    )
+    .order("created_at", { ascending: false })
+    .range((page - 1) * emailLogPageSize, page * emailLogPageSize - 1);
+
+  if (filters.kind && filters.kind !== "all") {
+    query = query.eq("kind", filters.kind);
+  }
+
+  if (filters.status && filters.status !== "all") {
+    query = query.eq("status", filters.status);
+  }
+
+  const search = filters.query?.trim();
+  if (search) {
+    // Vejice in oklepaji bi zlomili sintakso or() - jih odstranimo.
+    const term = search.replace(/[,()%]/g, " ").trim();
+    query = query.or(`to_email.ilike.%${term}%,subject.ilike.%${term}%`);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) {
+    console.error("Napaka pri branju dnevnika e-pošte", error);
+    return { rows: [] as EmailLogEntry[], total: 0, page };
+  }
+
+  return {
+    rows: (data ?? []).map((row) => ({ ...row, html: null, text_body: null })) as EmailLogEntry[],
+    total: count ?? 0,
+    page,
+  };
+}
+
+export async function getEmailLogEntry(id: string) {
+  const supabase = await getSupabaseOrNull();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data } = await supabase
+    .from("email_log")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!data) {
+    return null;
+  }
+
+  // Obvestila nimajo shranjene vsebine; sestavimo jo iz obvestila samega.
+  const campaign =
+    !data.html && data.campaign_id
+      ? (
+          await supabase
+            .from("email_campaigns")
+            .select("title, subtitle, content_html, cta_label, cta_url, campaign_type")
+            .eq("id", data.campaign_id)
+            .maybeSingle()
+        ).data
+      : null;
+
+  return { entry: data, campaign };
 }

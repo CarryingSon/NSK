@@ -29,6 +29,12 @@ export type CampaignType = "obvestilo" | "dogodek" | "ugodnost" | "novice";
 export type MemberSegment = "student" | "pupil" | "unknown";
 export type ArticleStatus = "draft" | "published";
 export type LeadershipBody = "upravni" | "nadzorni";
+export type EmailKind = "obvestilo" | "test" | "pozdrav" | "izjava" | "napaka";
+export interface EmailLogAttachment {
+  filename: string;
+  size: number;
+  contentType: string;
+}
 export type NotificationAudience =
   | "all"
   | "students"
@@ -374,6 +380,40 @@ export interface Database {
           completed_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["email_campaigns"]["Insert"]>;
+        Relationships: [];
+      };
+      email_log: {
+        Row: {
+          id: string;
+          kind: EmailKind;
+          to_email: string;
+          recipient_name: string | null;
+          subject: string;
+          html: string | null;
+          text_body: string | null;
+          campaign_id: string | null;
+          member_id: string | null;
+          status: "sent" | "failed";
+          error: string | null;
+          attachments: EmailLogAttachment[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          kind: EmailKind;
+          to_email: string;
+          recipient_name?: string | null;
+          subject: string;
+          html?: string | null;
+          text_body?: string | null;
+          campaign_id?: string | null;
+          member_id?: string | null;
+          status: "sent" | "failed";
+          error?: string | null;
+          attachments?: EmailLogAttachment[];
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["email_log"]["Insert"]>;
         Relationships: [];
       };
       email_queue: {

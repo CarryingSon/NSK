@@ -135,6 +135,7 @@ export async function reportBugAction(
     // za podrobnosti kar z odgovorom na sporočilo.
     replyTo: user?.email ?? null,
     attachments,
+    log: { kind: "napaka", recipientName: user?.email ?? null },
   });
 
   if (!result.success) {

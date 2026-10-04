@@ -5,8 +5,9 @@ import nodemailer from "nodemailer";
 import { campaignTypeLabels, club } from "@/lib/constants";
 import { escapeHtml, sanitizeRichText } from "@/lib/email-content";
 import { getSiteUrl } from "@/lib/site-url";
-import { getEmailCredentials } from "@/lib/supabase/env";
-import type { CampaignType } from "@/types/database";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getEmailCredentials, isUserManagementConfigured } from "@/lib/supabase/env";
+import type { CampaignType, EmailKind } from "@/types/database";
 
 let transporter: nodemailer.Transporter | null = null;
 
@@ -267,7 +268,82 @@ export interface EmailAttachment {
   contentType: string;
 }
 
-export async function sendEmail({
+export interface EmailLogInfo {
+  kind: EmailKind;
+  campaignId?: string | null;
+  memberId?: string | null;
+  recipientName?: string | null;
+  /**
+   * Ali shranimo vsebino. Pri obvestilih ne - ogled jo sestavi iz obvestila,
+   * sicer bi vsaka kampanja v bazi pustila 1500 kopij istega besedila.
+   */
+  storeBody?: boolean;
+}
+
+/**
+ * Zapiše poslano sporočilo v dnevnik (email_log).
+ *
+ * Piše s service_role ključem, ker pošiljamo tudi brez seje (javni obrazec,
+ * cron). Napaka pri zapisu pošiljanja ne podre - le zabeleži se.
+ */
+async function writeEmailLog(
+  log: EmailLogInfo,
+  message: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+    attachments?: EmailAttachment[];
+  },
+  outcome: { success: boolean; error?: string },
+) {
+  if (!isUserManagementConfigured()) {
+    return;
+  }
+
+  const storeBody = log.storeBody ?? true;
+
+  try {
+    const { error } = await createSupabaseAdminClient().from("email_log").insert({
+      kind: log.kind,
+      to_email: message.to,
+      recipient_name: log.recipientName ?? null,
+      subject: message.subject,
+      html: storeBody ? message.html : null,
+      text_body: storeBody ? message.text : null,
+      campaign_id: log.campaignId ?? null,
+      member_id: log.memberId ?? null,
+      status: outcome.success ? "sent" : "failed",
+      error: outcome.success ? null : (outcome.error ?? null),
+      attachments: (message.attachments ?? []).map((attachment) => ({
+        filename: attachment.filename,
+        size: attachment.content.length,
+        contentType: attachment.contentType,
+      })),
+    });
+
+    if (error) {
+      console.error("Zapisa v dnevnik e-pošte ni bilo mogoče shraniti", error);
+    }
+  } catch (error) {
+    console.error("Zapisa v dnevnik e-pošte ni bilo mogoče shraniti", error);
+  }
+}
+
+export async function sendEmail(
+  message: Parameters<typeof deliverEmail>[0] & { log?: EmailLogInfo },
+) {
+  const { log, ...rest } = message;
+  const result = await deliverEmail(rest);
+
+  if (log) {
+    await writeEmailLog(log, rest, result);
+  }
+
+  return result;
+}
+
+async function deliverEmail({
   to,
   subject,
   html,

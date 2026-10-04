@@ -19,10 +19,12 @@ import { isEmailConfigured } from "@/lib/supabase/env";
 export async function sendWelcomeEmail({
   email,
   firstName,
+  memberId,
   sosPending = false,
 }: {
   email: string;
   firstName: string;
+  memberId?: string | null;
   /** Član je dal soglasje za ŠOS in bo od tam dobil kodo za potrditev. */
   sosPending?: boolean;
 }) {
@@ -43,6 +45,7 @@ export async function sendWelcomeEmail({
   const result = await sendEmail({
     to: email,
     subject: title,
+    log: { kind: "pozdrav", memberId, recipientName: firstName },
     html: buildCampaignEmailHtml({
       title,
       subtitle: "Tvoje članstvo je potrjeno",

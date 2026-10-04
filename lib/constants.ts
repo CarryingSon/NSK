@@ -21,6 +21,7 @@ import type {
   MemberSegment,
   MembershipStatus,
   NotificationAudience,
+  EmailKind,
 } from "@/types/database";
 import type { AppRole } from "@/lib/roles";
 import type { StatusOption } from "@/types/app";
@@ -590,4 +591,12 @@ export const campaignStatusLabels: Record<CampaignStatus, string> = {
   sending: "Pošiljanje",
   paused: "Na pavzi",
   sent: "Poslano",
+};
+
+export const emailKindLabels: Record<EmailKind, string> = {
+  obvestilo: "Obvestilo",
+  test: "Testno obvestilo",
+  pozdrav: "Pozdrav novemu članu",
+  izjava: "Pristopna izjava",
+  napaka: "Prijava napake",
 };

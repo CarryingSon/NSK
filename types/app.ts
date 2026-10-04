@@ -18,6 +18,7 @@ export type MembershipApplication =
 export type LeadershipMember = Database["public"]["Tables"]["leadership"]["Row"];
 export type Article = Database["public"]["Tables"]["articles"]["Row"];
 export type EmailCampaign = Database["public"]["Tables"]["email_campaigns"]["Row"];
+export type EmailLogEntry = Database["public"]["Tables"]["email_log"]["Row"];
 export type EmailQueueItem = Database["public"]["Tables"]["email_queue"]["Row"];
 
 // Ožji izsek člana za spustne sezname - dovolj za prikaz imena in izbiro vrednosti.

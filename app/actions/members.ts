@@ -130,7 +130,8 @@ export async function saveMemberAction(
 
       const { email, first_name } = payload;
       if (email) {
-        after(() => sendWelcomeEmail({ email, firstName: first_name }));
+        const memberId = data?.id ?? null;
+        after(() => sendWelcomeEmail({ email, firstName: first_name, memberId }));
       }
     }
   } catch (error) {

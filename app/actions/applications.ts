@@ -268,6 +268,7 @@ async function sendDeclarationToClub(
       to: club.email,
       subject: `Pristopna izjava: ${name}`,
       replyTo: application.email,
+      log: { kind: "izjava", recipientName: name },
       text: [
         `Nova spletna prijava v ${club.shortName}: ${name} (${memberType}, ${application.school}).`,
         proofLine,
@@ -475,6 +476,7 @@ export async function createMemberFromApplicationAction(
       sendWelcomeEmail({
         email: application.email,
         firstName: application.first_name,
+        memberId: member.id,
         sosPending: Boolean(application.sos_registered_at),
       }),
     );
