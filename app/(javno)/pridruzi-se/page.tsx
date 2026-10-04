@@ -21,7 +21,8 @@ const potrebujes = [
   {
     ikona: FileText,
     naslov: "Pristopna izjava",
-    opis: "Izpolnjena pristopna izjava, ki je del spletnega obrazca.",
+    opis: "Izpolnjena pristopna izjava, ki je del spletnega obrazca. Če se včlaniš v klubu, jo lahko prej natisneš in izpolniš.",
+    povezava: { href: "/dokumenti/pristopna-izjava.pdf", besedilo: "Prenesi pristopno izjavo (PDF)" },
   },
 ];
 
@@ -48,6 +49,16 @@ export default function PridruziSeStran() {
               <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
                 {postavka.opis}
               </p>
+              {"povezava" in postavka && postavka.povezava ? (
+                <a
+                  href={postavka.povezava.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+                >
+                  {postavka.povezava.besedilo}
+                </a>
+              ) : null}
             </li>
           ))}
         </ul>

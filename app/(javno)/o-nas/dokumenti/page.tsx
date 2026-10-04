@@ -35,7 +35,9 @@ export default function DokumentiStran() {
                     <span className="flex-1 text-[0.9375rem] leading-snug">
                       {dokument.naslov}
                     </span>
-                    <span className="badge shrink-0">PDF</span>
+                    <span className="badge shrink-0">
+                      {dokument.datoteka.split(".").pop()?.toUpperCase()}
+                    </span>
                   </a>
                 </li>
               ))}

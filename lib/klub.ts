@@ -172,6 +172,14 @@ export const dokumenti: { skupina: string; vsebina: Dokument[] }[] = [
         naslov: "Politika zasebnosti in pravna obvestila",
         datoteka: "politika-zasebnosti.pdf",
       },
+      {
+        naslov: "Redni občni zbor in volitve v organe kluba NŠK 2025/2026",
+        datoteka: "redni-obcni-zbor-2025.docx",
+      },
+      {
+        naslov: "Pristopna izjava (za tiskanje)",
+        datoteka: "pristopna-izjava.pdf",
+      },
     ],
   },
 ];
